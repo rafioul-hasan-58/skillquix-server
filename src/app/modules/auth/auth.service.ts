@@ -180,6 +180,7 @@ export const AuthService = {
 
   // LinkedIn Login - Get Authorization URL
   getLinkedInAuthUrl: () => {
+      console.log('CONFIG REDIRECT URI:', config.linkedin.redirect_uri);
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: config.linkedin.client_id as string,
