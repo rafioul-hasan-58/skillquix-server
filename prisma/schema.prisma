@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  fullName         String
+  email            String           @unique
+  password         String?
+  profileImage     String           @default("")
+  profession       String?
+  location         String?
+  experienceYear   String?
+  bio              String?
+  role             userRole         @default(USER)
+  isProMember      Boolean          @default(false)
+  isDeleted        Boolean          @default(false)
+  subscriptionType SubscriptionType @default(FREE)
+  resumeLink       String?
+  planEndsIn       DateTime?        @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  OTP              OTP?
+}
+
+enum userRole {
+  USER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum SubscriptionStatus {
+  FREE
+  PRO
+  PREMIUM
+}
+
+enum SubscriptionType {
+  FREE
+  PRO
+  PREMIUM
+}
+
+model OTP {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  otpCode      String
+  otpExpiresAt DateTime // Security timeout for OTP validation
+  userId       String   @unique @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, otpCode]) // Ensure unique active OTPs per user
+  @@index([otpExpiresAt]) // For cleanup of expired OTPs
+}
