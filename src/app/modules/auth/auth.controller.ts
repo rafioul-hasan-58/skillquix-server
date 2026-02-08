@@ -115,7 +115,7 @@ export const AuthController = {
       httpOnly: true,
       sameSite: 'lax',
     });
-    const frontend_url = "http://localhost:3000"
+    const frontend_url = "http://72.62.87.243:3001"
     // Option 1: Redirect with token in URL (less secure but simpler)
     res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
   }),
