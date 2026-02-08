@@ -14,7 +14,6 @@ export const createToken = (
 	secret: string,
 	expiresIn: string
 ) => {
-	console.log('secret',secret)
 	return jwt.sign(
 		jwtPayload,
 		secret as jwt.Secret,

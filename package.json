@@ -1,5 +1,5 @@
 {
-  "name": "ladariusborner-server",
+  "name": "raoclinical-server",
   "version": "0.0.1",
   "main": "server.js",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "license": "ISC",
-  "description": "Ladariusborner-server",
+  "description": "raoclinical-server",
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",

@@ -19,6 +19,7 @@ export default {
   otp_expiry_time: process.env.OTP_ACCESS_EXPIRES_IN || "5",
   image_url: process.env.IMAGE_URL,
   environment: process.env.ENVIRONMENT,
+  frontend_url: process.env.FRONTEND_URL,
   google_client_id: process.env.GOOGLE_CLIENT_ID,
   admin: {
     email: process.env.ADMIN_EMAIL,

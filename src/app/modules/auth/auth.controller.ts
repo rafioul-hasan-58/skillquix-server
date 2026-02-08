@@ -101,7 +101,7 @@ export const AuthController = {
 
   // Handle LinkedIn callback
   linkedInCallback: catchAsync(async (req: Request, res: Response) => {
-    const { code } = req.body;
+    const { code } = req.query;
 
     if (!code || typeof code !== 'string') {
       throw new ApiError(status.BAD_REQUEST, "Authorization code is required");
@@ -115,22 +115,8 @@ export const AuthController = {
       httpOnly: true,
       sameSite: 'lax',
     });
-
-    // Redirect to frontend with access token
     // Option 1: Redirect with token in URL (less secure but simpler)
-    const frontendUrl = 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/auth/callback?token=${accessToken}`);
-
-    // Option 2: Send JSON response (if calling from API directly)
-    // sendResponse(res, {
-    //   success: true,
-    //   statusCode: status.OK,
-    //   message: "LinkedIn login successful!",
-    //   data: {
-    //     accessToken,
-    //     user
-    //   },
-    // });
+    res.redirect(`${config.frontend_url}/auth/callback?token=${accessToken}`);
   }),
 
 };

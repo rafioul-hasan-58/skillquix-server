@@ -194,7 +194,6 @@ export const AuthService = {
   // LinkedIn Callback - Exchange code for token and get user data
   linkedInCallback: async (code: string) => {
     try {
-      console.log("code",code)
       // Step 1: Exchange authorization code for access token
       const tokenResponse = await axios.post(
         'https://www.linkedin.com/oauth/v2/accessToken',
@@ -214,7 +213,6 @@ export const AuthService = {
       );
 
       const accessToken = tokenResponse.data.access_token;
-      console.log(accessToken)
 
       // Step 2: Get user profile from LinkedIn
       const profileResponse = await axios.get(
@@ -227,6 +225,7 @@ export const AuthService = {
       );
 
       const linkedInUser = profileResponse.data;
+      console.log(linkedInUser)
 
       // Step 3: Check if user exists in database
       let user = await prisma.user.findUnique({
