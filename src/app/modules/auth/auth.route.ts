@@ -14,7 +14,16 @@ router.post(
   validateRequest(AuthValidation.loginValidationSchema),
   AuthController.login
 );
+// LinkedIn OAuth routes
+router.get(
+  "/linkedin",
+  AuthController.linkedInLogin
+);
 
+router.get(
+  "/linkedin/verify",
+  AuthController.linkedInCallback
+);
 router.put(
   "/change-password",
   auth(),

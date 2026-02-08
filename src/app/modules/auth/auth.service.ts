@@ -6,7 +6,7 @@ import prisma from "../../lib/prisma";
 import config from "../../../config";
 import { comparePassword } from "../../utils/comparePassword";
 import { sendOTP } from "../../utils/sendOTP";
-
+import axios from "axios"
 
 export const AuthService = {
   verifyOTP: async (email: string, otp: string) => {
@@ -176,6 +176,124 @@ export const AuthService = {
     return {
       message: "New OTP has been sent to your email for reset password.",
     };
-  }
+  },
+
+  // LinkedIn Login - Get Authorization URL
+  getLinkedInAuthUrl: () => {
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: config.linkedin.client_id as string,
+      redirect_uri: config.linkedin.redirect_uri as string,
+      scope: 'openid profile email',
+      state: Math.random().toString(36).substring(7), // CSRF protection
+    });
+
+    return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
+  },
+
+  // LinkedIn Callback - Exchange code for token and get user data
+  linkedInCallback: async (code: string) => {
+    try {
+      console.log("code",code)
+      // Step 1: Exchange authorization code for access token
+      const tokenResponse = await axios.post(
+        'https://www.linkedin.com/oauth/v2/accessToken',
+        null,
+        {
+          params: {
+            grant_type: 'authorization_code',
+            code: code,
+            client_id: config.linkedin.client_id,
+            client_secret: config.linkedin.client_secret,
+            redirect_uri: config.linkedin.redirect_uri,
+          },
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+
+      const accessToken = tokenResponse.data.access_token;
+      console.log(accessToken)
+
+      // Step 2: Get user profile from LinkedIn
+      const profileResponse = await axios.get(
+        'https://api.linkedin.com/v2/userinfo',
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const linkedInUser = profileResponse.data;
+
+      // Step 3: Check if user exists in database
+      let user = await prisma.user.findUnique({
+        where: { email: linkedInUser.email },
+      });
+
+      // Step 4: If user doesn't exist, create new user
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email: linkedInUser.email,
+            fullName: linkedInUser.name || `${linkedInUser.given_name} ${linkedInUser.family_name}`,
+            profileImage: linkedInUser.picture || null,
+            role: 'USER', // or whatever your default role is
+            // Note: No password since it's OAuth login
+          },
+        });
+      } else {
+        // Optionally update user info from LinkedIn
+        user = await prisma.user.update({
+          where: { email: linkedInUser.email },
+          data: {
+            fullName: linkedInUser.name || user.fullName,
+            profileImage: linkedInUser.picture || user.profileImage,
+          },
+        });
+      }
+
+      // Step 5: Generate JWT tokens
+      const jwtPayload = {
+        id: user.id,
+        fullName: user.fullName ?? undefined,
+        email: user.email,
+        profileImage: user.profileImage,
+        role: user.role,
+      };
+
+      const accessTokenJWT = createToken(
+        jwtPayload,
+        config.jwt.access_secret as string,
+        config.jwt.access_expires_in as string
+      );
+
+      const refreshToken = createToken(
+        jwtPayload,
+        config.jwt.refresh_token_secret as string,
+        config.jwt.refresh_token_expires_in as string
+      );
+
+      return {
+        accessToken: accessTokenJWT,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          profileImage: user.profileImage,
+          role: user.role,
+        },
+      };
+    } catch (error: any) {
+      console.error('LinkedIn OAuth Error:', error.response?.data || error.message);
+      throw new ApiError(
+        status.UNAUTHORIZED,
+        error.response?.data?.error_description || 'LinkedIn authentication failed'
+      );
+    }
+  },
 
 };

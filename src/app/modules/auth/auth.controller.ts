@@ -3,6 +3,8 @@ import { AuthService } from "./auth.service";
 import catchAsync from "../../helpers/catchAsync";
 import { Request, Response } from "express";
 import sendResponse from "../../helpers/sendResponse";
+import ApiError from "../../errors/ApiError";
+import config from "../../../config";
 
 
 
@@ -82,6 +84,53 @@ export const AuthController = {
       statusCode: status.OK,
       message: result.message,
     });
-  })
+  }),
+  // Initiate LinkedIn OAuth
+  linkedInLogin: catchAsync(async (req: Request, res: Response) => {
+    const authUrl = AuthService.getLinkedInAuthUrl();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: status.OK,
+      message: "LinkedIn authorization URL generated",
+      data: {
+        authUrl
+      },
+    });
+  }),
+
+  // Handle LinkedIn callback
+  linkedInCallback: catchAsync(async (req: Request, res: Response) => {
+    const { code } = req.body;
+
+    if (!code || typeof code !== 'string') {
+      throw new ApiError(status.BAD_REQUEST, "Authorization code is required");
+    }
+
+    const { accessToken, refreshToken, user } = await AuthService.linkedInCallback(code);
+
+    // Set refresh token in cookie
+    res.cookie("refreshToken", refreshToken, {
+      secure: config.env === 'production', // true in production
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+
+    // Redirect to frontend with access token
+    // Option 1: Redirect with token in URL (less secure but simpler)
+    const frontendUrl = 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/auth/callback?token=${accessToken}`);
+
+    // Option 2: Send JSON response (if calling from API directly)
+    // sendResponse(res, {
+    //   success: true,
+    //   statusCode: status.OK,
+    //   message: "LinkedIn login successful!",
+    //   data: {
+    //     accessToken,
+    //     user
+    //   },
+    // });
+  }),
 
 };

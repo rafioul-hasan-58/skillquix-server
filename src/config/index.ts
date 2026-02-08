@@ -24,15 +24,16 @@ export default {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD
   },
+  linkedin: {
+    client_id: process.env.LINKEDIN_CLIENT_ID,
+    client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+    redirect_uri: process.env.LINKEDIN_REDIRECT_URI
+  },
   jwt: {
     access_secret: process.env.JWT_ACCESS_SECRET,
     access_expires_in: process.env.JWT_ACCESS_EXPIRES_IN,
     refresh_token_secret: process.env.JWT_REFRESH_SECRET,
     refresh_token_expires_in: process.env.JWT_REFRESH_EXPIRES_IN,
-  },
-  emailSender: {
-    email: process.env.EMAIL,
-    app_pass: process.env.EMAIL_PASSWORD,
   },
   smtp: {
     email: process.env.SMTP_EMAIL,
