@@ -101,29 +101,23 @@ export const AuthController = {
 
   // Handle LinkedIn callback
   linkedInCallback: catchAsync(async (req: Request, res: Response) => {
-    const processedCodes = new Set<string>();
-
     const { code } = req.query;
 
     if (!code || typeof code !== 'string') {
       throw new ApiError(status.BAD_REQUEST, "Authorization code is required");
     }
 
-    // Prevent duplicate processing
-    if (processedCodes.has(code)) {
-      return res.redirect(`${config.frontend_url}/dashboard`);
-    }
-    processedCodes.add(code);
-
     const { accessToken, refreshToken, user } = await AuthService.linkedInCallback(code);
+
     // Set refresh token in cookie
     res.cookie("refreshToken", refreshToken, {
       secure: config.env === 'production', // true in production
       httpOnly: true,
       sameSite: 'lax',
     });
+    const frontend_url = "http://localhost:3000"
     // Option 1: Redirect with token in URL (less secure but simpler)
-    res.redirect(`${config.frontend_url}/auth/callback?token=${accessToken}`);
+    res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
   }),
 
 };

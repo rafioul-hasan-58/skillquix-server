@@ -226,7 +226,6 @@ export const AuthService = {
       );
 
       const linkedInUser = profileResponse.data;
-      console.log(linkedInUser)
 
       // Step 3: Check if user exists in database
       let user = await prisma.user.findUnique({
