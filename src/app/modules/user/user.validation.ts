@@ -1,8 +1,8 @@
-import { SubscriptionType, userRole } from "@prisma/client";
+import { SubscriptionType, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 // Enums for role and subscription type
-const UserRoleEnum = z.nativeEnum(userRole);
+const UserRoleEnum = z.nativeEnum(UserRole);
 const SubscriptionTypeEnum = z.nativeEnum(SubscriptionType);
 
 export const createUserValidationSchema = z.object({
