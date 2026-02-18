@@ -40,7 +40,7 @@ export const UserService = {
       config.jwt.access_secret as string,
       config.jwt.access_expires_in as string
     );
-    console.log("refresh",config.jwt.refresh_token_secret)
+    console.log("refresh", config.jwt.refresh_token_secret)
     const refreshToken = createToken(
       jwtPayload,
       config.jwt.refresh_token_secret as string,
@@ -78,6 +78,30 @@ export const UserService = {
       data,
     };
   },
+  myProfile: async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        profileImage: true,
+        profession: true,
+        role: true,
+        bio: true,
+        location: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    if (!user) {
+      throw new ApiError(status.NOT_FOUND, "User not found!")
+    }
+    return user;
+  },
+  
   updateProfile: async (userId: string, payload: Partial<User>) => {
     const isUserExist = await prisma.user.findUnique({
       where: { id: userId },

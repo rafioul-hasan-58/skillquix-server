@@ -25,6 +25,11 @@ router.get(
   auth(),
   UserController.getSingleUserById
 );
+router.get(
+  "/my-profile",
+  auth(),
+  UserController.myProfile
+);
 
 router.patch(
   "/update-profile",
