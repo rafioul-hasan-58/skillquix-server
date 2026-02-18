@@ -7,6 +7,8 @@ import config from "../../../config";
 import { comparePassword } from "../../utils/comparePassword";
 import { sendOTP } from "../../utils/sendOTP";
 import axios from "axios"
+import { User } from "@prisma/client";
+import crypto from 'crypto';
 
 export const AuthService = {
   verifyOTP: async (email: string, otp: string) => {
@@ -294,5 +296,53 @@ export const AuthService = {
       );
     }
   },
+  googleLogin: async (payload: Partial<User>, sessionId: string) => {
+    const { fullName, email } = payload;
+    let user = await prisma.user.findUnique({
+      where: {
+        email
+      }
+    });
 
+    if (!email) {
+      throw new ApiError(status.BAD_REQUEST, "Google account has no email");
+    }
+    if (!fullName) {
+      throw new ApiError(status.BAD_REQUEST, "Google account has no name");
+    }
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          fullName,
+          email,
+          password: crypto.randomBytes(6).toString('hex'),
+        }
+      })
+    }
+    if (user?.isBlocked) {
+      throw new ApiError(status.FORBIDDEN, 'User is blocked')
+    }
+
+    const jwtPayload = {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role
+    }
+    const accessToken = createToken(
+      jwtPayload,
+      config.jwt.access_secret as string,
+      config.jwt.access_expires_in as string
+    );
+    const refreshToken = createToken(
+      jwtPayload,
+      config.jwt.refresh_token_secret as string,
+      config.jwt.refresh_token_expires_in as string
+    );
+    return {
+      accessToken,
+      refreshToken
+    }
+  },
 };

@@ -17,9 +17,10 @@ model User {
   location         String?
   experienceYear   String?
   bio              String?
-  role             userRole         @default(USER)
+  role             UserRole         @default(USER)
   isProMember      Boolean          @default(false)
   isDeleted        Boolean          @default(false)
+  isBlocked        Boolean          @default(false)
   subscriptionType SubscriptionType @default(FREE)
   resumeLink       String?
   planEndsIn       DateTime?        @updatedAt
@@ -28,9 +29,10 @@ model User {
   OTP              OTP?
 }
 
-enum userRole {
+enum UserRole {
   USER
   ADMIN
+	@@map("userRole")
 }
 
 enum Gender {

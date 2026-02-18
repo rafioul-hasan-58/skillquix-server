@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import sendResponse from "../../helpers/sendResponse";
 import ApiError from "../../errors/ApiError";
 import config from "../../../config";
+import { verifyGoogleToken } from "./auth.utils";
 
 
 
@@ -119,5 +120,25 @@ export const AuthController = {
     // Option 1: Redirect with token in URL (less secure but simpler)
     res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
   }),
+  googleLogin: catchAsync(async (req: Request, res: Response) => {
+    const { token, sessionId } = req.body;
+    const payload = await verifyGoogleToken(token);
+    if (!payload) {
+      throw new ApiError(status.NOT_FOUND, "Google token payload not found");
+    }
+    const { accessToken, refreshToken } = await AuthService.googleLogin(payload, sessionId);
 
+    res.cookie("refreshToken", refreshToken, {
+      secure: false,
+      httpOnly: true,
+    });
+    sendResponse(res, {
+      success: true,
+      statusCode: status.OK,
+      message: "Google login successful!",
+      data: {
+        accessToken
+      },
+    });
+  }),
 };

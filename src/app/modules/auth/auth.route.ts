@@ -14,6 +14,13 @@ router.post(
   validateRequest(AuthValidation.loginValidationSchema),
   AuthController.login
 );
+
+router.post(
+  "/google-login",
+  validateRequest(AuthValidation.googleLoginValidationSchema),
+  AuthController.googleLogin
+);
+
 // LinkedIn OAuth routes
 router.get(
   "/linkedin",

@@ -20,7 +20,7 @@ export default {
   image_url: process.env.IMAGE_URL,
   environment: process.env.ENVIRONMENT,
   frontend_url: process.env.FRONTEND_URL,
-  google_client_id: process.env.GOOGLE_CLIENT_ID,
+  google_client_id: process.env.GOOGLE_CLIENT_ID, 
   admin: {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD
