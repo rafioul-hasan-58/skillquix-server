@@ -27,12 +27,78 @@ model User {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   OTP              OTP?
+  resumes          Resume?
+}
+
+model OTP {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  otpCode      String
+  otpExpiresAt DateTime // Security timeout for OTP validation
+  userId       String   @unique @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, otpCode]) // Ensure unique active OTPs per user
+  @@index([otpExpiresAt]) // For cleanup of expired OTPs
+}
+
+model Resume {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String        @unique @db.ObjectId
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  title        String
+  email        String
+  location     String
+  phone        String
+  summary      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  expariences  Exparience[]
+  education    Education[]
+  resumeSkills ResumeSkill[]
+}
+
+model Exparience {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId    String    @db.ObjectId
+  resume      Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  workingRole String
+  companyName String
+  description String
+  startDate   DateTime
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Education {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId      String    @db.ObjectId
+  resume        Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  degreeName    String
+  instituteName String
+  startDate     DateTime
+  endDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ResumeSkill {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId  String   @db.ObjectId
+  resume    Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  skillName String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum UserRole {
   USER
   ADMIN
-	@@map("userRole")
+
+  @@map("userRole")
 }
 
 enum Gender {
@@ -51,17 +117,4 @@ enum SubscriptionType {
   FREE
   PRO
   PREMIUM
-}
-
-model OTP {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  otpCode      String
-  otpExpiresAt DateTime // Security timeout for OTP validation
-  userId       String   @unique @db.ObjectId
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@unique([userId, otpCode]) // Ensure unique active OTPs per user
-  @@index([otpExpiresAt]) // For cleanup of expired OTPs
 }
