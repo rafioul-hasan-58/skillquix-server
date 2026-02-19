@@ -161,7 +161,7 @@ const updateWorkExperienceSchema = z.array(
     })
 );
 
-export const updateEducationSchema = z.array(
+const updateEducationSchema = z.array(
     z.object({
         id: z.string().min(1),
         degreeName: z.string().optional(),
@@ -170,9 +170,17 @@ export const updateEducationSchema = z.array(
         endDate: z.coerce.date().optional(),
     })
 );
+const updateSkillsSchema = z.array(
+    z.object({
+        id: z.string().min(1),
+        skillName: z.string().optional()
+    })
+)
+
 export const ResumeValidation = {
     createResumeSchema,
     updateResumeSchema,
-    updateWorkExperienceSchema,
-    updateEducationSchema
+    updateSkillsSchema,
+    updateEducationSchema,
+    updateWorkExperienceSchema
 }

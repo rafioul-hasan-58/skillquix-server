@@ -1,9 +1,9 @@
 import { Router } from "express";
 import auth from "../../middlewares/auth";
-import { UserRole } from "@prisma/client";
 import { ResumeController } from "./resume.controller";
 import validateRequest, { validateRequestArray } from "../../middlewares/validateRequest";
 import { ResumeValidation } from "./resume.validation";
+import { UserRole } from "@prisma/client";
 
 
 const router = Router();
@@ -12,26 +12,37 @@ const router = Router();
 router.post(
     "/create",
     auth(),
-    validateRequest(ResumeValidation.createResumeSchema),
+    validateRequest(ResumeValidation.createResumeSchema),        
     ResumeController.createResume
 );
-router.post(
+router.delete(
+    "/delete/:id",
+    auth(UserRole.USER),
+    ResumeController.createResume
+);
+router.patch(
     "/update-personal-info/:id",
     auth(),
     validateRequest(ResumeValidation.updateResumeSchema),
     ResumeController.updatePersonalInfo
 );
-router.post(
+router.patch(
     "/update-work-exparience",
     auth(),
     validateRequestArray(ResumeValidation.updateWorkExperienceSchema),
     ResumeController.updateWorkExparience
 );
-router.post(
+router.patch(
     "/update-education",
     auth(),
     validateRequestArray(ResumeValidation.updateEducationSchema),
     ResumeController.updateEducation
+);
+router.patch(
+    "/update-resume-skills",
+    auth(),
+    validateRequestArray(ResumeValidation.updateSkillsSchema),
+    ResumeController.updateResumeSkills
 );
 
 export const ResumeRouter = router;

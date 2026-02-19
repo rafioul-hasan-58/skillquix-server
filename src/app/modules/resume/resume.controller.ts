@@ -18,6 +18,16 @@ export const ResumeController = {
             data: result
         });
     }),
+    deleteResume: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const result = await ResumeService.deleteResume(id);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume deleted successfully!",
+            data: result
+        });
+    }),
     updatePersonalInfo: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.params;
         const result = await ResumeService.updatePersonalInfo(id, req.body);
@@ -43,6 +53,15 @@ export const ResumeController = {
             success: true,
             statusCode: httpStatus.OK,
             message: "Education updated successfully!",
+            data: result
+        });
+    }),
+    updateResumeSkills: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.updateResumeSkills(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume Skills updated successfully!",
             data: result
         });
     })

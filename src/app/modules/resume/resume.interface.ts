@@ -27,3 +27,7 @@ export interface updateEducation {
     startDate?: string;
     endDate?: Date;
 }
+export interface updateSkill {
+    id: string;
+    skillName?: string;
+}

@@ -2,7 +2,7 @@ import { Education, Exparience, Resume, ResumeSkill } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
-import { createResume, updateEducation, updateWorkExperience } from "./resume.interface";
+import { createResume, updateEducation, updateSkill, updateWorkExperience } from "./resume.interface";
 
 
 
@@ -75,6 +75,43 @@ export const ResumeService = {
         });
         return resume
     },
+    deleteResume: async (resumeId: string) => {
+        const resume = await prisma.resume.findUnique({
+            where: {
+                id: resumeId
+            },
+            select: {
+                id: true
+            }
+        });
+        if (!resume) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume not found!")
+        }
+        const result = await prisma.$transaction(async (tx) => {
+            await tx.resumeSkill.deleteMany({
+                where: {
+                    resumeId
+                }
+            })
+            await tx.education.deleteMany({
+                where: {
+                    resumeId
+                }
+            })
+            await tx.exparience.deleteMany({
+                where: {
+                    resumeId
+                }
+            })
+            const res = await tx.resume.delete({
+                where: {
+                    id: resumeId
+                }
+            });
+            return res
+        });
+        return result
+    },
     updatePersonalInfo: async (resumeId: string, payload: Partial<Resume>) => {
         const resume = await prisma.resume.findUnique({
             where: {
@@ -127,13 +164,13 @@ export const ResumeService = {
     },
     updateEducation: async (payload: updateEducation[]) => {
         for (const edu of payload) {
-            const existingExp = await prisma.education.findUnique({
+            const existingEdu = await prisma.education.findUnique({
                 where: {
                     id: edu.id
                 }
             });
 
-            if (!existingExp) {
+            if (!existingEdu) {
                 throw new ApiError(httpStatus.NOT_FOUND, `Education with id ${edu.id} not found!`);
             }
 
@@ -150,5 +187,29 @@ export const ResumeService = {
             })
         }
         return { message: "Education updated successfully!" }
+    },
+    updateResumeSkills: async (payload: updateSkill[]) => {
+        for (const skill of payload) {
+            const existingSkills = await prisma.resumeSkill.findUnique({
+                where: {
+                    id: skill.id
+                }
+            });
+
+            if (!existingSkills) {
+                throw new ApiError(httpStatus.NOT_FOUND, `Skill with id ${skill.id} not found!`);
+            }
+
+            await prisma.resumeSkill.update({
+                where: {
+                    id: skill.id,
+                },
+                data: {
+                    skillName: skill.skillName,
+
+                }
+            })
+        }
+        return { message: "Skills updated successfully!" }
     }
 }
