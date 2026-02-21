@@ -2,7 +2,7 @@ import status from "http-status";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
-import { Gig } from "@prisma/client";
+import { Gig, Source } from "@prisma/client";
 
 export const GigService = {
     // Create a new gig
@@ -52,6 +52,7 @@ export const GigService = {
                 category: true,
                 description: true,
                 gigType: true,
+                source: true,
                 exparienceLevel: true,
                 duration: true,
                 location: true,
@@ -68,9 +69,30 @@ export const GigService = {
         if (!result.length) {
             throw new ApiError(status.NOT_FOUND, "No gigs found!");
         }
+        const manualGigs = await prisma.gig.count({
+            where: {
+                source: Source.MANUAL
+            }
+        });
+        const importedGigs = await prisma.gig.count({
+            where: {
+                source: Source.IMPORTED
+            }
+        });
+        const aiGeneratedGigs = await prisma.gig.count({
+            where: {
+                source: Source.AI_GENERATED
+            }
+        });
+        const gigsCount = {
+            manualGigs,
+            importedGigs,
+            aiGeneratedGigs
+        }
+
 
         return {
-            meta,
+            meta: { ...meta, ...gigsCount },
             data: result,
         };
     },
@@ -87,7 +109,13 @@ export const GigService = {
     },
 
     // Update gig
-    updateGig: async (gigId: string, payload: Partial<Gig>) => {
+    updateGig: async (
+        gigId: string,
+        payload: Partial<Gig> & {
+            responsibilities?: string[];
+            benefits?: string[];
+        }
+    ) => {
         const isGigExist = await prisma.gig.findUnique({
             where: { id: gigId },
         });
@@ -96,9 +124,35 @@ export const GigService = {
             throw new ApiError(status.NOT_FOUND, "Gig not found!");
         }
 
+        const { responsibilities, benefits, ...restPayload } = payload;
+
         const updatedGig = await prisma.gig.update({
             where: { id: gigId },
-            data: payload,
+            data: {
+                ...restPayload,
+
+                ...(responsibilities && {
+                    responsibilities: {
+                        set: [
+                            ...new Set([
+                                ...isGigExist.responsibilities,
+                                ...responsibilities,
+                            ]),
+                        ],
+                    },
+                }),
+
+                ...(benefits && {
+                    benefits: {
+                        set: [
+                            ...new Set([
+                                ...isGigExist.benefits,
+                                ...benefits,
+                            ]),
+                        ],
+                    },
+                }),
+            },
         });
 
         return updatedGig;
