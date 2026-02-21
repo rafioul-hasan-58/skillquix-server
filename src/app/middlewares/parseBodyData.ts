@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
-export const parseBody = (
+export const parseBodyData = (
     req: Request,
     res: Response,
     next: NextFunction

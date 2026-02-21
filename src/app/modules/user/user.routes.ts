@@ -7,14 +7,14 @@ import status from "http-status";
 import auth from "../../middlewares/auth";
 import { upload } from "../../utils/upload";
 import { uploadFile } from "../../middlewares/uploadFile";
-import { parseBody } from "../../middlewares/parseBodyData";
+import { parseBodyData } from "../../middlewares/parseBodyData";
 const router = Router();
 
 
 router.post(
   "/register",
   uploadFile.uploadUserAssets,
-  parseBody,
+  parseBodyData,
   validateRequest(UserValidation.createUserValidationSchema),
   UserController.register
 );
@@ -33,17 +33,8 @@ router.get(
 
 router.patch(
   "/update-profile",
-  upload.single("file"),
-  (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (req.body?.data) {
-        req.body = JSON.parse(req.body.data);
-      }
-      next();
-    } catch {
-      next(new ApiError(status.BAD_REQUEST, "Invalid JSON in 'data' field"));
-    }
-  },
+  uploadFile.uploadProfileImage,
+  parseBodyData,
   validateRequest(UserValidation.updateUserValidationSchema),
   auth(),
   UserController.updateProfile

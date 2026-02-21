@@ -29,11 +29,12 @@ export const getImageUrl = async (file: Express.MulterS3.File) => {
 };
 
 const uploadUserAssets = upload.fields([
-  { name: "profileImage", maxCount: 1 },
-  { name: "resume", maxCount: 1 }
+    { name: "profileImage", maxCount: 1 },
+    { name: "resume", maxCount: 1 }
 ]);
 
 const uploadFaceImage = upload.single("faceImage");
+const uploadProfileImage = upload.single("profileImage");
 const loginImage = upload.single("loginImage");
 const uploadProductImage = upload.fields([
     { name: "images", maxCount: 5 }
@@ -44,6 +45,7 @@ const uploadDocuments = upload.fields([
 
 export const uploadFile = {
     uploadProductImage,
+    uploadProfileImage,
     uploadUserAssets,
     uploadDocuments,
     uploadFaceImage,

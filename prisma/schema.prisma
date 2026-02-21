@@ -8,28 +8,31 @@ datasource db {
 }
 
 model User {
-  id               String           @id @default(auto()) @map("_id") @db.ObjectId
-  fullName         String
-  email            String           @unique
-  password         String?
-  profileImage     String           @default("")
-  profession       String?
-  location         String?
-  experienceYear   String?
-  bio              String?
-  role             UserRole         @default(USER)
-  isProMember      Boolean          @default(false)
-  isDeleted        Boolean          @default(false)
-  isBlocked        Boolean          @default(false)
-  lastActive       DateTime?
-  subscriptionType SubscriptionType @default(FREE)
-  resumeLink       String?
-  planEndsIn       DateTime?        @updatedAt
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  OTP              OTP?
-  resumes          Resume?
-  reflextions      Reflextion[]
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  fullName          String
+  email             String           @unique
+  password          String?
+  profileImage      String           @default("")
+  profession        String?
+  location          String?
+  experienceYear    String?
+  bio               String?
+  role              UserRole         @default(USER)
+  isProMember       Boolean          @default(false)
+  isDeleted         Boolean          @default(false)
+  isBlocked         Boolean          @default(false)
+  lastActive        DateTime?
+  subscriptionType  SubscriptionType @default(FREE)
+  emailNotification Toggle           @default(ON)
+  jobAlerts         Toggle           @default(ON)
+  marketingEmails   Toggle           @default(ON)
+  resumeLink        String?
+  planEndsIn        DateTime?        @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  OTP               OTP?
+  resumes           Resume?
+  reflextions       Reflextion[]
 }
 
 model OTP {
@@ -130,4 +133,9 @@ enum SubscriptionType {
   FREE
   PRO
   PREMIUM
+}
+
+enum Toggle {
+  ON
+  OFF
 }

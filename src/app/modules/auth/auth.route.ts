@@ -31,7 +31,7 @@ router.get(
   "/linkedin/verify",
   AuthController.linkedInCallback
 );
-router.put(
+router.patch(
   "/change-password",
   auth(),
   validateRequest(AuthValidation.changePasswordValidationSchema),
