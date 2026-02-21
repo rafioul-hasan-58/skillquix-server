@@ -33,6 +33,30 @@ model User {
   OTP               OTP?
   resumes           Resume?
   reflextions       Reflextion[]
+  gigs              Gig[]
+}
+
+model Gig {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  industryName     String
+  industryEmail    String
+  gigTitle         String
+  category         String
+  source           Source          @default(MANUAL)
+  description      String
+  gigType          String
+  exparienceLevel  ExparienceLevel @default(MID_LEVEL)
+  duration         String
+  location         String
+  jobDescription   String
+  responsibilities String[]
+  benefits         String[]
+  gigStatus        GigStatus       @default(ACTIVE)
+  userId           String          @db.ObjectId
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  validUntil       DateTime
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 }
 
 model OTP {
@@ -123,10 +147,27 @@ enum Gender {
   OTHER
 }
 
+enum GigStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Source {
+  MANUAL
+  IMPORTED
+  AI_GENERATED
+}
+
 enum SubscriptionType {
   FREE
   PRO
   PREMIUM
+}
+
+enum ExparienceLevel {
+  ENTRY
+  MID_LEVEL
+  EXPERT
 }
 
 enum Toggle {

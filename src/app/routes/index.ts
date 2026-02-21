@@ -3,6 +3,7 @@ import { AuthRoutes } from "../modules/auth/auth.route";
 import { UserRoutes } from "../modules/user/user.routes";
 import { ResumeRouter } from "../modules/resume/resume.routes";
 import { ReflextionRoutes } from "../modules/reflextion/reflextion.routes";
+import { GigRoutes } from "../modules/gig/git.routes";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -21,6 +22,10 @@ const moduleRoutes = [
   {
     path: "/reflextion",
     route: ReflextionRoutes,
+  },
+  {
+    path: "/gig",
+    route: GigRoutes,
   },
 ];
 
