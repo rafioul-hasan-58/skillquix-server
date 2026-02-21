@@ -8,6 +8,7 @@ import auth from "../../middlewares/auth";
 import { upload } from "../../utils/upload";
 import { uploadFile } from "../../middlewares/uploadFile";
 import { parseBodyData } from "../../middlewares/parseBodyData";
+import { UserRole } from "@prisma/client";
 const router = Router();
 
 
@@ -18,7 +19,11 @@ router.post(
   validateRequest(UserValidation.createUserValidationSchema),
   UserController.register
 );
-router.get("/get-all-users", auth(), UserController.getAllUser);
+router.get(
+  "/get-all",
+  auth(UserRole.ADMIN),
+  UserController.getAllUser
+);
 
 router.get(
   "/get-user/:userId",
@@ -40,11 +45,19 @@ router.patch(
   UserController.updateProfile
 );
 
+router.patch(
+  "/block/:userId",
+  auth(UserRole.ADMIN),
+  UserController.blockUser
+);
+router.patch(
+  "/unblock/:userId",
+  auth(UserRole.ADMIN),
+  UserController.unblockUser
+);
 router.delete(
-  "/delete-user/:userId",
+  "/delete/:userId",
   auth(),
   UserController.deleteUser
 );
-
-
 export const UserRoutes = router;

@@ -57,6 +57,7 @@ const updateProfile = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const myProfile = catchAsync(async (req, res) => {
   const { id } = req.user;
   const result = await UserService.myProfile(id);
@@ -90,7 +91,28 @@ const deleteUser = catchAsync(async (req, res) => {
   });
 });
 
+
+const blockUser = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  await UserService.blockUser(userId);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "User blocked successfully!",
+  });
+})
+
+const unblockUser = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  await UserService.unblockUser(userId);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "User unblocked successfully!",
+  });
+})
+
 export const UserController = {
+  blockUser,
+  unblockUser,
   register,
   getAllUser,
   updateProfile,

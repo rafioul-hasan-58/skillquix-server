@@ -56,7 +56,17 @@ export const UserService = {
     const userQuery = new QueryBuilder(prisma.user, query)
       .search(["fullName", "email"])
       .filter()
-      .paginate();
+      .paginate()
+      .select({
+        id: true,
+        fullName: true,
+        email: true,
+        profileImage: true,
+        isBlocked: true,
+        createdAt: true,
+        lastLogin: true,
+        subscriptionType: true
+      })
 
     const [result, meta] = await Promise.all([
       userQuery.execute(),
@@ -145,15 +155,23 @@ export const UserService = {
     return updatedUser;
   },
   getSingleUserByIdFromDB: async (userId: string) => {
-    const user = await prisma.user.findUnique({
+    const result = await prisma.user.findUnique({
       where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        profession: true,
+        profileImage: true,
+        location: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
-    if (!user) {
+    if (!result) {
       throw new ApiError(status.NOT_FOUND, "User not found!");
     }
-    const { password, ...rest } = user;
-
-    return rest;
+    return result
   },
   deleteUserFromDB: async (userId: string) => {
     const isUserExist = await prisma.user.findUnique({
@@ -169,5 +187,42 @@ export const UserService = {
     });
 
     return null;
-  }
+  },
+  blockUser: async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new ApiError(status.NOT_FOUND, "User not found!");
+    }
+    if (user?.isBlocked) {
+      throw new ApiError(status.NOT_FOUND, "User is Already Blocked!");
+    }
+    const result = await prisma.user.update({
+      where: { id: userId },
+      data: { isBlocked: true },
+    });
+
+    return result;
+  },
+
+  unblockUser: async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ApiError(status.NOT_FOUND, "User not found!");
+    }
+
+    if (user.isBlocked === false) {
+      throw new ApiError(status.NOT_ACCEPTABLE, "User already unblocked!")
+    }
+    const result = await prisma.user.update({
+      where: { id: userId },
+      data: { isBlocked: false },
+    });
+
+    return result;
+  },
 };

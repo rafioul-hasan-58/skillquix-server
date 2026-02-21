@@ -123,12 +123,6 @@ enum Gender {
   OTHER
 }
 
-enum SubscriptionStatus {
-  FREE
-  PRO
-  PREMIUM
-}
-
 enum SubscriptionType {
   FREE
   PRO

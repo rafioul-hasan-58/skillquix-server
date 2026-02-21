@@ -1,11 +1,13 @@
 import { Server } from "http";
 import app from "./app";
 import config from "./config";
+import { seedAdmin } from "./app/utils/seedAdmin";
 
 let server: Server;
 
 async function main() {
-  server = app.listen(config.port, () => {
+  server = app.listen(config.port, async () => {
+    await seedAdmin()
     console.log("Raoclinical Sever is running on port ", config.port);
   });
   const exitHandler = () => {
