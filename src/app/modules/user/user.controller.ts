@@ -48,7 +48,7 @@ const getAllUser = catchAsync(async (req, res) => {
 const updateProfile = catchAsync(async (req, res) => {
   const { id } = req.user;
   if (req.file) {
-    req.body.profilePic = `${config.image_url}/uploads/${req.file.filename}`;
+    req.body.profileImage = await getImageUrl(req.file as any);
   }
   const result = await UserService.updateProfile(id, req.body);
   sendResponse(res, {

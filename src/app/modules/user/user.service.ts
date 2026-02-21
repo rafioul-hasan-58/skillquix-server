@@ -101,7 +101,7 @@ export const UserService = {
     }
     return user;
   },
-  
+
   updateProfile: async (userId: string, payload: Partial<User>) => {
     const isUserExist = await prisma.user.findUnique({
       where: { id: userId },
@@ -119,13 +119,24 @@ export const UserService = {
       data: {
         fullName: payload.fullName,
         profileImage: payload.profileImage || "",
+        bio: payload.bio,
+        location: payload.location,
+        profession: payload.profession,
+        marketingEmails: payload.marketingEmails,
+        jobAlerts: payload.jobAlerts,
+        emailNotification: payload.emailNotification
       },
       select: {
         id: true,
         fullName: true,
         email: true,
         profileImage: true,
+        location: true,
+        bio: true,
         role: true,
+        marketingEmails: true,
+        jobAlerts: true,
+        emailNotification: true,
         createdAt: true,
         updatedAt: true,
       },

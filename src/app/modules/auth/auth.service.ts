@@ -317,7 +317,7 @@ export const AuthService = {
           fullName,
           email,
           password: crypto.randomBytes(6).toString('hex'),
-          lastActive: new Date(),
+          lastLogin: new Date(),
         }
       })
     }

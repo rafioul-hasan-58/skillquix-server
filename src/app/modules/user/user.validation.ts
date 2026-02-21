@@ -1,4 +1,4 @@
-import { SubscriptionType, UserRole } from "@prisma/client";
+import { SubscriptionType, Toggle, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 // Enums for role and subscription type
@@ -32,13 +32,37 @@ export const createUserValidationSchema = z.object({
 
 
 const updateUserValidationSchema = z.object({
-  body: z.object({
-    fullName: z
-      .string({
-        invalid_type_error: "Full name must be a string.",
-      })
-      .optional(),
-  }),
+  fullName: z
+    .string({
+      invalid_type_error: "Full name must be a string.",
+    })
+    .optional(),
+  bio: z
+    .string({
+      invalid_type_error: "Bio must be a string.",
+    })
+    .optional(),
+
+  profession: z
+    .string({
+      invalid_type_error: "Professional Title must be a string.",
+    })
+    .optional(),
+  location: z
+    .string({
+      invalid_type_error: "Location Title must be a string.",
+    })
+    .optional(),
+  emailNotification: z
+    .nativeEnum(Toggle)
+    .optional(),
+  jobAlerts: z
+    .nativeEnum(Toggle)
+    .optional(),
+  marketingEmails: z
+    .nativeEnum(Toggle)
+    .optional(),
+
 });
 
 export const UserValidation = {
