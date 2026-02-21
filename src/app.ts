@@ -45,7 +45,7 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "public", "uploads
 // Route handler for root endpoint
 app.get("/", (req: Request, res: Response) => {
   res.send({
-    Message: "Raoclinical Server Is Running!",
+    Message: "raoclinical server is running!",
   });
 });
 

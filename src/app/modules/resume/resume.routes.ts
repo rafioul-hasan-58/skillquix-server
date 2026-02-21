@@ -12,7 +12,7 @@ const router = Router();
 router.post(
     "/create",
     auth(),
-    validateRequest(ResumeValidation.createResumeSchema),        
+    validateRequest(ResumeValidation.createResumeSchema),
     ResumeController.createResume
 );
 router.delete(

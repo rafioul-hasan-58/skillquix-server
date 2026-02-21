@@ -75,43 +75,28 @@ export const ResumeService = {
         });
         return resume
     },
-    deleteResume: async (resumeId: string) => {
-        const resume = await prisma.resume.findUnique({
-            where: {
-                id: resumeId
-            },
-            select: {
-                id: true
-            }
-        });
-        if (!resume) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Resume not found!")
-        }
-        const result = await prisma.$transaction(async (tx) => {
-            await tx.resumeSkill.deleteMany({
-                where: {
-                    resumeId
-                }
-            })
-            await tx.education.deleteMany({
-                where: {
-                    resumeId
-                }
-            })
-            await tx.exparience.deleteMany({
-                where: {
-                    resumeId
-                }
-            })
-            const res = await tx.resume.delete({
-                where: {
-                    id: resumeId
-                }
-            });
-            return res
-        });
-        return result
-    },
+   deleteResume: async (resumeId: string) => {
+    // Check if resume exists
+    const resume = await prisma.resume.findUnique({
+        where: { id: resumeId },
+        select: { id: true },
+    });
+    if (!resume) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Resume not found!");
+    }
+
+    // Delete resume and all related child records in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+        // await tx.resumeSkill.deleteMany({ where: { resumeId } });
+        // await tx.education.deleteMany({ where: { resumeId } });
+        // await tx.exparience.deleteMany({ where: { resumeId } });
+
+        const deletedResume = await tx.resume.delete({ where: { id: resumeId } });
+        return deletedResume;
+    });
+
+    return result;
+},
     updatePersonalInfo: async (resumeId: string, payload: Partial<Resume>) => {
         const resume = await prisma.resume.findUnique({
             where: {

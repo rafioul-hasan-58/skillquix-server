@@ -21,6 +21,7 @@ model User {
   isProMember      Boolean          @default(false)
   isDeleted        Boolean          @default(false)
   isBlocked        Boolean          @default(false)
+  lastActive       DateTime?
   subscriptionType SubscriptionType @default(FREE)
   resumeLink       String?
   planEndsIn       DateTime?        @updatedAt
