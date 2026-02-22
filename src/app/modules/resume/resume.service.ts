@@ -9,18 +9,6 @@ import { createResume, updateEducation, updateSkill, updateWorkExperience } from
 
 export const ResumeService = {
     createResume: async (userId: string, payload: createResume) => {
-        const existingResume = await prisma.resume.findUnique({
-            where: {
-                id: userId
-            },
-            select: {
-                id: true
-            }
-        });
-
-        if (existingResume) {
-            throw new ApiError(httpStatus.CONFLICT, "Resume already exists.You can update it instead!.");
-        };
         const {
             name,
             title,
@@ -33,8 +21,54 @@ export const ResumeService = {
             skills,
         } = payload;
 
-        const resume = await prisma.resume.create({
-            data: {
+        // Delete existing nested records first (for clean upsert)
+        const existingResume = await prisma.resume.findUnique({
+            where: { userId },
+            select: { id: true }
+        });
+
+        if (existingResume) {
+            // Clean up existing nested data before updating
+            await prisma.$transaction([
+                prisma.exparience.deleteMany({ where: { resumeId: existingResume.id } }),
+                prisma.education.deleteMany({ where: { resumeId: existingResume.id } }),
+                prisma.resumeSkill.deleteMany({ where: { resumeId: existingResume.id } }),
+            ]);
+        }
+
+        const resume = await prisma.resume.upsert({
+            where: { userId },
+            update: {
+                name,
+                title,
+                email,
+                location,
+                phone,
+                summary,
+                expariences: {
+                    create: experiences?.map((exp: any) => ({
+                        workingRole: exp.workingRole,
+                        companyName: exp.companyName,
+                        description: exp.description,
+                        startDate: new Date(exp.startDate),
+                        endDate: exp.endDate ? new Date(exp.endDate) : null,
+                    })),
+                },
+                education: {
+                    create: education?.map((edu: any) => ({
+                        degreeName: edu.degreeName,
+                        instituteName: edu.instituteName,
+                        startDate: new Date(edu.startDate),
+                        endDate: edu.endDate ? new Date(edu.endDate) : null,
+                    })),
+                },
+                resumeSkills: {
+                    create: skills?.map((skill: any) => ({
+                        skillName: skill.skillName,
+                    })),
+                },
+            },
+            create: {
                 userId,
                 name,
                 title,
@@ -51,7 +85,6 @@ export const ResumeService = {
                         endDate: exp.endDate ? new Date(exp.endDate) : null,
                     })),
                 },
-
                 education: {
                     create: education?.map((edu: any) => ({
                         degreeName: edu.degreeName,
@@ -60,7 +93,6 @@ export const ResumeService = {
                         endDate: edu.endDate ? new Date(edu.endDate) : null,
                     })),
                 },
-
                 resumeSkills: {
                     create: skills?.map((skill: any) => ({
                         skillName: skill.skillName,
@@ -73,30 +105,31 @@ export const ResumeService = {
                 resumeSkills: true,
             },
         });
-        return resume
+
+        return resume;
     },
-   deleteResume: async (resumeId: string) => {
-    // Check if resume exists
-    const resume = await prisma.resume.findUnique({
-        where: { id: resumeId },
-        select: { id: true },
-    });
-    if (!resume) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Resume not found!");
-    }
+    deleteResume: async (resumeId: string) => {
+        // Check if resume exists
+        const resume = await prisma.resume.findUnique({
+            where: { id: resumeId },
+            select: { id: true },
+        });
+        if (!resume) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume not found!");
+        }
 
-    // Delete resume and all related child records in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-        // await tx.resumeSkill.deleteMany({ where: { resumeId } });
-        // await tx.education.deleteMany({ where: { resumeId } });
-        // await tx.exparience.deleteMany({ where: { resumeId } });
+        // Delete resume and all related child records in a transaction
+        const result = await prisma.$transaction(async (tx) => {
+            // await tx.resumeSkill.deleteMany({ where: { resumeId } });
+            // await tx.education.deleteMany({ where: { resumeId } });
+            // await tx.exparience.deleteMany({ where: { resumeId } });
 
-        const deletedResume = await tx.resume.delete({ where: { id: resumeId } });
-        return deletedResume;
-    });
+            const deletedResume = await tx.resume.delete({ where: { id: resumeId } });
+            return deletedResume;
+        });
 
-    return result;
-},
+        return result;
+    },
     updatePersonalInfo: async (resumeId: string, payload: Partial<Resume>) => {
         const resume = await prisma.resume.findUnique({
             where: {
