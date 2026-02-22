@@ -7,6 +7,7 @@ import config from "../../../config";
 import { InvoiceStatus, SubscriptionStatus, SubscriptionType } from "@prisma/client";
 
 const handleStripeWebhook = async (req: Request, res: Response) => {
+
     const sig = req.headers["stripe-signature"] as string;
 
     let event: Stripe.Event;
@@ -22,6 +23,8 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
         console.error("Webhook signature verification failed:", err);
         return res.status(400).send("Webhook signature verification failed");
     }
+
+    console.log("Webhook received!", event.type)
 
     // Step 2 — Handle each event type
     try {
