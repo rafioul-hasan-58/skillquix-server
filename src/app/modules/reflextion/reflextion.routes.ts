@@ -20,6 +20,11 @@ router.get(
     ReflextionController.getAllReflextions
 );
 router.get(
+    "/get-my",
+    auth(UserRole.USER),
+    ReflextionController.getMyReflextions
+);
+router.get(
     "/details/:id",
     auth(UserRole.USER),
     ReflextionController.getReflextionById
