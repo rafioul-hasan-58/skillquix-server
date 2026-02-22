@@ -56,6 +56,21 @@ model Gig {
   updatedAt        DateTime        @updatedAt
 }
 
+model Invoice {
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String        @db.ObjectId
+  user               User          @relation(fields: [userId], references: [id])
+  stripeInvoiceId    String        @unique
+  amount             Float
+  currency           String        @default("usd")
+  status             InvoiceStatus
+  planName           String // e.g. "Starter Pro"
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  invoiceUrl         String? // Stripe hosted invoice PDF link
+  createdAt          DateTime      @default(now())
+}
+
 model OTP {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   otpCode      String
@@ -143,7 +158,7 @@ model User {
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   // subscription
-  stripeCustomerId     String?
+  stripeCustomerId     String?            @unique
   stripeSubscriptionId String?
   subscriptionStatus   SubscriptionStatus @default(INACTIVE)
   currentPeriodEnd     DateTime?
@@ -151,6 +166,7 @@ model User {
   resumes              Resume?
   reflextions          Reflextion[]
   gigs                 Gig[]
+  invoices             Invoice[]
 }
 
 // Enums in alphabetical order
@@ -169,6 +185,12 @@ enum Gender {
 enum GigStatus {
   ACTIVE
   INACTIVE
+}
+
+enum InvoiceStatus {
+  PAID
+  UNPAID
+  FAILED
 }
 
 enum Source {
