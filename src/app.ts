@@ -12,7 +12,7 @@ const app: Application = express();
 const prisma = new PrismaClient();
 
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://72.62.87.243:3001"],
+  origin: ["http://localhost:3000", "http://72.62.87.243:3001","https://www.skillquix.tech"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
