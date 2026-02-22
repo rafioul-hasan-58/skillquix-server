@@ -121,12 +121,12 @@ export const AuthController = {
     res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
   }),
   googleLogin: catchAsync(async (req: Request, res: Response) => {
-    const { token, sessionId } = req.body;
+    const { token} = req.body;
     const payload = await verifyGoogleToken(token);
     if (!payload) {
       throw new ApiError(status.NOT_FOUND, "Google token payload not found");
     }
-    const { accessToken, refreshToken } = await AuthService.googleLogin(payload, sessionId);
+    const { accessToken, refreshToken } = await AuthService.googleLogin(payload);
 
     res.cookie("refreshToken", refreshToken, {
       secure: false,

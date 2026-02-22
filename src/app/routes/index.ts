@@ -4,6 +4,7 @@ import { UserRoutes } from "../modules/user/user.routes";
 import { ResumeRouter } from "../modules/resume/resume.routes";
 import { ReflextionRoutes } from "../modules/reflextion/reflextion.routes";
 import { GigRoutes } from "../modules/gig/git.routes";
+import { PlanRoutes } from "../modules/plan/plan.routes";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -26,6 +27,10 @@ const moduleRoutes = [
   {
     path: "/gig",
     route: GigRoutes,
+  },
+  {
+    path: "/plan",
+    route: PlanRoutes,
   },
 ];
 

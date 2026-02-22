@@ -6,6 +6,7 @@ import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { createToken } from "../auth/auth.utils";
 import config from "../../../config";
+import stripe from "../../stripe/stripe";
 
 
 export const UserService = {
@@ -19,14 +20,31 @@ export const UserService = {
     }
 
     const hashedPassword = await hashPassword(payload.password ?? "");
-    const userData = {
-      ...payload,
-      password: hashedPassword
-    };
 
     const user = await prisma.user.create({
-      data: userData
-    })
+      data: {
+        ...payload,
+        password: hashedPassword,
+      },
+    });
+
+    // Create Stripe customer and update user in one go
+    try {
+      const stripeCustomer = await stripe.customers.create({
+        email: user.email,
+        name: user.fullName,
+        metadata: { userId: user.id }, // helpful for debugging in Stripe dashboard
+      });
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { stripeCustomerId: stripeCustomer.id },
+      });
+    } catch (err) {
+      // User is created but Stripe failed — log it, don't break registration
+      console.error("Stripe customer creation failed:", err);
+    }
+
     const jwtPayload = {
       id: user.id,
       fullName: user.fullName ?? undefined,
@@ -40,16 +58,14 @@ export const UserService = {
       config.jwt.access_secret as string,
       config.jwt.access_expires_in as string
     );
-    console.log("refresh", config.jwt.refresh_token_secret)
+
     const refreshToken = createToken(
       jwtPayload,
       config.jwt.refresh_token_secret as string,
       config.jwt.refresh_token_expires_in as string
     );
-    return {
-      accessToken,
-      refreshToken
-    }
+
+    return { accessToken, refreshToken };
   },
 
   getAllUserFromDB: async (query: Record<string, unknown>) => {
