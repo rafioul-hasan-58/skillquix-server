@@ -7,6 +7,7 @@ import Stripe from "stripe";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { SubscriptionStatus, SubscriptionType } from "@prisma/client";
 import { PlanService } from "../plan/plan.service";
+import { monthlyRevenue } from "./subscription.helper";
 
 const createSubscription = async (
   userId: string,
@@ -96,39 +97,13 @@ const getSubscribedUsers = async (query: Record<string, unknown>) => {
 const getSubscriptions = async (query: Record<string, unknown>) => {
   const subscribedUsers = await getSubscribedUsers(query);
 
-  // 1️⃣ Get current month range
-  const now = new Date();
 
-  const startOfMonth = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1
-  );
-
-  const startOfNextMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    1
-  );
-
-  // 2️⃣ Aggregate revenue
-  const monthlyRevenue = await prisma.invoice.aggregate({
-    _sum: {
-      amount: true,
-    },
-    where: {
-      status: "PAID", // or InvoiceStatus.PAID
-      createdAt: {
-        gte: startOfMonth,
-        lt: startOfNextMonth,
-      },
-    },
-  });
 
   const plans = await PlanService.getAllPlans();
+  const totalRevenue = await monthlyRevenue();
 
   return {
-    totalRevenue: monthlyRevenue._sum.amount ?? 0,
+    totalRevenue,
     activeSubscriptions: subscribedUsers.meta?.total ?? subscribedUsers.data?.length ?? 0,
     plans,
     subscribedUsers

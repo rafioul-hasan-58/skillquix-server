@@ -70,4 +70,9 @@ router.get(
   auth(UserRole.ADMIN),
   UserController.getAllAdmins
 );
+router.get(
+  "/admin/dashbaord/overview",
+  auth(UserRole.ADMIN),
+  UserController.adminDashboardOverview
+);
 export const UserRoutes = router;

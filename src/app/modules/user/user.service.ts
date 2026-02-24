@@ -1,13 +1,14 @@
 import status from "http-status";
 import { hashPassword } from "./user.utils";
 import ApiError from "../../errors/ApiError";
-import { User, UserRole } from "@prisma/client";
+import { SubscriptionType, User, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { createToken } from "../auth/auth.utils";
 import config from "../../../config";
 import stripe from "../../stripe/stripe";
 import { addManagerInput } from "./user.validation";
+import { monthlyRevenue } from "../subscription/subscription.helper";
 
 
 export const UserService = {
@@ -322,5 +323,55 @@ export const UserService = {
       meta,
       data: result,
     };
+  },
+  adminDashboardOverview: async () => {
+    const totalUser = await prisma.user.count();
+    const activeUser = await prisma.user.count({
+      where: {
+        isBlocked: false
+      }
+    });
+    const totalGigs = await prisma.gig.count();
+    const totalRevenue = await monthlyRevenue();
+    const freeUser = await prisma.user.count({
+      where: {
+        subscriptionType: SubscriptionType.FREE
+      }
+    });
+    const proUser = await prisma.user.count({
+      where: {
+        subscriptionType: {
+          in: [SubscriptionType.PRO, SubscriptionType.PREMIUM]
+        }
+      }
+    });
+    const recentUser = await prisma.user.findMany({
+      where: {
+        isBlocked: false
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        profileImage: true,
+        isBlocked: true,
+        subscriptionType: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 10
+    })
+    return {
+      totalUser,
+      activeUser,
+      totalGigs,
+      monthlyRevenue: totalRevenue,
+      freeUser: (freeUser / totalUser) * 100,
+      proUser: (proUser / totalUser) * 100,
+      recentUser
+    }
   }
 };

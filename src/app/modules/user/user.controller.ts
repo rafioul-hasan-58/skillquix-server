@@ -130,6 +130,14 @@ const getAllAdmins = catchAsync(async (req, res) => {
     data: result.data,
   });
 });
+const adminDashboardOverview = catchAsync(async (req, res) => {
+  const result = await UserService.adminDashboardOverview();
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Dashboard overview fetched successfully!",
+    data: result,
+  });
+});
 export const UserController = {
   addManager,
   blockUser,
@@ -141,4 +149,5 @@ export const UserController = {
   deleteUser,
   myProfile,
   getSingleUserById,
+  adminDashboardOverview
 };
