@@ -15,6 +15,11 @@ router.post(
     validateRequest(ResumeValidation.createResumeSchema),
     ResumeController.createResume
 );
+router.get(
+    "/my",
+    auth(),
+    ResumeController.getMyResume
+);
 router.delete(
     "/delete/:id",
     auth(UserRole.USER),

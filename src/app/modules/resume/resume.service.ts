@@ -130,6 +130,54 @@ export const ResumeService = {
 
         return result;
     },
+    getMyResume: async (userId: string) => {
+        // Check if resume exists
+        const result = await prisma.resume.findUnique({
+            where: { userId },
+            select: {
+                id: true,
+                name: true,
+                title: true,
+                email: true,
+                location: true,
+                phone: true,
+                summary: true,
+                createdAt: true,
+                expariences: {
+                    select: {
+                        id: true,
+                        workingRole: true,
+                        companyName: true,
+                        description: true,
+                        startDate: true,
+                        endDate: true,
+                        createdAt: true
+                    }
+                },
+                education: {
+                    select: {
+                        id: true,
+                        degreeName: true,
+                        instituteName: true,
+                        startDate: true,
+                        endDate: true,
+                        createdAt: true
+                    }
+                },
+                resumeSkills: {
+                    select: {
+                        id: true,
+                        skillName: true,
+                        createdAt: true
+                    }
+                }
+            }
+        });
+        if (!result) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume not found!");
+        }
+        return result;
+    },
     updatePersonalInfo: async (resumeId: string, payload: Partial<Resume>) => {
         const resume = await prisma.resume.findUnique({
             where: {

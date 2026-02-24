@@ -18,6 +18,16 @@ export const ResumeController = {
             data: result
         });
     }),
+    getMyResume: catchAsync(async (req: Request, res: Response) => {
+        const { id: userId } = req.user;
+        const result = await ResumeService.getMyResume(userId);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume fetched successfully!",
+            data: result
+        });
+    }),
     deleteResume: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.params;
         const result = await ResumeService.deleteResume(id);
