@@ -1,10 +1,6 @@
 import { SubscriptionType, Toggle, UserRole } from "@prisma/client";
 import { z } from "zod";
 
-// Enums for role and subscription type
-const UserRoleEnum = z.nativeEnum(UserRole);
-const SubscriptionTypeEnum = z.nativeEnum(SubscriptionType);
-
 export const createUserValidationSchema = z.object({
   fullName: z.string({
     required_error: "Full name is required.",
@@ -13,7 +9,7 @@ export const createUserValidationSchema = z.object({
 
   email: z
     .string({ required_error: "Email is required." })
-    .email("Invalid email address"),
+    .min(4, "Invalid email address"),
 
   password: z
     .string({
