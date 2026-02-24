@@ -121,6 +121,7 @@ const getAllPlans = async () => {
     });
     return result
 }
+
 export const PlanService = {
     createPlan,
     updatePlan,

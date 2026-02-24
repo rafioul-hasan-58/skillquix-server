@@ -19,6 +19,10 @@ router.get(
     auth(UserRole.ADMIN),
     SubscriptionController.getSubscribedUser
 );
-
+router.get(
+    "/get-subscriptions",
+    auth(UserRole.ADMIN),
+    SubscriptionController.getSubscriptions
+);
 
 export const SubscriptionRouter = router
