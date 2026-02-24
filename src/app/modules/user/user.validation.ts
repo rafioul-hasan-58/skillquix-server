@@ -26,6 +26,30 @@ export const createUserValidationSchema = z.object({
   bio: z.string().optional(),
 });
 
+const addManagerValidationSchema = z.object({
+  fullName: z.string({
+    required_error: "Full name is required.",
+    invalid_type_error: "Full name must be a string.",
+  }),
+
+  email: z
+    .string({ required_error: "Email is required." })
+    .min(4, "Invalid email address"),
+
+  password: z
+    .string({
+      required_error: "Password is required.",
+      invalid_type_error: "Password must be a string.",
+    })
+    .min(6, "Password must be at least 6 characters long.")
+    .optional(), // since Prisma allows `password?`
+
+  profileImage: z.string().optional(),
+  isManagerAllowed: z.boolean().optional()
+});
+
+export type addManagerInput = z.infer<typeof addManagerValidationSchema>
+
 
 const updateUserValidationSchema = z.object({
   fullName: z
@@ -64,4 +88,5 @@ const updateUserValidationSchema = z.object({
 export const UserValidation = {
   createUserValidationSchema,
   updateUserValidationSchema,
+  addManagerValidationSchema
 };

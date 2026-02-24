@@ -1,12 +1,13 @@
 import status from "http-status";
 import { hashPassword } from "./user.utils";
 import ApiError from "../../errors/ApiError";
-import { User } from "@prisma/client";
+import { User, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { createToken } from "../auth/auth.utils";
 import config from "../../../config";
 import stripe from "../../stripe/stripe";
+import { addManagerInput } from "./user.validation";
 
 
 export const UserService = {
@@ -211,6 +212,9 @@ export const UserService = {
     if (!user) {
       throw new ApiError(status.NOT_FOUND, "User not found!");
     }
+    if (user.role === UserRole.ADMIN) {
+      throw new ApiError(status.NOT_FOUND, "Admin cannot be blocked!")
+    }
     if (user?.isBlocked) {
       throw new ApiError(status.NOT_FOUND, "User is Already Blocked!");
     }
@@ -241,4 +245,82 @@ export const UserService = {
 
     return result;
   },
+  addManager: async (payload: addManagerInput) => {
+    const isUserExist = await prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+
+    if (isUserExist) {
+      throw new ApiError(status.BAD_REQUEST, "User already exists");
+    }
+
+    const hashedPassword = await hashPassword(payload.password ?? "");
+
+    const result = await prisma.user.create({
+      data: {
+        ...payload,
+        password: hashedPassword,
+        role: UserRole.MANAGER
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        profileImage: true,
+        isManagerAllowed: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    // Create Stripe customer and update user in one go
+    try {
+      const stripeCustomer = await stripe.customers.create({
+        email: result.email,
+        name: result.fullName,
+        metadata: { userId: result.id }, // helpful for debugging in Stripe dashboard
+      });
+
+      await prisma.user.update({
+        where: { id: result.id },
+        data: { stripeCustomerId: stripeCustomer.id },
+      });
+    } catch (err) {
+      // User is created but Stripe failed — log it, don't break registration
+      console.error("Stripe customer creation failed:", err);
+    }
+
+    return result
+  },
+  getAllAdmins: async (query: Record<string, unknown>) => {
+    const userQuery = new QueryBuilder(prisma.user, query)
+      .search(["fullName", "email"])
+      .filter()
+      .rawFilter({ role: { in: [UserRole.ADMIN, UserRole.MANAGER] } })
+      .paginate()
+      .select({
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        profileImage: true,
+        isBlocked: true,
+        createdAt: true,
+        lastLogin: true,
+        subscriptionType: true
+      })
+
+    const [result, meta] = await Promise.all([
+      userQuery.execute(),
+      userQuery.countTotal(),
+    ]);
+
+    if (!result.length) {
+      throw new ApiError(status.NOT_FOUND, "No users found!");
+    }
+    return {
+      meta,
+      data: result,
+    };
+  }
 };

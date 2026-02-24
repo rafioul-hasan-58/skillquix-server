@@ -4,6 +4,8 @@ import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import stripe from "../../stripe/stripe";
 import Stripe from "stripe";
+import QueryBuilder from "../../builder/QueryBuilder";
+import { SubscriptionStatus, SubscriptionType } from "@prisma/client";
 
 const createSubscription = async (
     userId: string,
@@ -49,6 +51,48 @@ const createSubscription = async (
     };
 };
 
+const getSubscribedUsers = async (query: Record<string, unknown>) => {
+  const userQuery = new QueryBuilder(prisma.user, query)
+    .search(["fullName"])
+    .filter()
+    .paginate()
+    .rawFilter({ subscriptionStatus: SubscriptionStatus.ACTIVE })
+    .select({
+      id: true,
+      fullName: true,
+      email: true,
+      profileImage: true,
+      subscriptionType: true,
+      subscriptionStatus: true,
+      currentPeriodEnd: true,
+    });
+
+  const [result, meta] = await Promise.all([
+    userQuery.execute(),
+    userQuery.countTotal(),
+  ]);
+
+  if (!result.length) throw new ApiError(status.NOT_FOUND, "No users found!");
+
+  // Get all unique plan types from results
+  const planTypes = [...new Set(result.map((u: any) => u.subscriptionType))] as SubscriptionType[];
+
+  // Fetch matching plans in one query
+  const plans = await prisma.plan.findMany({
+    where: { type: { in: planTypes } },
+    select: { type: true, name: true, monthlyPrice: true },
+  });
+
+  // Map plan info to each user
+  const data = result.map((user: any) => ({
+    ...user,
+    plan: plans.find((p) => p.type === user.subscriptionType) ?? null,
+  }));
+
+  return { meta, data };
+};
+
 export const SubscriptionService = {
-    createSubscription
+    createSubscription,
+    getSubscribedUsers
 }

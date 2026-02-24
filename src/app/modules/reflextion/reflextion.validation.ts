@@ -1,4 +1,4 @@
-import { optional, z } from "zod";
+import { z } from "zod";
 
 const nonEmptyString = z.string().trim().min(1, "Cannot be empty");
 const skillBulletItem = nonEmptyString.min(2, "Too short (min 2 characters)");

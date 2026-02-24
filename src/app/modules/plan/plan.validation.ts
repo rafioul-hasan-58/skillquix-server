@@ -16,9 +16,7 @@ const createPlanSchema = z.object({
         .number({
             required_error: "Monthly price is required",
             invalid_type_error: "Monthly price must be a number",
-        })
-        .positive("Monthly price must be greater than 0"),
-
+        }),
     type: z.nativeEnum(SubscriptionType, {
         required_error: "Type is required",
         invalid_type_error: "Type must be FREE, PRO, or ENTERPRISE",

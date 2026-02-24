@@ -14,6 +14,11 @@ router.post(
     validateRequest(SubscriptionValidation.createSubscription),
     SubscriptionController.createSubscription
 );
+router.get(
+    "/subscribed-user",
+    auth(UserRole.ADMIN),
+    SubscriptionController.getSubscribedUser
+);
 
 
 export const SubscriptionRouter = router

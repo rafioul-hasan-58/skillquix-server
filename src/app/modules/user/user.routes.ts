@@ -2,10 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { UserValidation } from "./user.validation";
 import validateRequest from "../../middlewares/validateRequest";
 import { UserController } from "./user.controller";
-import ApiError from "../../errors/ApiError";
-import status from "http-status";
 import auth from "../../middlewares/auth";
-import { upload } from "../../utils/upload";
 import { uploadFile } from "../../middlewares/uploadFile";
 import { parseBodyData } from "../../middlewares/parseBodyData";
 import { UserRole } from "@prisma/client";
@@ -59,5 +56,18 @@ router.delete(
   "/delete/:userId",
   auth(),
   UserController.deleteUser
+);
+// manager
+router.post(
+  "/add-manager",
+  uploadFile.uploadProfileImage,
+  parseBodyData,
+  validateRequest(UserValidation.addManagerValidationSchema),
+  UserController.addManager
+);
+router.get(
+  "/all-admins",
+  auth(UserRole.ADMIN),
+  UserController.getAllAdmins
 );
 export const UserRoutes = router;

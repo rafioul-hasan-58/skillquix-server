@@ -16,8 +16,17 @@ const createSubscription = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+const getSubscribedUser = catchAsync(async (req: Request, res: Response) => {
+    const result = await SubscriptionService.getSubscribedUsers(req.query);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        message: "Subscribed users feched successfully!",
+        data: result,
+    });
+});
 
 
 export const SubscriptionController = {
-    createSubscription
+    createSubscription,
+    getSubscribedUser
 }

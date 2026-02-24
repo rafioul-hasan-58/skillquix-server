@@ -108,14 +108,36 @@ const unblockUser = catchAsync(async (req, res) => {
     statusCode: status.OK,
     message: "User unblocked successfully!",
   });
+});
+// manager
+const addManager = catchAsync(async (req, res) => {
+  if (req.file) {
+    req.body.profileImage = await getImageUrl(req.file as any);
+  }
+  const result = await UserService.addManager(req.body);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Manager added successfully!",
+    data: result
+  });
 })
-
+const getAllAdmins = catchAsync(async (req, res) => {
+  const result = await UserService.getAllAdmins(req.query);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "All admins successfully!",
+    meta: result.meta,
+    data: result.data,
+  });
+});
 export const UserController = {
+  addManager,
   blockUser,
   unblockUser,
   register,
   getAllUser,
   updateProfile,
+  getAllAdmins,
   deleteUser,
   myProfile,
   getSingleUserById,
