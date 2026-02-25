@@ -47,7 +47,7 @@ const createSubscription = async (
   const invoice = subscription.latest_invoice as Stripe.Invoice;
   const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
   const fullClientSecret = paymentIntent.client_secret;
-  const clientSecret = fullClientSecret.split("_secret_")[0];
+  // const clientSecret = fullClientSecret.split("_secret_")[0];
 
   return {
     subscriptionId: subscription.id,
