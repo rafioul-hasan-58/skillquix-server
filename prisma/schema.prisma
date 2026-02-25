@@ -20,7 +20,7 @@ model Education {
   updatedAt     DateTime @updatedAt
 }
 
-model Exparience {
+model Experience {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   resumeId    String   @db.ObjectId
   resume      Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
@@ -42,7 +42,7 @@ model Gig {
   source           Source          @default(MANUAL)
   description      String
   gigType          String
-  exparienceLevel  ExparienceLevel @default(MID_LEVEL)
+  experienceLevel  ExperienceLevel @default(MID_LEVEL)
   duration         String
   location         String
   jobDescription   String
@@ -122,21 +122,22 @@ model Resume {
   summary      String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  expariences  Exparience[]
+  experiences  Experience[]
   education    Education[]
   resumeSkills ResumeSkill[]
 }
 
 model ResumeSkill {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  resumeId         String   @db.ObjectId
-  resume           Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId         String      @db.ObjectId
+  resume           Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   skillName        String
   skillCategory    String
   proficiencyLevel String
   yearOfExperience Int
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  source           SkillSource
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model User {
@@ -175,7 +176,7 @@ model User {
 }
 
 // Enums in alphabetical order
-enum ExparienceLevel {
+enum ExperienceLevel {
   ENTRY
   MID_LEVEL
   EXPERT
@@ -216,6 +217,12 @@ enum SubscriptionStatus {
   PAST_DUE
   CANCELED
   UNPAID
+}
+
+enum SkillSource {
+  RESUME
+  MANUAL
+  RECOMMENDATION
 }
 
 enum Toggle {

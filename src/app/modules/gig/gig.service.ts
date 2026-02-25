@@ -24,7 +24,7 @@ export const GigService = {
                 source: payload.source,
                 description: payload.description,
                 gigType: payload.gigType,
-                exparienceLevel: payload.exparienceLevel,
+                experienceLevel: payload.experienceLevel,
                 duration: payload.duration,
                 location: payload.location,
                 jobDescription: payload.jobDescription,

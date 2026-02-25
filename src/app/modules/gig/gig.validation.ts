@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ExparienceLevel, GigStatus, Source } from "@prisma/client";
+import { ExperienceLevel, GigStatus, Source } from "@prisma/client";
 
 // Create Gig Validation
 const createGigValidationSchema = z.object({
@@ -10,7 +10,7 @@ const createGigValidationSchema = z.object({
     source: z.nativeEnum(Source).optional().default(Source.MANUAL),
     description: z.string().min(1, "Description is required"),
     gigType: z.string().min(1, "Gig type is required"),
-    exparienceLevel: z.nativeEnum(ExparienceLevel).optional().default(ExparienceLevel.MID_LEVEL),
+    experienceLevel: z.nativeEnum(ExperienceLevel).optional().default(ExperienceLevel.MID_LEVEL),
     duration: z.string().min(1, "Duration is required"),
     location: z.string().min(1, "Location is required"),
     jobDescription: z.string().min(1, "Job description is required"),
@@ -30,7 +30,7 @@ const updateGigValidationSchema = z.object({
     source: z.nativeEnum(Source).optional(),
     description: z.string().optional(),
     gigType: z.string().optional(),
-    exparienceLevel: z.nativeEnum(ExparienceLevel).optional(),
+    experienceLevel: z.nativeEnum(ExperienceLevel).optional(),
     duration: z.string().optional(),
     location: z.string().optional(),
     jobDescription: z.string().optional(),

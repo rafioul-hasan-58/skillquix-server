@@ -1,4 +1,4 @@
-import { Education, Exparience, Resume, ResumeSkill } from "@prisma/client";
+import { Education, Experience, Resume, ResumeSkill, SkillSource } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -30,7 +30,7 @@ export const ResumeService = {
         if (existingResume) {
             // Clean up existing nested data before updating
             await prisma.$transaction([
-                prisma.exparience.deleteMany({ where: { resumeId: existingResume.id } }),
+                prisma.experience.deleteMany({ where: { resumeId: existingResume.id } }),
                 prisma.education.deleteMany({ where: { resumeId: existingResume.id } }),
                 prisma.resumeSkill.deleteMany({ where: { resumeId: existingResume.id } }),
             ]);
@@ -45,8 +45,8 @@ export const ResumeService = {
                 location,
                 phone,
                 summary,
-                expariences: {
-                    create: experiences?.map((exp: Exparience) => ({
+                experiences: {
+                    create: experiences?.map((exp: Experience) => ({
                         workingRole: exp.workingRole,
                         companyName: exp.companyName,
                         description: exp.description,
@@ -59,13 +59,14 @@ export const ResumeService = {
                         degreeName: edu.degreeName,
                         instituteName: edu.instituteName,
                         startDate: edu.startDate,
-                        endDate: edu.endDate ,
+                        endDate: edu.endDate,
                     })),
                 },
                 resumeSkills: {
                     create: skills?.map((skill: ResumeSkill) => ({
                         skillName: skill.skillName,
                         skillCategory: skill.skillCategory,
+                        source: SkillSource.RESUME,
                         proficiencyLevel: skill.proficiencyLevel,
                         yearOfExperience: skill.yearOfExperience
                     })),
@@ -79,8 +80,8 @@ export const ResumeService = {
                 location,
                 phone,
                 summary,
-                expariences: {
-                    create: experiences?.map((exp: Exparience) => ({
+                experiences: {
+                    create: experiences?.map((exp: Experience) => ({
                         workingRole: exp.workingRole,
                         companyName: exp.companyName,
                         description: exp.description,
@@ -93,20 +94,21 @@ export const ResumeService = {
                         degreeName: edu.degreeName,
                         instituteName: edu.instituteName,
                         startDate: edu.startDate,
-                        endDate: edu.endDate ,
+                        endDate: edu.endDate,
                     })),
                 },
                 resumeSkills: {
                     create: skills?.map((skill: ResumeSkill) => ({
                         skillName: skill.skillName,
                         skillCategory: skill.skillCategory,
+                        source: SkillSource.RESUME,
                         proficiencyLevel: skill.proficiencyLevel,
                         yearOfExperience: skill.yearOfExperience
                     })),
                 },
             },
             include: {
-                expariences: true,
+                experiences: true,
                 education: true,
                 resumeSkills: true,
             },
@@ -128,7 +130,7 @@ export const ResumeService = {
         const result = await prisma.$transaction(async (tx) => {
             // await tx.resumeSkill.deleteMany({ where: { resumeId } });
             // await tx.education.deleteMany({ where: { resumeId } });
-            // await tx.exparience.deleteMany({ where: { resumeId } });
+            // await tx.experience.deleteMany({ where: { resumeId } });
 
             const deletedResume = await tx.resume.delete({ where: { id: resumeId } });
             return deletedResume;
@@ -149,7 +151,7 @@ export const ResumeService = {
                 phone: true,
                 summary: true,
                 createdAt: true,
-                expariences: {
+                experiences: {
                     select: {
                         id: true,
                         workingRole: true,
@@ -209,7 +211,7 @@ export const ResumeService = {
     },
     updateWorkExperience: async (payload: updateWorkExperience[]) => {
         for (const exp of payload) {
-            const existingExp = await prisma.exparience.findUnique({
+            const existingExp = await prisma.experience.findUnique({
                 where: {
                     id: exp.id
                 }
@@ -219,7 +221,7 @@ export const ResumeService = {
                 throw new ApiError(httpStatus.NOT_FOUND, `Experience with id ${exp.id} not found!`);
             }
 
-            await prisma.exparience.update({
+            await prisma.experience.update({
                 where: {
                     id: exp.id,
                 },

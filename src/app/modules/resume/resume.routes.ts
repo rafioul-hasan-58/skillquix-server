@@ -32,10 +32,10 @@ router.patch(
     ResumeController.updatePersonalInfo
 );
 router.patch(
-    "/update-work-exparience",
+    "/update-work-experience",
     auth(),
     validateRequestArray(ResumeValidation.updateWorkExperienceSchema),
-    ResumeController.updateWorkExparience
+    ResumeController.updateWorkExperience
 );
 router.patch(
     "/update-education",

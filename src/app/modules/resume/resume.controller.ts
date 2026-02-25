@@ -48,7 +48,7 @@ export const ResumeController = {
             data: result
         });
     }),
-    updateWorkExparience: catchAsync(async (req: Request, res: Response) => {
+    updateWorkExperience: catchAsync(async (req: Request, res: Response) => {
         const result = await ResumeService.updateWorkExperience(req.body);
         sendResponse(res, {
             success: true,
