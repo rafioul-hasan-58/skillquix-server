@@ -262,7 +262,7 @@ export const ResumeService = {
         }
         return { message: "Education updated successfully!" }
     },
-    updateResumeSkills: async (payload: updateSkill[]) => {
+    updateResumeSkills: async (payload: Partial<Skill>[]) => {
         for (const skill of payload) {
             const existingSkills = await prisma.skill.findUnique({
                 where: {
@@ -280,6 +280,10 @@ export const ResumeService = {
                 },
                 data: {
                     skillName: skill.skillName,
+                    skillCategory: skill.skillCategory,
+                    proficiencyLevel: skill.proficiencyLevel,
+                    yearOfExperience: skill.yearOfExperience,
+                    source: skill.source
 
                 }
             })

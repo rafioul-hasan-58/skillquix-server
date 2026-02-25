@@ -47,11 +47,41 @@ const createSubscription = async (
   const invoice = subscription.latest_invoice as Stripe.Invoice;
   const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
   const fullClientSecret = paymentIntent.client_secret;
-  // const clientSecret = fullClientSecret.split("_secret_")[0];
+  if (!fullClientSecret) throw new ApiError(status.BAD_REQUEST, "Client secret not found");
+  const clientSecret = fullClientSecret.split("_secret_")[0];
 
   return {
     subscriptionId: subscription.id,
-    clientSecret: paymentIntent.client_secret,
+    clientSecret,
+  };
+};
+
+const cancelSubscription = async (userId: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(status.NOT_FOUND, "User not found");
+
+  if (!user.stripeSubscriptionId) {
+    throw new ApiError(status.BAD_REQUEST, "No active subscription found");
+  }
+
+  if (user.subscriptionStatus === "CANCELED") {
+    throw new ApiError(status.BAD_REQUEST, "Subscription is already canceled");
+  }
+
+  // Cancel at period end — user keeps access until currentPeriodEnd
+  await stripe.subscriptions.update(user.stripeSubscriptionId, {
+    cancel_at_period_end: true,
+  });
+
+  // Update DB — mark as canceled but keep subscriptionType until webhook fires
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { subscriptionStatus: "CANCELED" },
+  });
+
+  return {
+    message: "Subscription canceled successfully. You will have access until your current period ends.",
+    currentPeriodEnd: updatedUser.currentPeriodEnd,
   };
 };
 
@@ -111,8 +141,10 @@ const getSubscriptions = async (query: Record<string, unknown>) => {
     subscribedUsers
   };
 };
+
 export const SubscriptionService = {
   createSubscription,
   getSubscribedUsers,
-  getSubscriptions
+  getSubscriptions,
+  cancelSubscription
 }

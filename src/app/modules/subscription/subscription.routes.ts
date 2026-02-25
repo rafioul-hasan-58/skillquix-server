@@ -14,6 +14,11 @@ router.post(
     validateRequest(SubscriptionValidation.createSubscription),
     SubscriptionController.createSubscription
 );
+router.post(
+    "/cancel",
+    auth(UserRole.USER),
+    SubscriptionController.cancelSubscription
+);
 router.get(
     "/subscribed-user",
     auth(UserRole.ADMIN),

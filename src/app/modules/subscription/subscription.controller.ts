@@ -20,7 +20,7 @@ const getSubscribedUser = catchAsync(async (req: Request, res: Response) => {
     const result = await SubscriptionService.getSubscribedUsers(req.query);
     sendResponse(res, {
         statusCode: httpStatus.OK,
-        message: "Subscribed users feched successfully!",
+        message: "Subscribed users fetched successfully!",
         data: result,
     });
 });
@@ -28,7 +28,16 @@ const getSubscriptions = catchAsync(async (req: Request, res: Response) => {
     const result = await SubscriptionService.getSubscriptions(req.query);
     sendResponse(res, {
         statusCode: httpStatus.OK,
-        message: "Subscription feched successfully!",
+        message: "Subscription fetched successfully!",
+        data: result,
+    });
+});
+const cancelSubscription = catchAsync(async (req: Request, res: Response) => {
+    const { id: userId } = req.user;
+    const result = await SubscriptionService.cancelSubscription(userId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        message: "Subscription cancelled successfully!",
         data: result,
     });
 });
@@ -37,5 +46,6 @@ const getSubscriptions = catchAsync(async (req: Request, res: Response) => {
 export const SubscriptionController = {
     getSubscriptions,
     createSubscription,
-    getSubscribedUser
+    getSubscribedUser,
+    cancelSubscription
 }
