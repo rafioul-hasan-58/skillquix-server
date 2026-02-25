@@ -16,12 +16,13 @@ export const mailService = {
         html = AuthTemplates.otp(otp, formattedDate);
 
 
-        await transporter.sendMail({
+        const res = await transporter.sendMail({
             from: `${config.smtp.name} <${config.smtp.email_from}>`,
             to,
             subject,
             html,
         });
+        return res
     },
 
 

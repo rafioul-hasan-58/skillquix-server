@@ -19,6 +19,16 @@ router.get(
     auth(),
     SkillController.getMy
 );
+router.patch(
+    "/update/:id",
+    auth(),
+    SkillController.updateSkill
+);
+router.delete(
+    "/delete/:id",
+    auth(),
+    SkillController.deleteSkill
+);
 
 
 export const SkillRouter = router;

@@ -70,5 +70,44 @@ export const SkillService = {
             meta,
             data: groupedSkills
         };
+    },
+    updateSkill: async (skillId: string, payload: Partial<Skill>) => {
+        const skill = await prisma.skill.findUnique({
+            where: {
+                id: skillId
+            }
+        });
+        if (!skill) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Skill not found!")
+        }
+        const result = await prisma.skill.update({
+            where: {
+                id: skillId
+            },
+            data: {
+                skillCategory: payload.skillCategory,
+                skillName: payload.skillName,
+                proficiencyLevel: payload.proficiencyLevel,
+                yearOfExperience: payload.yearOfExperience,
+                source: payload.source
+            }
+        });
+
+        return result
+    },
+    deleteSkill: async (skillId: string) => {
+        const skill = await prisma.skill.findUnique({
+            where: {
+                id: skillId
+            }
+        });
+        if (!skill) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Skill not found!")
+        }
+        await prisma.skill.delete({
+            where: {
+                id: skillId
+            }
+        });
     }
 }

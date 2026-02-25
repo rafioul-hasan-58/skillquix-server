@@ -1,4 +1,4 @@
-import { ProfilingLevel } from "mongodb";
+import { ProficiencyLevel } from "@prisma/client";
 import { z } from "zod";
 
 const createSkillSchema = z.object({
@@ -15,7 +15,7 @@ const createSkillSchema = z.object({
         .trim(),
 
     proficiencyLevel: z
-        .nativeEnum(ProfilingLevel)
+        .nativeEnum(ProficiencyLevel)
         .optional(),
 
     yearOfExperience: z
