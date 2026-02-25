@@ -1,4 +1,4 @@
-import { Education, Exparience, Resume, ResumeSkill } from "@prisma/client";
+import { Resume, ResumeSkill } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -63,8 +63,11 @@ export const ResumeService = {
                     })),
                 },
                 resumeSkills: {
-                    create: skills?.map((skill: any) => ({
+                    create: skills?.map((skill: ResumeSkill) => ({
                         skillName: skill.skillName,
+                        skillCategory: skill.skillCategory,
+                        proficiencyLevel: skill.proficiencyLevel,
+                        yearOfExperience: skill.yearOfExperience
                     })),
                 },
             },
@@ -96,6 +99,9 @@ export const ResumeService = {
                 resumeSkills: {
                     create: skills?.map((skill: any) => ({
                         skillName: skill.skillName,
+                        skillCategory: skill.skillCategory,
+                        proficiencyLevel: skill.proficiencyLevel,
+                        yearOfExperience: skill.yearOfExperience
                     })),
                 },
             },

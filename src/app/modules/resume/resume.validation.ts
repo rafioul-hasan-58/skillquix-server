@@ -62,6 +62,15 @@ const skillSchema = z.object({
     skillName: z
         .string({ required_error: "Skill name is required" })
         .min(1, "Skill name cannot be empty"),
+    skillCategory: z
+        .string({ required_error: "skillCategory is required" })
+        .min(1, "skillCategory cannot be empty"),
+    proficiencyLevel: z
+        .string({ required_error: "proficiencyLevel is required" })
+        .min(1, "proficiencyLevel cannot be empty"),
+    yearOfExperience: z
+        .number({ required_error: "yearOfExperience is required" })
+        .min(1, "yearOfExperience cannot be empty"),
 });
 
 const createResumeSchema = z.object({

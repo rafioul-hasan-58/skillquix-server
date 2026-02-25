@@ -128,12 +128,15 @@ model Resume {
 }
 
 model ResumeSkill {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  resumeId  String   @db.ObjectId
-  resume    Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  skillName String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId         String   @db.ObjectId
+  resume           Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  skillName        String
+  skillCategory    String
+  proficiencyLevel String
+  yearOfExperience Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model User {
