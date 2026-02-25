@@ -1,4 +1,4 @@
-import { Education, Experience, Resume, ResumeSkill, SkillSource } from "@prisma/client";
+import { Education, Experience, Resume, Skill, SkillSource } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -32,7 +32,7 @@ export const ResumeService = {
             await prisma.$transaction([
                 prisma.experience.deleteMany({ where: { resumeId: existingResume.id } }),
                 prisma.education.deleteMany({ where: { resumeId: existingResume.id } }),
-                prisma.resumeSkill.deleteMany({ where: { resumeId: existingResume.id } }),
+                prisma.skill.deleteMany({ where: { resumeId: existingResume.id } }),
             ]);
         }
 
@@ -62,8 +62,8 @@ export const ResumeService = {
                         endDate: edu.endDate,
                     })),
                 },
-                resumeSkills: {
-                    create: skills?.map((skill: ResumeSkill) => ({
+                skills: {
+                    create: skills?.map((skill: Skill) => ({
                         skillName: skill.skillName,
                         skillCategory: skill.skillCategory,
                         source: SkillSource.RESUME,
@@ -97,8 +97,8 @@ export const ResumeService = {
                         endDate: edu.endDate,
                     })),
                 },
-                resumeSkills: {
-                    create: skills?.map((skill: ResumeSkill) => ({
+                skills: {
+                    create: skills?.map((skill: Skill) => ({
                         skillName: skill.skillName,
                         skillCategory: skill.skillCategory,
                         source: SkillSource.RESUME,
@@ -110,7 +110,7 @@ export const ResumeService = {
             include: {
                 experiences: true,
                 education: true,
-                resumeSkills: true,
+                skills: true,
             },
         });
 
@@ -172,7 +172,7 @@ export const ResumeService = {
                         createdAt: true
                     }
                 },
-                resumeSkills: {
+                skills: {
                     select: {
                         id: true,
                         skillName: true,
@@ -264,7 +264,7 @@ export const ResumeService = {
     },
     updateResumeSkills: async (payload: updateSkill[]) => {
         for (const skill of payload) {
-            const existingSkills = await prisma.resumeSkill.findUnique({
+            const existingSkills = await prisma.skill.findUnique({
                 where: {
                     id: skill.id
                 }
@@ -274,7 +274,7 @@ export const ResumeService = {
                 throw new ApiError(httpStatus.NOT_FOUND, `Skill with id ${skill.id} not found!`);
             }
 
-            await prisma.resumeSkill.update({
+            await prisma.skill.update({
                 where: {
                     id: skill.id,
                 },

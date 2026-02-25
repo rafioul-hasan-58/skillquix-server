@@ -1,0 +1,34 @@
+import { z } from "zod";
+
+const createSkillSchema = z.object({
+    skillName: z
+        .string()
+        .min(2, "Skill name must be at least 2 characters")
+        .max(50, "Skill name cannot exceed 50 characters")
+        .trim(),
+
+    skillCategory: z
+        .string()
+        .min(2, "Skill category must be at least 2 characters")
+        .max(50, "Skill category cannot exceed 50 characters")
+        .trim(),
+
+    proficiencyLevel: z
+        .string()
+        .min(2, "Proficiency level is required")
+        .max(30, "Proficiency level is too long")
+        .trim(),
+
+    yearOfExperience: z
+        .coerce
+        .number({
+            invalid_type_error: "Year of experience must be a number"
+        })
+        .int("Year of experience must be an integer")
+        .min(0, "Experience cannot be negative")
+        .max(50, "Experience seems unrealistic"),
+});
+
+export const SkillValidations = {
+    createSkillSchema
+}
