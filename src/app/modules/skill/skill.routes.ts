@@ -19,6 +19,11 @@ router.get(
     auth(),
     SkillController.getMy
 );
+router.get(
+    "/details/:id",
+    auth(),
+    SkillController.details
+);
 router.patch(
     "/update/:id",
     auth(),

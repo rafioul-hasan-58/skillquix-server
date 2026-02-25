@@ -71,6 +71,25 @@ export const SkillService = {
             data: groupedSkills
         };
     },
+    details: async (skillId: string) => {
+        const skill = await prisma.skill.findUnique({
+            where: {
+                id: skillId
+            },
+            select: {
+                id: true,
+                skillName: true,
+                skillCategory: true,
+                proficiencyLevel: true,
+                yearOfExperience: true,
+                source: true
+            }
+        });
+        if (!skill) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Skill not found!");
+        }
+        return skill
+    },
     updateSkill: async (skillId: string, payload: Partial<Skill>) => {
         const skill = await prisma.skill.findUnique({
             where: {

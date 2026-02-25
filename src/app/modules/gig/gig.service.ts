@@ -53,7 +53,7 @@ export const GigService = {
                 description: true,
                 gigType: true,
                 source: true,
-                exparienceLevel: true,
+                experienceLevel: true,
                 duration: true,
                 location: true,
                 gigStatus: true,

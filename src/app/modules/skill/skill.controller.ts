@@ -26,6 +26,16 @@ export const SkillController = {
             data: result
         });
     }),
+    details: catchAsync(async (req: Request, res: Response) => {
+        const { id: skillId } = req.params;
+        const result = await SkillService.details(skillId);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Skill details fetched successfully!",
+            data: result
+        });
+    }),
     updateSkill: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.params;
         const result = await SkillService.updateSkill(id, req.body);
