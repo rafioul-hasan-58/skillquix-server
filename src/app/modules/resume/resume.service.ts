@@ -1,4 +1,4 @@
-import { Resume, ResumeSkill } from "@prisma/client";
+import { Education, Exparience, Resume, ResumeSkill } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -46,20 +46,20 @@ export const ResumeService = {
                 phone,
                 summary,
                 expariences: {
-                    create: experiences?.map((exp: any) => ({
+                    create: experiences?.map((exp: Exparience) => ({
                         workingRole: exp.workingRole,
                         companyName: exp.companyName,
                         description: exp.description,
-                        startDate: new Date(exp.startDate),
-                        endDate: exp.endDate ? new Date(exp.endDate) : null,
+                        startDate: exp.startDate,
+                        endDate: exp.endDate,
                     })),
                 },
                 education: {
-                    create: education?.map((edu: any) => ({
+                    create: education?.map((edu: Education) => ({
                         degreeName: edu.degreeName,
                         instituteName: edu.instituteName,
-                        startDate: new Date(edu.startDate),
-                        endDate: edu.endDate ? new Date(edu.endDate) : null,
+                        startDate: edu.startDate,
+                        endDate: edu.endDate ,
                     })),
                 },
                 resumeSkills: {
@@ -80,24 +80,24 @@ export const ResumeService = {
                 phone,
                 summary,
                 expariences: {
-                    create: experiences?.map((exp: any) => ({
+                    create: experiences?.map((exp: Exparience) => ({
                         workingRole: exp.workingRole,
                         companyName: exp.companyName,
                         description: exp.description,
-                        startDate: new Date(exp.startDate),
-                        endDate: exp.endDate ? new Date(exp.endDate) : null,
+                        startDate: exp.startDate,
+                        endDate: exp.endDate,
                     })),
                 },
                 education: {
-                    create: education?.map((edu: any) => ({
+                    create: education?.map((edu: Education) => ({
                         degreeName: edu.degreeName,
                         instituteName: edu.instituteName,
-                        startDate: new Date(edu.startDate),
-                        endDate: edu.endDate ? new Date(edu.endDate) : null,
+                        startDate: edu.startDate,
+                        endDate: edu.endDate ,
                     })),
                 },
                 resumeSkills: {
-                    create: skills?.map((skill: any) => ({
+                    create: skills?.map((skill: ResumeSkill) => ({
                         skillName: skill.skillName,
                         skillCategory: skill.skillCategory,
                         proficiencyLevel: skill.proficiencyLevel,

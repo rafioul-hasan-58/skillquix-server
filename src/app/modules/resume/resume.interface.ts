@@ -17,15 +17,15 @@ export interface updateWorkExperience {
     workingRole?: string;
     companyName?: string;
     description?: string;
-    startDate?: Date;
-    endDate?: Date | null;
+    startDate?: string;
+    endDate?: string | null;
 }
 export interface updateEducation {
     id: string;
     degreeName?: string;
     instituteName?: string;
     startDate?: string;
-    endDate?: Date;
+    endDate?: string;
 }
 export interface updateSkill {
     id: string;

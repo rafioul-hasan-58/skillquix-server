@@ -158,13 +158,11 @@ const updateWorkExperienceSchema = z.array(
             .optional(),
 
         startDate: z
-            .coerce
-            .date()
+            .string()
             .optional(),
 
         endDate: z
-            .coerce
-            .date()
+            .string()
             .nullable()
             .optional(),
     })
