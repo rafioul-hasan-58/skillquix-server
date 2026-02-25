@@ -14,6 +14,11 @@ router.post(
     validateRequest(SkillValidations.createSkillSchema),
     SkillController.create
 );
+router.get(
+    "/get-my",
+    auth(),
+    SkillController.getMy
+);
 
 
 export const SkillRouter = router;

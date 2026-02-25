@@ -15,5 +15,15 @@ export const SkillController = {
             message: "Skill created successfully!",
             data: result
         });
+    }),
+    getMy: catchAsync(async (req: Request, res: Response) => {
+        const { id: userId } = req.user;
+        const result = await SkillService.getMy(userId,req.query);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "My skill fetched successfully!",
+            data: result
+        });
     })
 }

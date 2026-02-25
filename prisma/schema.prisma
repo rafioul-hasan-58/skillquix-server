@@ -128,18 +128,20 @@ model Resume {
 }
 
 model Skill {
-  id               String      @id @default(auto()) @map("_id") @db.ObjectId
-  resumeId         String?      @db.ObjectId
-  resume           Resume?      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  userId           String?     @db.ObjectId
-  user             User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId         String?          @db.ObjectId
+  resume           Resume?          @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  userId           String?          @db.ObjectId
+  user             User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   skillName        String
   skillCategory    String
-  proficiencyLevel String
-  yearOfExperience Int
-  source           SkillSource
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  proficiencyLevel ProficiencyLevel @default(Beginner)
+  yearOfExperience Int              @default(0)
+  source           SkillSource      @default(MANUAL)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([userId, skillName])
 }
 
 model User {
@@ -237,4 +239,11 @@ enum UserRole {
   USER
   ADMIN
   MANAGER
+}
+
+enum ProficiencyLevel {
+  Beginner
+  Intermediate
+  Advanced
+  Expert
 }

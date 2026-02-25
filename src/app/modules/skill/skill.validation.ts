@@ -1,3 +1,4 @@
+import { ProfilingLevel } from "mongodb";
 import { z } from "zod";
 
 const createSkillSchema = z.object({
@@ -14,10 +15,8 @@ const createSkillSchema = z.object({
         .trim(),
 
     proficiencyLevel: z
-        .string()
-        .min(2, "Proficiency level is required")
-        .max(30, "Proficiency level is too long")
-        .trim(),
+        .nativeEnum(ProfilingLevel)
+        .optional(),
 
     yearOfExperience: z
         .coerce
@@ -26,7 +25,8 @@ const createSkillSchema = z.object({
         })
         .int("Year of experience must be an integer")
         .min(0, "Experience cannot be negative")
-        .max(50, "Experience seems unrealistic"),
+        .max(50, "Experience seems unrealistic")
+        .optional(),
 });
 
 export const SkillValidations = {
