@@ -7,6 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Accomplishment {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  date        DateTime
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Models in alphabetical order
 model Education {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -180,6 +191,7 @@ model User {
   gigs                 Gig[]
   invoices             Invoice[]
   skills               Skill[]
+  accomplishments      Accomplishment[]
 }
 
 // Enums in alphabetical order

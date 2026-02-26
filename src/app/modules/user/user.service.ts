@@ -9,6 +9,7 @@ import config from "../../../config";
 import stripe from "../../stripe/stripe";
 import { addManagerInput } from "./user.validation";
 import { monthlyRevenue } from "../subscription/subscription.helper";
+import { SkillService } from "../skill/skill.service";
 
 
 export const UserService = {
@@ -363,11 +364,14 @@ export const UserService = {
         createdAt: "desc"
       },
       take: 10
-    })
+    });
+
+    const topSkills = await SkillService.topSkills();
     return {
       totalUser,
       activeUser,
       totalGigs,
+      topSkills,
       monthlyRevenue: totalRevenue,
       freeUser: (freeUser / totalUser) * 100,
       proUser: (proUser / totalUser) * 100,

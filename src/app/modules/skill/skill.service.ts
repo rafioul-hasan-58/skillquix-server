@@ -128,5 +128,42 @@ export const SkillService = {
                 id: skillId
             }
         });
+    },
+    topSkills: async () => {
+        const skills = await prisma.skill.findMany();
+
+        // Count how many skills per category
+        const categoryCounts: Record<string, number> = {};
+
+        for (const skill of skills) {
+            const category = skill.skillCategory;
+            categoryCounts[category] = (categoryCounts[category] || 0) + 1; // +1 per skill
+        }
+
+        // Sort categories by count descending
+        const sortedCategories = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]);
+
+        // Take top 3 categories
+        const top3 = sortedCategories.slice(0, 3);
+
+        // Total skills count
+        const totalCount = sortedCategories.reduce((sum, [, count]) => sum + count, 0);
+
+        // Prepare result
+        const result: Record<string, number> = {};
+
+        // Top 3 categories with percentage
+        for (const [category, count] of top3) {
+            result[category] = Math.round((count / totalCount) * 100);
+        }
+
+        // Sum remaining categories as Others
+        const othersCount = sortedCategories.slice(3).reduce((sum, [, count]) => sum + count, 0);
+        if (othersCount > 0) {
+            result["Others"] = Math.round((othersCount / totalCount) * 100);
+        }
+
+        return result
+
     }
 }
