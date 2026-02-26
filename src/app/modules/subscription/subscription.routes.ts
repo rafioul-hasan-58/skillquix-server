@@ -25,6 +25,12 @@ router.post(
     validateRequest(SubscriptionValidation.upgradeSubscription),
     SubscriptionController.upgradeSubscription
 );
+router.post(
+    "/downgrade",
+    auth(UserRole.USER),
+    validateRequest(SubscriptionValidation.downgradeSubscription),
+    SubscriptionController.downgradeSubscription
+);
 router.get(
     "/subscribed-user",
     auth(UserRole.ADMIN),

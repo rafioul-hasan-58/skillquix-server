@@ -14,8 +14,14 @@ const upgradeSubscription = z.object({
         required_error: "newPlanId is required!"
     }),
 });
+const downgradeSubscription = z.object({
+    newPlanId: z.string({
+        required_error: "newPlanId is required!"
+    }),
+});
 
 export const SubscriptionValidation = {
     createSubscription,
-    upgradeSubscription
+    upgradeSubscription,
+    downgradeSubscription
 }

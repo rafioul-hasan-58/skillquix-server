@@ -64,7 +64,6 @@ ${responsibilities?.map((res, i) => `${i + 1}. ${res}`).join("\n")}
 Benefits:
 ${benefits?.map((ben, i) => `${i + 1}. ${ben}`).join("\n")}
   `.trim();
-
     // 📡 Call embedding API
     try {
         // 🔹 Call Embedding API

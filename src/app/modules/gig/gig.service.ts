@@ -20,6 +20,7 @@ export const GigService = {
             ...payload,
             validUntil: payload.validUntil instanceof Date ? payload.validUntil.toISOString() : payload.validUntil
         });
+        return embedding
         const result = await prisma.gig.create({
             data: {
                 industryName: payload.industryName,
