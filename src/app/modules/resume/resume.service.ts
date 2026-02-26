@@ -3,6 +3,7 @@ import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import { createResume, updateEducation, updateSkill, updateWorkExperience } from "./resume.interface";
+import { generateResumeEmbedding } from "./resume.helper";
 
 
 
@@ -21,6 +22,8 @@ export const ResumeService = {
             skills,
         } = payload;
 
+        const embedding = await generateResumeEmbedding(payload);
+
         // Delete existing nested records first (for clean upsert)
         const existingResume = await prisma.resume.findUnique({
             where: { userId },
@@ -36,85 +39,90 @@ export const ResumeService = {
             ]);
         }
 
-        const resume = await prisma.resume.upsert({
-            where: { userId },
-            update: {
-                name,
-                title,
-                email,
-                location,
-                phone,
-                summary,
-                experiences: {
-                    create: experiences?.map((exp: Experience) => ({
-                        workingRole: exp.workingRole,
-                        companyName: exp.companyName,
-                        description: exp.description,
-                        startDate: exp.startDate,
-                        endDate: exp.endDate,
-                    })),
+        const result = await prisma.$transaction(async (tx) => {
+            const resume = await tx.resume.upsert({
+                where: { userId },
+                update: {
+                    name,
+                    title,
+                    email,
+                    location,
+                    phone,
+                    summary,
+                    embedding,
+                    experiences: {
+                        create: experiences?.map((exp: Experience) => ({
+                            workingRole: exp.workingRole,
+                            companyName: exp.companyName,
+                            description: exp.description,
+                            startDate: exp.startDate,
+                            endDate: exp.endDate,
+                        })),
+                    },
+                    education: {
+                        create: education?.map((edu: Education) => ({
+                            degreeName: edu.degreeName,
+                            instituteName: edu.instituteName,
+                            startDate: edu.startDate,
+                            endDate: edu.endDate,
+                        })),
+                    },
                 },
-                education: {
-                    create: education?.map((edu: Education) => ({
-                        degreeName: edu.degreeName,
-                        instituteName: edu.instituteName,
-                        startDate: edu.startDate,
-                        endDate: edu.endDate,
-                    })),
+                create: {
+                    userId,
+                    name,
+                    title,
+                    email,
+                    location,
+                    phone,
+                    summary,
+                    embedding,
+                    experiences: {
+                        create: experiences?.map((exp: Experience) => ({
+                            workingRole: exp.workingRole,
+                            companyName: exp.companyName,
+                            description: exp.description,
+                            startDate: exp.startDate,
+                            endDate: exp.endDate,
+                        })),
+                    },
+                    education: {
+                        create: education?.map((edu: Education) => ({
+                            degreeName: edu.degreeName,
+                            instituteName: edu.instituteName,
+                            startDate: edu.startDate,
+                            endDate: edu.endDate,
+                        })),
+                    },
                 },
-                skills: {
-                    create: skills?.map((skill: Skill) => ({
-                        skillName: skill.skillName,
-                        skillCategory: skill.skillCategory,
-                        source: SkillSource.RESUME,
-                        proficiencyLevel: skill.proficiencyLevel,
-                        yearOfExperience: skill.yearOfExperience
-                    })),
+                include: {
+                    experiences: true,
+                    education: true,
                 },
-            },
-            create: {
-                userId,
-                name,
-                title,
-                email,
-                location,
-                phone,
-                summary,
-                experiences: {
-                    create: experiences?.map((exp: Experience) => ({
-                        workingRole: exp.workingRole,
-                        companyName: exp.companyName,
-                        description: exp.description,
-                        startDate: exp.startDate,
-                        endDate: exp.endDate,
-                    })),
-                },
-                education: {
-                    create: education?.map((edu: Education) => ({
-                        degreeName: edu.degreeName,
-                        instituteName: edu.instituteName,
-                        startDate: edu.startDate,
-                        endDate: edu.endDate,
-                    })),
-                },
-                skills: {
-                    create: skills?.map((skill: Skill) => ({
-                        skillName: skill.skillName,
-                        skillCategory: skill.skillCategory,
-                        source: SkillSource.RESUME,
-                        proficiencyLevel: skill.proficiencyLevel,
-                        yearOfExperience: skill.yearOfExperience
-                    })),
-                },
-            },
-            include: {
-                experiences: true,
-                education: true,
-                skills: true,
-            },
-        });
+            });
+            // Delete old skills
+            await tx.skill.deleteMany({
+                where: { resumeId: resume.id }
+            });
 
-        return resume;
+            // Create all skills in ONE query
+            if (skills?.length) {
+                await tx.skill.createMany({
+                    data: skills.map(skill => ({
+                        userId,
+                        resumeId: resume.id,
+                        skillName: skill.skillName,
+                        skillCategory: skill.skillCategory,
+                        source: "RESUME",
+                        proficiencyLevel: skill.proficiencyLevel,
+                        yearOfExperience: skill.yearOfExperience,
+                    })),
+                });
+            }
+            return resume;
+        });
+        return result
+
     },
     deleteResume: async (resumeId: string) => {
         // Check if resume exists

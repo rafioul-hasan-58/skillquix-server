@@ -3,6 +3,7 @@ import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { Gig, Source } from "@prisma/client";
+import { generateGigEmbedding } from "./gig.helper";
 
 export const GigService = {
     // Create a new gig
@@ -15,12 +16,17 @@ export const GigService = {
         if (!user) {
             throw new ApiError(status.NOT_FOUND, "User not found to create gig!")
         }
+        const embedding = await generateGigEmbedding({
+            ...payload,
+            validUntil: payload.validUntil instanceof Date ? payload.validUntil.toISOString() : payload.validUntil
+        });
         const result = await prisma.gig.create({
             data: {
                 industryName: payload.industryName,
                 industryEmail: payload.industryEmail,
                 gigTitle: payload.gigTitle,
                 category: payload.category,
+                embedding,
                 source: payload.source,
                 description: payload.description,
                 gigType: payload.gigType,
