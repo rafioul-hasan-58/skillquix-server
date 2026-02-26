@@ -1,3 +1,4 @@
+import { ProficiencyLevel, SkillSource } from "@prisma/client";
 import { z } from "zod";
 
 const experienceSchema = z.object({
@@ -167,7 +168,35 @@ const updateWorkExperienceSchema = z.array(
             .optional(),
     })
 );
+const addWorkExperienceSchema = z.object({
+    resumeId: z
+        .string()
+        .min(1, "Resume id is required"),
 
+    workingRole: z
+        .string()
+        .min(1, "Working role cannot be empty")
+        .optional(),
+
+    companyName: z
+        .string()
+        .min(1, "Company name cannot be empty")
+        .optional(),
+
+    description: z
+        .string()
+        .min(1, "Description cannot be empty")
+        .optional(),
+
+    startDate: z
+        .string()
+        .optional(),
+
+    endDate: z
+        .string()
+        .nullable()
+        .optional(),
+});
 const updateEducationSchema = z.array(
     z.object({
         id: z.string().min(1),
@@ -177,15 +206,37 @@ const updateEducationSchema = z.array(
         endDate: z.coerce.date().optional(),
     })
 );
+const addEducationSchema = z.object({
+    resumeId: z.string().min(1),
+    degreeName: z.string().optional(),
+    instituteName: z.string().optional(),
+    startDate: z.string().optional(),
+    endDate: z.coerce.date().optional(),
+});
+
 const updateSkillsSchema = z.array(
     z.object({
-        id: z.string().min(1),
-        skillName: z.string().optional()
+        id: z.string().min(1), // assuming each skill has an id
+        skillName: z.string().min(1).optional(),
+        skillCategory: z.string().min(1).optional(),
+        proficiencyLevel: z.nativeEnum(ProficiencyLevel).optional(),
+        yearOfExperience: z.number().min(0).optional(),
+        source: z.nativeEnum(SkillSource).optional()
     })
-)
-
+);
+const addSkillSchema = z.object({
+    resumeId: z.string().min(1), // assuming each skill has an id
+    skillName: z.string().min(1).optional(),
+    skillCategory: z.string().min(1).optional(),
+    proficiencyLevel: z.nativeEnum(ProficiencyLevel).optional(),
+    yearOfExperience: z.number().min(0).optional(),
+    source: z.nativeEnum(SkillSource).optional()
+});
 export const ResumeValidation = {
+    addSkillSchema,
+    addEducationSchema,
     createResumeSchema,
+    addWorkExperienceSchema,
     updateResumeSchema,
     updateSkillsSchema,
     updateEducationSchema,

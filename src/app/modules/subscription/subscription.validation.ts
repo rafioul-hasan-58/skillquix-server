@@ -9,7 +9,13 @@ const createSubscription = z.object({
         required_error: "paymentMethodId is required!"
     }),
 });
+const upgradeSubscription = z.object({
+    newPlanId: z.string({
+        required_error: "newPlanId is required!"
+    }),
+});
 
 export const SubscriptionValidation = {
-    createSubscription
+    createSubscription,
+    upgradeSubscription
 }

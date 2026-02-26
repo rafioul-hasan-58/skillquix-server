@@ -19,6 +19,12 @@ router.post(
     auth(UserRole.USER),
     SubscriptionController.cancelSubscription
 );
+router.post(
+    "/upgrade",
+    auth(UserRole.USER),
+    validateRequest(SubscriptionValidation.upgradeSubscription),
+    SubscriptionController.upgradeSubscription
+);
 router.get(
     "/subscribed-user",
     auth(UserRole.ADMIN),

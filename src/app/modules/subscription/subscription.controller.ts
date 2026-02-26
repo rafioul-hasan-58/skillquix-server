@@ -41,11 +41,22 @@ const cancelSubscription = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+const upgradeSubscription = catchAsync(async (req: Request, res: Response) => {
+    const { id: userId } = req.user;
+    const { newPlanId } = req.body;
+    const result = await SubscriptionService.upgradeSubscription(userId, newPlanId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        message: "Subscription upgraded successfully!",
+        data: result,
+    });
+});
 
 
 export const SubscriptionController = {
     getSubscriptions,
     createSubscription,
     getSubscribedUser,
-    cancelSubscription
+    cancelSubscription,
+    upgradeSubscription
 }

@@ -37,17 +37,35 @@ router.patch(
     validateRequestArray(ResumeValidation.updateWorkExperienceSchema),
     ResumeController.updateWorkExperience
 );
+router.post(
+    "/add-work-experience",
+    auth(),
+    validateRequest(ResumeValidation.addWorkExperienceSchema),
+    ResumeController.addWorkExperience
+);
 router.patch(
     "/update-education",
     auth(),
     validateRequestArray(ResumeValidation.updateEducationSchema),
     ResumeController.updateEducation
 );
+router.post(
+    "/add-education",
+    auth(),
+    validateRequestArray(ResumeValidation.addEducationSchema),
+    ResumeController.addEducation
+);
 router.patch(
     "/update-resume-skills",
     auth(),
     validateRequestArray(ResumeValidation.updateSkillsSchema),
     ResumeController.updateResumeSkills
+);
+router.post(
+    "/add-resume-skill",
+    auth(),
+    validateRequestArray(ResumeValidation.addSkillSchema),
+    ResumeController.addResumeSkill
 );
 
 export const ResumeRouter = router;

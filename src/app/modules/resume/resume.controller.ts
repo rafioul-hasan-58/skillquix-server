@@ -48,12 +48,30 @@ export const ResumeController = {
             data: result
         });
     }),
+    addWorkExperience: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.addWorkExperience(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Work Experience added successfully!",
+            data: result
+        });
+    }),
     updateWorkExperience: catchAsync(async (req: Request, res: Response) => {
         const result = await ResumeService.updateWorkExperience(req.body);
         sendResponse(res, {
             success: true,
             statusCode: httpStatus.OK,
-            message: "Work Exparience updated successfully!",
+            message: "Work Experience updated successfully!",
+            data: result
+        });
+    }),
+    addEducation: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.addEducation(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Education added successfully!",
             data: result
         });
     }),
@@ -72,6 +90,15 @@ export const ResumeController = {
             success: true,
             statusCode: httpStatus.OK,
             message: "Resume Skills updated successfully!",
+            data: result
+        });
+    }),
+    addResumeSkill: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.addResumeSkill(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume Skills added successfully!",
             data: result
         });
     })

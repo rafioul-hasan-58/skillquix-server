@@ -217,6 +217,48 @@ export const ResumeService = {
         return result
 
     },
+    addWorkExperience: async (payload: Experience) => {
+        const resume = await prisma.resume.findUnique({
+            where: {
+                id: payload.resumeId
+            }
+        });
+        if (!resume) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume not Found!")
+        }
+        const result = await prisma.experience.create({
+            data: {
+                resumeId: payload.resumeId,
+                workingRole: payload.workingRole,
+                companyName: payload.companyName,
+                description: payload.description,
+                endDate: payload.endDate,
+                startDate: payload.startDate
+            }
+        })
+
+        return result
+    },
+    addEducation: async (payload: Education) => {
+        const resume = await prisma.resume.findUnique({
+            where: {
+                id: payload.resumeId
+            }
+        });
+        if (!resume) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume not Found!")
+        }
+        const result = await prisma.education.create({
+            data: {
+                resumeId: payload.resumeId,
+                degreeName: payload.degreeName,
+                instituteName: payload.instituteName,
+                endDate: payload.endDate,
+                startDate: payload.startDate
+            }
+        })
+        return result
+    },
     updateWorkExperience: async (payload: updateWorkExperience[]) => {
         for (const exp of payload) {
             const existingExp = await prisma.experience.findUnique({
@@ -269,6 +311,30 @@ export const ResumeService = {
             })
         }
         return { message: "Education updated successfully!" }
+    },
+    addResumeSkill: async (skill: Skill) => {
+        if (!skill.resumeId) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Skill id is required!")
+        }
+        const resume = await prisma.resume.findUnique({
+            where: {
+                id: skill.resumeId
+            }
+        });
+
+        if (!resume) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume not Found!")
+        }
+        const result = await prisma.skill.create({
+            data: {
+                skillName: skill.skillName,
+                skillCategory: skill.skillCategory,
+                proficiencyLevel: skill.proficiencyLevel,
+                yearOfExperience: skill.yearOfExperience,
+                source: skill.source
+            }
+        })
+        return result
     },
     updateResumeSkills: async (payload: Partial<Skill>[]) => {
         for (const skill of payload) {
