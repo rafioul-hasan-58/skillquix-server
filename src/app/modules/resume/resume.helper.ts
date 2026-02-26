@@ -71,3 +71,36 @@ ${skills?.map((skill: Skill, index: number) =>
         };
     }
 };
+
+
+export const upsertResumeEmbedding = async (
+    userId: string,
+    embedding: number[]
+) => {
+    try {
+        const response = await axios.post(
+            `${config.ai_base_url}/v1/upsert_resume_embedding`,
+            {
+                embedding,
+            },
+            {
+                params: {
+                    user_id: userId, // query param
+                },
+                headers: {
+                    "Content-Type": "application/json",
+                    accept: "application/json",
+                },
+                timeout: 10000, // optional timeout (10s)
+            }
+        );
+
+        return response.data;
+    } catch (error: any) {
+        console.error(
+            "Upsert Resume Embedding Error:",
+            error?.response?.data || error.message
+        );
+        throw new Error("Failed to upsert resume embedding");
+    }
+};

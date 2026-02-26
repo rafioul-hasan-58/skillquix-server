@@ -54,10 +54,10 @@ const upgradeSubscription = catchAsync(async (req: Request, res: Response) => {
 const downgradeSubscription = catchAsync(async (req: Request, res: Response) => {
     const { id: userId } = req.user;
     const { newPlanId } = req.body;
-    const result = await SubscriptionService.upgradeSubscription(userId, newPlanId);
+    const result = await SubscriptionService.downgradeSubscription(userId, newPlanId);
     sendResponse(res, {
         statusCode: httpStatus.OK,
-        message: "Subscription upgraded successfully!",
+        message: "Subscription downgraded successfully!",
         data: result,
     });
 });

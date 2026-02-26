@@ -3,7 +3,7 @@ import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { Gig, Source } from "@prisma/client";
-import { generateGigEmbedding } from "./gig.helper";
+import { generateGigEmbedding, upsertGigEmbedding } from "./gig.helper";
 
 export const GigService = {
     // Create a new gig
@@ -20,7 +20,6 @@ export const GigService = {
             ...payload,
             validUntil: payload.validUntil instanceof Date ? payload.validUntil.toISOString() : payload.validUntil
         });
-        return embedding
         const result = await prisma.gig.create({
             data: {
                 industryName: payload.industryName,
@@ -42,7 +41,8 @@ export const GigService = {
                 userId
             },
         });
-        return result;
+        await upsertGigEmbedding(result.id, embedding);
+        return result
     },
 
     // Get all gigs with QueryBuilder

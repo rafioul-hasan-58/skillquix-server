@@ -3,7 +3,7 @@ import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import { createResume, updateEducation, updateSkill, updateWorkExperience } from "./resume.interface";
-import { generateResumeEmbedding } from "./resume.helper";
+import { generateResumeEmbedding, upsertResumeEmbedding } from "./resume.helper";
 
 
 
@@ -121,6 +121,7 @@ export const ResumeService = {
             }
             return resume;
         });
+        await upsertResumeEmbedding(result.id, embedding)
         return result
 
     },

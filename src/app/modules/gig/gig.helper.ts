@@ -90,3 +90,33 @@ ${benefits?.map((ben, i) => `${i + 1}. ${ben}`).join("\n")}
         };
     }
 };
+
+
+export const upsertGigEmbedding = async (
+    gigId: string,
+    embedding: number[]
+) => {
+    try {
+        const response = await axios.post(
+            `${config.ai_base_url}/v1/upsert_gig_embedding`,
+            {
+                embedding,
+            },
+            {
+                params: {
+                    gig_id: gigId, // query param
+                },
+                headers: {
+                    "Content-Type": "application/json",
+                    accept: "application/json",
+                },
+                timeout: 10000, // optional (10s timeout)
+            }
+        );
+
+        return response.data;
+    } catch (error: any) {
+        console.error("Upsert Gig Embedding Error:", error?.response?.data || error.message);
+        throw new Error("Failed to upsert gig embedding");
+    }
+};
