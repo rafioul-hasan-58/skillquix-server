@@ -57,9 +57,33 @@ const deleteGig = catchAsync(async (req: Request, res: Response) => {
         data: result
     });
 });
+// save gig
+const saveGig = catchAsync(async (req: Request, res: Response) => {
+    const { gigId } = req.params;
+    const { id: userId } = req.user;
+    const result = await GigService.saveGig(gigId, userId);
+    sendResponse(res, {
+        statusCode: status.OK,
+        message: "Gig saved successfully!",
+        data: result
+    });
+});
+// save gig
+const applyGig = catchAsync(async (req: Request, res: Response) => {
+    const { gigId } = req.params;
+    const { id: userId } = req.user;
+    const result = await GigService.applyGig(gigId, userId);
+    sendResponse(res, {
+        statusCode: status.OK,
+        message: "Gig applied successfully!",
+        data: result
+    });
+});
 
 export const GigController = {
+    applyGig,
     createGig,
+    saveGig,
     getAllGigs,
     getSingleGig,
     updateGig,

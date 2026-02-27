@@ -1,4 +1,4 @@
-import {  Router } from "express";
+import { Router } from "express";
 import validateRequest from "../../middlewares/validateRequest";
 import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
@@ -42,6 +42,18 @@ router.delete(
   "/delete/:gigId",
   auth(UserRole.ADMIN),
   GigController.deleteGig
+);
+// Save Gig
+router.post(
+  "/save/:gigId",
+  auth(UserRole.USER),
+  GigController.saveGig
+);
+// Apply Gig
+router.post(
+  "/apply/:gigId",
+  auth(UserRole.USER),
+  GigController.applyGig
 );
 
 export const GigRoutes = router;

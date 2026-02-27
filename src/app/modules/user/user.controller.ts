@@ -138,6 +138,24 @@ const adminDashboardOverview = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const userDashboardOverview = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const result = await UserService.userDashboardOverview(userId);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "User dashboard overview fetched successfully!",
+    data: result,
+  });
+});
+const monthlyInsight = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const result = await UserService.monthlyInsight(userId);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Monthly insight fetched successfully!",
+    data: result,
+  });
+});
 export const UserController = {
   addManager,
   blockUser,
@@ -146,8 +164,10 @@ export const UserController = {
   getAllUser,
   updateProfile,
   getAllAdmins,
+  monthlyInsight,
   deleteUser,
   myProfile,
   getSingleUserById,
+  userDashboardOverview,
   adminDashboardOverview
 };

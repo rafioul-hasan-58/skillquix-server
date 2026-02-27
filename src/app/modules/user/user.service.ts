@@ -10,6 +10,8 @@ import stripe from "../../stripe/stripe";
 import { addManagerInput } from "./user.validation";
 import { monthlyRevenue } from "../subscription/subscription.helper";
 import { SkillService } from "../skill/skill.service";
+import httpStatus from "http-status";
+import axios from "axios";
 
 
 export const UserService = {
@@ -381,6 +383,124 @@ export const UserService = {
       freeUser: (freeUser / totalUser) * 100,
       proUser: (proUser / totalUser) * 100,
       recentUser
+    }
+  },
+  userDashboardOverview: async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+    }
+
+    // 🗓 Get start & end of current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const [skills, skillAddedThisMonth, response] = await Promise.all([
+      prisma.skill.findMany({
+        where: { userId },
+        select: { skillName: true },
+        take: 6
+      }),
+
+      prisma.skill.count({
+        where: {
+          userId,
+          createdAt: {
+            gte: startOfMonth,
+            lt: endOfMonth
+          }
+        }
+      }),
+
+      axios.get(`${config.ai_base_url}/v1/gigs/similar/${userId}`, {
+        params: {
+          page: 1,
+          page_size: 6,
+        },
+        headers: {
+          accept: "application/json",
+        },
+      })
+    ]);
+
+    const activityLog = await prisma.activityLog.findMany({
+      where: {
+        userId
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 3
+    })
+
+    return {
+      topSkills: skills,
+      opportunityMatches: response.data.gigs,
+      monthlyInsights: {
+        skillsAddedThisMonth: skillAddedThisMonth,
+        clarity: 16, // you can calculate later,
+        activityLog
+      }
+    };
+  },
+  monthlyInsight: async (userId: string) => {
+    // 🗓 Get start & end of current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const skillCount = await prisma.skill.count({
+      where: {
+        userId,
+        createdAt: {
+          gte: startOfMonth,
+          lt: endOfMonth
+        }
+      }
+    });
+    const topThreeSkills = await prisma.skill.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: startOfMonth,
+          lt: endOfMonth
+        }
+      },
+      select: {
+        skillName: true
+      },
+      take: 3
+    });
+    const skillImpactDetails = await Promise.all(
+      topThreeSkills.map(async (skill) => {
+        const response = await axios.post(
+          `${config.ai_base_url}/v1/skill-impact`,
+          null,
+          {
+            params: {
+              skill: skill.skillName,
+            },
+            headers: {
+              accept: "application/json",
+            },
+          }
+        );
+
+        return {
+          skill: skill.skillName,
+          impact: response.data,
+        };
+      })
+    );
+    return {
+      clarityScore: 86,
+      delta: 6,
+      skillCount,
+      newRoleIdentified: 7,
+      skillImpactDetails
     }
   }
 };

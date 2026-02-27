@@ -7,6 +7,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model ActivityLog {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String       @db.ObjectId
+  action      ActivityType
+  description String?
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id])
+}
+
+model AppliedGig {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  gigId     String   @db.ObjectId
+  gig       Gig      @relation(fields: [gigId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gigId, userId])
+}
+
 model Accomplishment {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -66,6 +87,8 @@ model Gig {
   embedding        Json?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  savedGigs        SavedGig[]
+  appliedGigs      AppliedGig[]
 }
 
 model Invoice {
@@ -157,6 +180,18 @@ model Skill {
   @@unique([userId, skillName])
 }
 
+model SavedGig {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  gigId     String   @db.ObjectId
+  gig       Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gigId])
+}
+
 model User {
   id                   String             @id @default(auto()) @map("_id") @db.ObjectId
   fullName             String
@@ -192,9 +227,21 @@ model User {
   invoices             Invoice[]
   skills               Skill[]
   accomplishments      Accomplishment[]
+  activityLogs         ActivityLog[]
+  savedGigs            SavedGig[]
+  appliedGigs          AppliedGig[]
 }
 
 // Enums in alphabetical order
+enum ActivityType {
+  SAVED_GIG
+  APPLIED_GIG
+  UPDATED_SKILLS
+  ADDED_PROJECT
+  VIEWED_SNAPSHOT
+  UPLOADED_RESUME
+}
+
 enum ExperienceLevel {
   ENTRY
   MID_LEVEL

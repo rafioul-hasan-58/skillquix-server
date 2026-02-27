@@ -2,9 +2,10 @@ import status from "http-status";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
-import { Gig, Source } from "@prisma/client";
+import { ActivityType, Gig, Source } from "@prisma/client";
 import { generateGigEmbedding, upsertGigEmbedding } from "./gig.helper";
 import config from "../../../config";
+import { ActivityLogService } from "../activitylog/activitylog.service";
 
 export const GigService = {
     // Create a new gig
@@ -43,7 +44,7 @@ export const GigService = {
             },
         });
         const res = await upsertGigEmbedding(result.id, embedding);
-        return result
+        return res
     },
 
     // Get all gigs with QueryBuilder
@@ -203,4 +204,66 @@ export const GigService = {
         const data = await response.json();
         return data;
     },
+    saveGig: async (gigId: string, userId: string) => {
+        const [user, gig] = await Promise.all([
+            prisma.user.findUnique({ where: { id: userId } }),
+            prisma.gig.findUnique({ where: { id: gigId } }),
+        ]);
+
+        if (!user) throw new Error("User not found");
+        if (!gig) throw new Error("Gig not found");
+
+        // 2️. Create applied gig (duplicate handled by unique constraint)
+        try {
+            await prisma.savedGig.create({
+                data: {
+                    gigId,
+                    userId,
+                },
+            });
+
+            await ActivityLogService.add(userId, ActivityType.SAVED_GIG)
+
+            return { saved: true }
+        } catch (error: any) {
+            if (error.code === "P2002") {
+                throw new Error("You already applied to this gig");
+            }
+            throw error;
+        }
+    },
+    applyGig: async (gigId: string, userId: string) => {
+        // 1️. Check user & gig in parallel
+        const [user, gig] = await Promise.all([
+            prisma.user.findUnique({ where: { id: userId } }),
+            prisma.gig.findUnique({ where: { id: gigId } }),
+        ]);
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        if (!gig) {
+            throw new Error("Gig not found");
+        }
+
+        // 2️. Create applied gig (duplicate handled by unique constraint)
+        try {
+            await prisma.appliedGig.create({
+                data: {
+                    gigId,
+                    userId,
+                },
+            });
+
+            await ActivityLogService.add(userId, ActivityType.APPLIED_GIG)
+
+            return { applied: true }
+        } catch (error: any) {
+            if (error.code === "P2002") {
+                throw new Error("You already applied to this gig");
+            }
+            throw error;
+        }
+    }
 };

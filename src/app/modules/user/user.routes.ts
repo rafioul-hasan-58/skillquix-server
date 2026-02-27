@@ -71,8 +71,18 @@ router.get(
   UserController.getAllAdmins
 );
 router.get(
-  "/admin/dashbaord/overview",
+  "/admin/dashboard/overview",
   auth(UserRole.ADMIN),
   UserController.adminDashboardOverview
+);
+router.get(
+  "/dashboard/overview",
+  auth(UserRole.USER),
+  UserController.userDashboardOverview
+);
+router.get(
+  "/dashboard/monthly-insight",
+  auth(UserRole.USER),
+  UserController.monthlyInsight
 );
 export const UserRoutes = router;

@@ -2,5 +2,6 @@
     "liveServer.settings.port": 5503,
     "cSpell.words": [
         "Lamare"
-    ]
+    ],
+    "prisma.pinToPrisma6": true
 }
