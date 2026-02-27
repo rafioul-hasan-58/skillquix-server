@@ -12,7 +12,7 @@ interface GigPayload {
     experienceLevel: string;
     duration: string;
     location: string;
-    jobDescription: string;
+    jobDescription: string[];
     responsibilities: string[];
     benefits: string[];
     gigStatus: string;
@@ -56,7 +56,7 @@ Short Description:
 ${description}
 
 Job Description:
-${jobDescription}
+${jobDescription?.map((res, i) => `${i + 1}. ${res}`).join("\n")}
 
 Responsibilities:
 ${responsibilities?.map((res, i) => `${i + 1}. ${res}`).join("\n")}

@@ -50,10 +50,11 @@ const updateGig = catchAsync(async (req: Request, res: Response) => {
 // Delete Gig
 const deleteGig = catchAsync(async (req: Request, res: Response) => {
     const { gigId } = req.params;
-    await GigService.deleteGigFromDB(gigId);
+    const result = await GigService.deleteGigFromDB(gigId);
     sendResponse(res, {
         statusCode: status.OK,
         message: "Gig deleted successfully!",
+        data: result
     });
 });
 

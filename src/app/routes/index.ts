@@ -3,7 +3,7 @@ import { AuthRoutes } from "../modules/auth/auth.route";
 import { UserRoutes } from "../modules/user/user.routes";
 import { ResumeRouter } from "../modules/resume/resume.routes";
 import { ReflextionRoutes } from "../modules/reflextion/reflextion.routes";
-import { GigRoutes } from "../modules/gig/git.routes";
+import { GigRoutes } from "../modules/gig/gig.routes";
 import { PlanRoutes } from "../modules/plan/plan.routes";
 import { SubscriptionRouter } from "../modules/subscription/subscription.routes";
 import { SkillRouter } from "../modules/skill/skill.routes";

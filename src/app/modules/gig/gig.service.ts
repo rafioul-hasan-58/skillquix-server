@@ -4,6 +4,7 @@ import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { Gig, Source } from "@prisma/client";
 import { generateGigEmbedding, upsertGigEmbedding } from "./gig.helper";
+import config from "../../../config";
 
 export const GigService = {
     // Create a new gig
@@ -41,7 +42,7 @@ export const GigService = {
                 userId
             },
         });
-        await upsertGigEmbedding(result.id, embedding);
+        const res = await upsertGigEmbedding(result.id, embedding);
         return result
     },
 
@@ -121,6 +122,7 @@ export const GigService = {
         payload: Partial<Gig> & {
             responsibilities?: string[];
             benefits?: string[];
+            jobDescription?: string[];
         }
     ) => {
         const isGigExist = await prisma.gig.findUnique({
@@ -131,7 +133,7 @@ export const GigService = {
             throw new ApiError(status.NOT_FOUND, "Gig not found!");
         }
 
-        const { responsibilities, benefits, ...restPayload } = payload;
+        const { responsibilities, benefits, jobDescription, ...restPayload } = payload;
 
         const updatedGig = await prisma.gig.update({
             where: { id: gigId },
@@ -159,6 +161,16 @@ export const GigService = {
                         ],
                     },
                 }),
+                ...(jobDescription && {
+                    jobDescription: {
+                        set: [
+                            ...new Set([
+                                ...isGigExist.jobDescription,
+                                ...jobDescription,
+                            ]),
+                        ],
+                    },
+                }),
             },
         });
 
@@ -178,7 +190,17 @@ export const GigService = {
         await prisma.gig.delete({
             where: { id: gigId },
         });
+        const response = await fetch(
+            `${config.ai_base_url}/v1/admin/qdrant-delete/${gigId}`,
+            {
+                method: "DELETE",
+                headers: {
+                    "accept": "application/json",
+                },
+            }
+        );
 
-        return null;
+        const data = await response.json();
+        return data;
     },
 };

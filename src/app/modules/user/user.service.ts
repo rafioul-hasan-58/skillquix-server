@@ -1,5 +1,5 @@
 import status from "http-status";
-import { hashPassword } from "./user.utils";
+import { hashPassword, parseResumeFromS3 } from "./user.utils";
 import ApiError from "../../errors/ApiError";
 import { SubscriptionType, User, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
@@ -24,12 +24,17 @@ export const UserService = {
 
     const hashedPassword = await hashPassword(payload.password ?? "");
 
+
     const user = await prisma.user.create({
       data: {
         ...payload,
         password: hashedPassword,
       },
     });
+
+    // if (payload.resumeLink) {
+    //   await parseResumeFromS3(payload.resumeLink, user.id)
+    // }
 
     // Create Stripe customer and update user in one go
     try {

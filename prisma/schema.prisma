@@ -56,7 +56,7 @@ model Gig {
   experienceLevel  ExperienceLevel @default(MID_LEVEL)
   duration         String
   location         String
-  jobDescription   String
+  jobDescription   String[]
   responsibilities String[]
   benefits         String[]
   gigStatus        GigStatus       @default(ACTIVE)
