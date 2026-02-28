@@ -55,5 +55,10 @@ router.post(
   auth(UserRole.USER),
   GigController.applyGig
 );
+router.get(
+  "/my-saved",
+  auth(UserRole.USER),
+  GigController.mySavedGig
+);
 
 export const GigRoutes = router;

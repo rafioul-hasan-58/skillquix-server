@@ -79,6 +79,17 @@ const applyGig = catchAsync(async (req: Request, res: Response) => {
         data: result
     });
 });
+const mySavedGig = catchAsync(async (req: Request, res: Response) => {
+    const { id: userId } = req.user;
+    const result = await GigService.mySavedGig(userId, req.query);
+    sendResponse(res, {
+        statusCode: status.OK,
+        message: "Saved gig retrived successfully!",
+        meta: result.meta,
+        data: result.data,
+
+    });
+});
 
 export const GigController = {
     applyGig,
@@ -88,4 +99,5 @@ export const GigController = {
     getSingleGig,
     updateGig,
     deleteGig,
+    mySavedGig
 }

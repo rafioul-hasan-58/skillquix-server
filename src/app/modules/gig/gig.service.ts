@@ -265,5 +265,44 @@ export const GigService = {
             }
             throw error;
         }
+    },
+    mySavedGig: async (userId: string, query: Record<string, unknown>) => {
+        const gigQuery = new QueryBuilder(prisma.savedGig, query)
+            .search(["gig.gigTitle", "gig.industryName", "gig.location", "gig.category"])
+            .filter()
+            .paginate()
+            .select({
+                gig: {
+                    select: {
+                        id: true,
+                        gigTitle: true,
+                        industryName: true,
+                        industryEmail: true,
+                        category: true,
+                        description: true,
+                        gigType: true,
+                        source: true,
+                        experienceLevel: true,
+                        duration: true,
+                        location: true,
+                        gigStatus: true,
+                        validUntil: true,
+                        createdAt: true,
+                    }
+                }
+            })
+            .rawFilter({
+                userId
+            });
+
+        const [result, meta] = await Promise.all([
+            gigQuery.execute(),
+            gigQuery.countTotal(),
+        ]);
+
+        return {
+            data: result.map((gig: any) => gig.gig),
+            meta
+        }
     }
 };

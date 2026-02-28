@@ -24,6 +24,9 @@ const createSubscription = async (
   if (!plan) throw new ApiError(status.NOT_FOUND, "Plan not found");
   if (!plan.isActive || plan.isDeleted) throw new ApiError(status.BAD_REQUEST, "Plan is not available");
   if (!plan.stripePriceId) throw new ApiError(status.BAD_REQUEST, "Plan has no price configured");
+  if (user.subscriptionStatus === SubscriptionStatus.ACTIVE) {
+    throw new ApiError(httpStatus.CONFLICT, "You are already subscribed!")
+  }
 
   // Step 2 — Attach payment method to Stripe customer
   await stripe.paymentMethods.attach(paymentMethodId, {
