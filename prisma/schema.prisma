@@ -42,7 +42,7 @@ model Accomplishment {
 model Certificate {
   id        String @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  issueDate String
+  issueDate String?
 
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   resumeId String @db.ObjectId
@@ -54,8 +54,8 @@ model Education {
   resumeId      String   @db.ObjectId
   resume        Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   degreeName    String
-  instituteName String
-  startDate     String
+  instituteName String?
+  startDate     String?
   endDate       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -65,10 +65,10 @@ model Experience {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   resumeId    String   @db.ObjectId
   resume      Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  workingRole String
-  companyName String
-  description String
-  startDate   String
+  workingRole String?
+  companyName String?
+  description String?
+  startDate   String?
   endDate     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -146,11 +146,11 @@ model Plan {
 model Project {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  link        String
+  link        String?
   techStack   String[] // ["Python", "FastAPI"]
   description String[] // multiple bullet points
-  startDate   String
-  endDate     String
+  startDate   String?
+  endDate     String?
 
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   resumeId String @db.ObjectId
@@ -158,8 +158,8 @@ model Project {
 
 model OtherLink {
   id   String @id @default(auto()) @map("_id") @db.ObjectId
-  type String
-  link String
+  type String?
+  link String?
 
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   resumeId String @db.ObjectId
@@ -188,12 +188,12 @@ model Resume {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   userId       String        @unique @db.ObjectId
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
-  title        String
-  email        String
-  location     String
-  phone        String
-  summary      String
+  name         String?
+  title        String?
+  email        String?
+  location     String?
+  phone        String?
+  summary      String?
   embedding    Json?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

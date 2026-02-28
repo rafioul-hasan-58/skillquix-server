@@ -1,14 +1,16 @@
 import { ProficiencyLevel, SkillSource } from "@prisma/client";
-import { z } from "zod";
+import {  z } from "zod";
 
 const experienceSchema = z.object({
     workingRole: z
         .string({ required_error: "Working role is required" })
-        .min(1, "Working role cannot be empty"),
+        .min(1, "Working role cannot be empty")
+        .optional(),
 
     companyName: z
         .string({ required_error: "Company name is required" })
-        .min(1, "Company name cannot be empty"),
+        .min(1, "Company name cannot be empty")
+        .optional(),
 
     description: z
         .string()
@@ -16,9 +18,7 @@ const experienceSchema = z.object({
 
     startDate: z
         .string({ required_error: "Start date is required" })
-        .refine((date) => !isNaN(Date.parse(date)), {
-            message: "Invalid start date format",
-        }),
+        .optional(),
 
     endDate: z
         .string()
@@ -39,24 +39,16 @@ const educationSchema = z.object({
 
     instituteName: z
         .string({ required_error: "Institute name is required" })
-        .min(1, "Institute name cannot be empty"),
+        .min(1, "Institute name cannot be empty")
+        .optional(),
 
     startDate: z
         .string({ required_error: "Start date is required" })
-        .refine((date) => !isNaN(Date.parse(date)), {
-            message: "Invalid start date format",
-        }),
+        .optional(),
 
     endDate: z
         .string()
         .optional()
-        .nullable()
-        .refine((date) => {
-            if (!date) return true;
-            return !isNaN(Date.parse(date));
-        }, {
-            message: "Invalid end date format",
-        }),
 });
 
 const skillSchema = z.object({
@@ -68,10 +60,12 @@ const skillSchema = z.object({
         .min(1, "skillCategory cannot be empty"),
     proficiencyLevel: z
         .string({ required_error: "proficiencyLevel is required" })
-        .min(1, "proficiencyLevel cannot be empty"),
+        .min(1, "proficiencyLevel cannot be empty")
+        .optional(),
     yearOfExperience: z
         .number({ required_error: "yearOfExperience is required" })
-        .min(1, "yearOfExperience cannot be empty"),
+        .min(1, "yearOfExperience cannot be empty")
+        .optional(),
 });
 const projectSchema = z.object({
     name: z
@@ -80,27 +74,32 @@ const projectSchema = z.object({
 
     link: z
         .string({ required_error: "Project link is required" })
-        .url("Invalid project URL"),
+        .url("Invalid project URL")
+        .optional(),
 
     techStack: z
         .array(z.string().min(1))
-        .min(1, "At least one tech stack is required"),
+        .min(1, "At least one tech stack is required")
+        .optional(),
 
     description: z
         .array(z.string().min(1))
-        .min(1, "At least one description point is required"),
+        .min(1, "At least one description point is required")
+        .optional(),
 
     startDate: z
         .string({ required_error: "Start date is required" })
         .refine((date) => !isNaN(Date.parse(date)), {
             message: "Invalid start date format",
-        }),
+        })
+        .optional(),
 
     endDate: z
         .string({ required_error: "End date is required" })
         .refine((date) => !isNaN(Date.parse(date)), {
             message: "Invalid end date format",
-        }),
+        })
+        .optional(),
 });
 
 const otherLinkSchema = z.object({
@@ -126,7 +125,8 @@ const certificateSchema = z.object({
 
     issueDate: z
         .string({ required_error: "Issue date is required" })
-        .min(1, "Issue date cannot be empty"),
+        .min(1, "Issue date cannot be empty")
+        .optional(),
 });
 const createResumeSchema = z.object({
     name: z
@@ -135,20 +135,23 @@ const createResumeSchema = z.object({
 
     title: z
         .string({ required_error: "Title is required" })
-        .min(1, "Title cannot be empty"),
+        .min(1, "Title cannot be empty")
+        .optional(),
 
     email: z
         .string({ required_error: "Email is required" })
-        .email("Invalid email format"),
+        .email("Invalid email format")
+        .optional(),
 
     location: z
         .string({ required_error: "Location is required" })
-        .min(1, "Location cannot be empty"),
+        .min(1, "Location cannot be empty")
+        .optional(),
 
     phone: z
         .string({ required_error: "Phone is required" })
-        .min(1, "Phone cannot be empty"),
-
+        .min(1, "Phone cannot be empty")
+        .optional(),
     summary: z
         .string()
         .optional(),
@@ -268,7 +271,7 @@ const updateEducationSchema = z.array(
 );
 const addEducationSchema = z.object({
     resumeId: z.string().min(1),
-    degreeName: z.string().optional(),
+    degreeName: z.string(),
     instituteName: z.string().optional(),
     startDate: z.string().optional(),
     endDate: z.coerce.date().optional(),
@@ -286,8 +289,8 @@ const updateSkillsSchema = z.array(
 );
 const addSkillSchema = z.object({
     resumeId: z.string().min(1), // assuming each skill has an id
-    skillName: z.string().min(1).optional(),
-    skillCategory: z.string().min(1).optional(),
+    skillName: z.string().min(1),
+    skillCategory: z.string().min(1),
     proficiencyLevel: z.nativeEnum(ProficiencyLevel).optional(),
     yearOfExperience: z.number().min(0).optional(),
     source: z.nativeEnum(SkillSource).optional()
@@ -296,11 +299,11 @@ const addSkillSchema = z.object({
 const addProjectSchema = z.object({
     resumeId: z.string().min(1, "Resume id is required"),
     name: z.string().min(1, "Project name is required"),
-    link: z.string().url("Invalid project link").min(1, "Project link is required"),
-    techStack: z.array(z.string()).min(1, "At least one tech stack is required"),
-    description: z.array(z.string()).min(1, "At least one description point is required"),
-    startDate: z.string().min(1, "Start date is required"),
-    endDate: z.string().min(1, "End date is required"),
+    link: z.string().url("Invalid project link").min(1, "Project link is required").optional(),
+    techStack: z.array(z.string()).min(1, "At least one tech stack is required").optional(),
+    description: z.array(z.string()).min(1, "At least one description point is required").optional(),
+    startDate: z.string().min(1, "Start date is required").optional(),
+    endDate: z.string().min(1, "End date is required").optional(),
 });
 
 const updateProjectSchema = z.array(
@@ -318,8 +321,8 @@ const updateProjectSchema = z.array(
 // --- OTHER LINKS ---
 const addOtherLinkSchema = z.object({
     resumeId: z.string().min(1, "Resume id is required"),
-    type: z.string().min(1, "Link type is required"),
-    link: z.string().url("Invalid URL").min(1, "Link is required"),
+    type: z.string().min(1, "Link type is required").optional(),
+    link: z.string().url("Invalid URL").min(1, "Link is required").optional(),
 });
 
 const updateOtherLinkSchema = z.array(
@@ -347,7 +350,7 @@ const updateLanguageSchema = z.array(
 const addCertificateSchema = z.object({
     resumeId: z.string().min(1, "Resume id is required"),
     name: z.string().min(1, "Certificate name is required"),
-    issueDate: z.string().min(1, "Issue date is required"),
+    issueDate: z.string().min(1, "Issue date is required").optional(),
 });
 
 const updateCertificateSchema = z.array(
