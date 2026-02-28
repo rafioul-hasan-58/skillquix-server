@@ -45,3 +45,36 @@ export const parseResumeFromS3 = async (
 		throw error;
 	}
 };
+
+export const getClearityScore = async (userId: string) => {
+	try {
+		const response = await fetch(
+			`${config.ai_base_url}/v1/clearity-score/${userId}`,
+			{
+				method: "GET",
+				headers: {
+					accept: "application/json",
+				},
+			}
+		);
+		const data = await response.json();
+		return data;
+	} catch (error) {
+		console.error("Error fetching clearity score:", error);
+	}
+};
+
+export const getClarityPercentageChange = (
+  clarity: any
+): number => {
+  const current = clarity?.currentMonth?.score ?? 0;
+  const previous = clarity?.previousMonth?.score ?? 0;
+
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
+
+  const percentage = ((current - previous) / previous) * 100;
+
+  return Number(percentage.toFixed(2));
+};

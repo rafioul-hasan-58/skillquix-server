@@ -47,12 +47,12 @@ const createSubscription = async (
   const invoice = subscription.latest_invoice as Stripe.Invoice;
   const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
   const fullClientSecret = paymentIntent.client_secret;
-  if (!fullClientSecret) throw new ApiError(status.BAD_REQUEST, "Client secret not found");
-  const clientSecret = fullClientSecret.split("_secret_")[0];
+  // if (!fullClientSecret) throw new ApiError(status.BAD_REQUEST, "Client secret not found");
+  // const clientSecret = fullClientSecret.split("_secret_")[0];
 
   return {
     subscriptionId: subscription.id,
-    clientSecret,
+    clientSecret: fullClientSecret,
   };
 };
 

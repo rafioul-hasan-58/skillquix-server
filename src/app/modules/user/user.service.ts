@@ -1,5 +1,5 @@
 import status from "http-status";
-import { hashPassword, parseResumeFromS3 } from "./user.utils";
+import { getClarityPercentageChange, getClearityScore, hashPassword, parseResumeFromS3 } from "./user.utils";
 import ApiError from "../../errors/ApiError";
 import { SubscriptionType, User, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
@@ -437,12 +437,14 @@ export const UserService = {
       take: 3
     })
 
+    const clarity = await getClearityScore(userId);
+
     return {
       topSkills: skills,
       opportunityMatches: response.data.gigs,
       monthlyInsights: {
         skillsAddedThisMonth: skillAddedThisMonth,
-        clarity: 16, // you can calculate later,
+        clarity: clarity.currentMonth.score,
         activityLog
       }
     };
@@ -495,9 +497,11 @@ export const UserService = {
         };
       })
     );
+    const clarity = await getClearityScore(userId);
+    const delta = getClarityPercentageChange(clarity)
     return {
-      clarityScore: 86,
-      delta: 6,
+      clarityScore: clarity.currentMonth.score,
+      delta,
       skillCount,
       newRoleIdentified: 7,
       skillImpactDetails
