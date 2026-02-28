@@ -8,6 +8,7 @@ import QueryBuilder from "../../builder/QueryBuilder";
 import { SubscriptionStatus, SubscriptionType } from "@prisma/client";
 import { PlanService } from "../plan/plan.service";
 import { monthlyRevenue } from "./subscription.helper";
+import httpStatus from "http-status";
 
 const createSubscription = async (
   userId: string,
@@ -269,7 +270,32 @@ const downgradeSubscription = async (userId: string, newPlanId: string) => {
   };
 };
 const getMySubscription = async (userId: string) => {
-  return userId
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId
+    }
+  });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
+  };
+
+  if (user.subscriptionType === SubscriptionType.FREE || user.stripeSubscriptionId === null) {
+    const plan = await prisma.plan.findFirst({
+      where: {
+        type: SubscriptionType.FREE
+      }
+    });
+    return plan
+  }
+
+
+  const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId!);
+
+  // Get plan from DB using Stripe Price ID
+  const plan = await prisma.plan.findFirst({
+    where: { stripePriceId: subscription.items.data[0].price.id },
+  });
+  return plan
 };
 export const SubscriptionService = {
   createSubscription,
