@@ -268,11 +268,15 @@ const downgradeSubscription = async (userId: string, newPlanId: string) => {
     effectiveDate: new Date(subscription.current_period_end * 1000),
   };
 };
+const getMySubscription = async (userId: string) => {
+  return userId
+};
 export const SubscriptionService = {
   createSubscription,
   getSubscribedUsers,
   getSubscriptions,
   cancelSubscription,
   upgradeSubscription,
-  downgradeSubscription
+  downgradeSubscription,
+  getMySubscription
 }

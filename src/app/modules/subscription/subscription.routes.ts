@@ -41,5 +41,10 @@ router.get(
     auth(UserRole.ADMIN),
     SubscriptionController.getSubscriptions
 );
+router.get(
+    "/my-subscription",
+    auth(UserRole.USER),
+    SubscriptionController.getMySubscription
+);
 
 export const SubscriptionRouter = router

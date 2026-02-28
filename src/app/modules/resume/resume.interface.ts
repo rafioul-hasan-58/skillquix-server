@@ -1,4 +1,4 @@
-import { Education, Experience, Skill, } from "@prisma/client";
+import { Certificate, Education, Experience, Language, OtherLink, Project, Skill, } from "@prisma/client";
 
 export interface createResume {
     name: string;
@@ -10,6 +10,10 @@ export interface createResume {
     experiences: Experience[];
     education: Education[];
     skills: Skill[];
+    projects: Project[]
+    otherLinks: OtherLink[]
+    languages: Language[]
+    certificates: Certificate[]
 }
 
 export interface updateWorkExperience {

@@ -61,6 +61,15 @@ const downgradeSubscription = catchAsync(async (req: Request, res: Response) => 
         data: result,
     });
 });
+const getMySubscription = catchAsync(async (req: Request, res: Response) => {
+    const { id: userId } = req.user;
+    const result = await SubscriptionService.getMySubscription(userId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        message: "My subscription  successfully!",
+        data: result,
+    });
+});
 
 
 export const SubscriptionController = {
@@ -69,5 +78,6 @@ export const SubscriptionController = {
     getSubscribedUser,
     cancelSubscription,
     upgradeSubscription,
-    downgradeSubscription
+    downgradeSubscription,
+    getMySubscription
 }

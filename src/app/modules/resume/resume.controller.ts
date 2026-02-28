@@ -101,5 +101,124 @@ export const ResumeController = {
             message: "Resume Skills added successfully!",
             data: result
         });
-    })
+    }),
+    // --- PROJECTS ---
+    addProject: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.addProject(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.CREATED,
+            message: "Project added successfully!",
+            data: result
+        });
+    }),
+    updateProject: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.updateProject(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Project updated successfully!",
+            data: result
+        });
+    }),
+    deleteProject: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const result = await ResumeService.deleteProject(id);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Project deleted successfully!",
+            data: result
+        });
+    }),
+
+    // --- OTHER LINKS ---
+    addOtherLink: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.addOtherLink(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.CREATED,
+            message: "Link added successfully!",
+            data: result
+        });
+    }),
+    updateOtherLink: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.updateOtherLink(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Link updated successfully!",
+            data: result
+        });
+    }),
+    deleteOtherLink: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const result = await ResumeService.deleteOtherLink(id);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Link deleted successfully!",
+            data: result
+        });
+    }),
+
+    // --- LANGUAGES ---
+    addLanguage: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.addLanguage(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.CREATED,
+            message: "Language added successfully!",
+            data: result
+        });
+    }),
+    updateLanguage: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.updateLanguage(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Language updated successfully!",
+            data: result
+        });
+    }),
+    deleteLanguage: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const result = await ResumeService.deleteLanguage(id);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Language deleted successfully!",
+            data: result
+        });
+    }),
+
+    // --- CERTIFICATES ---
+    addCertificate: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.addCertificate(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.CREATED,
+            message: "Certificate added successfully!",
+            data: result
+        });
+    }),
+    updateCertificate: catchAsync(async (req: Request, res: Response) => {
+        const result = await ResumeService.updateCertificate(req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Certificate updated successfully!",
+            data: result
+        });
+    }),
+    deleteCertificate: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const result = await ResumeService.deleteCertificate(id);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Certificate deleted successfully!",
+            data: result
+        });
+    }),
 }
