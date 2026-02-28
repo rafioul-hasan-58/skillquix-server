@@ -121,10 +121,21 @@ const getAllPlans = async () => {
     });
     return result
 }
-
+const planDetails = async (planId: string) => {
+    const plan = await prisma.plan.findUnique({
+        where: {
+            id: planId
+        }
+    });
+    if (!plan) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Plan not found!")
+    }
+    return plan
+}
 export const PlanService = {
     createPlan,
     updatePlan,
     deletePlan,
-    getAllPlans
+    getAllPlans,
+    planDetails
 };

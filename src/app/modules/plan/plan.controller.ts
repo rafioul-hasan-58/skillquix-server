@@ -42,10 +42,21 @@ const getAllPlans = catchAsync(async (req: Request, res: Response) => {
         data: plan,
     });
 });
+const planDetails = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const plan = await PlanService.planDetails(id);
+    sendResponse(res, {
+        statusCode: status.CREATED,
+        success: true,
+        message: "Plan details retrieved successfully",
+        data: plan,
+    });
+});
 
 export const PlanController = {
     createPlan,
     updatePlan,
     deletePlan,
-    getAllPlans
+    getAllPlans,
+    planDetails
 };

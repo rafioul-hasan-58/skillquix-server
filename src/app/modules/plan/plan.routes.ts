@@ -29,5 +29,10 @@ router.get(
     auth(),
     PlanController.getAllPlans
 );
+router.get(
+    "/details/:id",
+    auth(),
+    PlanController.planDetails
+);
 
 export const PlanRoutes = router;
