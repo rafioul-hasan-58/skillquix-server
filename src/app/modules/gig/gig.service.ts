@@ -6,6 +6,7 @@ import { ActivityType, Gig, Source } from "@prisma/client";
 import { generateGigEmbedding, upsertGigEmbedding } from "./gig.helper";
 import config from "../../../config";
 import { ActivityLogService } from "../activitylog/activitylog.service";
+import { mailService } from "../../mail/mail.service";
 
 export const GigService = {
     // Create a new gig
@@ -257,7 +258,7 @@ export const GigService = {
             });
 
             await ActivityLogService.add(userId, ActivityType.APPLIED_GIG)
-
+            await mailService.sendApplyGigConfirmation(user.email, user.fullName, "Application Confirmation")
             return { applied: true }
         } catch (error: any) {
             if (error.code === "P2002") {
