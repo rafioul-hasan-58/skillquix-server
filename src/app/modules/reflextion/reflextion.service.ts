@@ -3,6 +3,8 @@ import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
 import { CreateReflextionInput } from "./reflextion.validation";
 import QueryBuilder from "../../builder/QueryBuilder";
+import httpStatus from "http-status";
+import { SubscriptionType } from "@prisma/client";
 
 export const ReflextionService = {
     // CREATE
@@ -10,6 +12,27 @@ export const ReflextionService = {
         if (!payload.shortSummary?.trim()) {
             throw new ApiError(status.BAD_REQUEST, "Short summary is required");
         }
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        });
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User is not found to create reflextion!")
+        };
+
+        if (user.subscriptionType === SubscriptionType.FREE) {
+            const reflextionCount = await prisma.reflextion.count({
+                where: {
+                    userId
+                }
+            });
+            if (reflextionCount >= 3) {
+                throw new ApiError(httpStatus.FORBIDDEN, "Free users can create only 3 reflections")
+            }
+        }
+
+
 
         if (!Array.isArray(payload.extractedSkills) || payload.extractedSkills.length === 0) {
             throw new ApiError(status.BAD_REQUEST, "At least one extracted skill is required");
