@@ -221,4 +221,16 @@ export const ResumeController = {
             data: result
         });
     }),
+
+    // increment resume parse count
+    incrementResumeParseCount: catchAsync(async (req: Request, res: Response) => {
+        const { id: userId } = req.user;
+        const result = await ResumeService.incrementResumeParseCount(userId);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume parse count updated successfully!.",
+            data: result
+        });
+    }),
 }

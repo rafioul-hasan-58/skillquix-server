@@ -40,7 +40,7 @@ model Accomplishment {
 }
 
 model Certificate {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   issueDate String?
 
@@ -157,7 +157,7 @@ model Project {
 }
 
 model OtherLink {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  id   String  @id @default(auto()) @map("_id") @db.ObjectId
   type String?
   link String?
 
@@ -256,6 +256,7 @@ model User {
   // manager role 
   isManagerAllowed     Boolean?
   resumeLink           String?
+  resumeParseCount     Int                @default(0)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   // subscription

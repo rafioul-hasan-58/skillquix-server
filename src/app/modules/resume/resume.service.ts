@@ -129,17 +129,17 @@ export const ResumeService = {
             projects, otherLinks, languages, certificates,
         } = payload;
 
-        // ✅ Do heavy AI call OUTSIDE transaction
+        //  Do heavy AI call OUTSIDE transaction
         const embedding = await generateResumeEmbedding(payload);
 
-        // ✅ Do all cleanup OUTSIDE transaction first
+        //  Do all cleanup OUTSIDE transaction first
         const existingResume = await prisma.resume.findUnique({
             where: { userId },
             select: { id: true }
         });
 
         if (existingResume) {
-            // ✅ Cleanup in parallel with Promise.all instead of sequential
+            //  Cleanup in parallel with Promise.all instead of sequential
             await Promise.all([
                 prisma.experience.deleteMany({ where: { resumeId: existingResume.id } }),
                 prisma.education.deleteMany({ where: { resumeId: existingResume.id } }),
@@ -151,14 +151,14 @@ export const ResumeService = {
             ]);
         }
 
-        // ✅ Now upsert resume (no nested creates needed, children already deleted)
+        //  Now upsert resume (no nested creates needed, children already deleted)
         const resume = await prisma.resume.upsert({
             where: { userId },
             update: { name, title, email, location, phone, summary, embedding },
             create: { userId, name, title, email, location, phone, summary, embedding },
         });
 
-        // ✅ Create all children in parallel with Promise.all — no transaction needed
+        //  Create all children in parallel with Promise.all — no transaction needed
         await Promise.all([
             experiences?.length
                 ? prisma.experience.createMany({
@@ -243,7 +243,7 @@ export const ResumeService = {
                 : Promise.resolve(),
         ]);
 
-        // ✅ Upsert embedding after everything is done
+        //  Upsert embedding after everything is done
         const res = await upsertResumeEmbedding(resume.id, embedding);
         return res;
     },
@@ -575,5 +575,30 @@ export const ResumeService = {
         await prisma.certificate.delete({ where: { id: certificateId } });
         return { message: "Certificate deleted successfully!" };
     },
+
+    // increment resume parse count
+    incrementResumeParseCount: async (userId: string) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        });
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+        };
+        const result = await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                resumeParseCount: {
+                    increment: 1
+                }
+            }
+        });
+        return {
+            message: "Resume parse count updated successfully!."
+        }
+    }
 
 }

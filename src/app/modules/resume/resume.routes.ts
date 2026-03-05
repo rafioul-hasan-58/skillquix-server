@@ -149,4 +149,11 @@ router.delete(
     ResumeController.deleteCertificate
 );
 
+// increment resume parse count
+router.post(
+    "/increment-parse-count",
+    auth(UserRole.USER),
+    ResumeController.incrementResumeParseCount
+);
+
 export const ResumeRouter = router;
