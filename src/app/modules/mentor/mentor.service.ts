@@ -1,0 +1,206 @@
+import { MentorProfile, MentorshipRequest, MentorshipRequestStatus } from "@prisma/client";
+import prisma from "../../lib/prisma";
+import ApiError from "../../errors/ApiError";
+import httpStatus from "http-status";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import QueryBuilder from "../../builder/QueryBuilder";
+
+export const MentorService = {
+    // mentor
+    setupMentorProfile: async (userId: string, payload: MentorProfile) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        });
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found to setup mentor profile!")
+        };
+
+        try {
+            const result = await prisma.mentorProfile.create({
+                data: {
+                    ...payload,
+                    userId
+                }
+            });
+            return result;
+        } catch (err: any) {
+            if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
+                // Unique constraint violation
+                throw new ApiError(
+                    httpStatus.CONFLICT,
+                    "A mentor profile already exists for this user."
+                );
+            }
+            // rethrow other errors
+            throw err;
+        }
+    },
+    getMyRequests: async (mentorId: string, query: Record<string, unknown>) => {
+        const mentor = await prisma.user.findUnique({
+            where: {
+                id: mentorId
+            },
+            include: {
+                mentorProfile: true
+            }
+        });
+        if (!mentor?.mentorProfile) {
+            throw new ApiError(httpStatus.NOT_FOUND, "No mentor found!setup your mentor profile first!")
+        };
+        const userQuery = new QueryBuilder(prisma.mentorshipRequest, query)
+            .filter()
+            .rawFilter({ mentorId })
+            .paginate()
+            .select({
+                id: true,
+                learningGoals: true,
+                actionItems: true,
+                status: true,
+                mentee: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        profession: true,
+                        profileImage: true
+                    }
+                }
+            })
+
+        const [data, meta] = await Promise.all([
+            userQuery.execute(),
+            userQuery.countTotal(),
+        ]);
+        return {
+            data,
+            meta
+        }
+    },
+    acceptMentorshipRequest: async (requestId: string) => {
+        const request = await prisma.mentorshipRequest.findUnique({
+            where: {
+                id: requestId
+            }
+        });
+        if (!request) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentorship request Not found!")
+        }
+        const result = await prisma.mentorshipRequest.update({
+            where: {
+                id: requestId
+            },
+            data: {
+                status: MentorshipRequestStatus.ACCEPTED
+            }
+        });
+        return {
+            message: "Request accepted!"
+        }
+    },
+    rejectMentorshipRequest: async (requestId: string) => {
+        const request = await prisma.mentorshipRequest.findUnique({
+            where: {
+                id: requestId
+            }
+        });
+        if (!request) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentorship request Not found!")
+        }
+        await prisma.mentorshipRequest.update({
+            where: {
+                id: requestId
+            },
+            data: {
+                status: MentorshipRequestStatus.REJECTED
+            }
+        });
+        return {
+            message: "Request rejected!"
+        }
+    },
+
+    // mentee
+    sendMentorshipRequest: async (menteeId: string, payload: MentorshipRequest) => {
+        const mentee = await prisma.user.findUnique({
+            where: {
+                id: menteeId
+            }
+        });
+        if (!mentee) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentee not found to send mentorship request!");
+        };
+        const mentor = await prisma.user.findUnique({
+            where: {
+                id: payload.mentorId
+            },
+            include: {
+                mentorProfile: true
+            }
+        });
+        if (!mentor?.mentorProfile) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Provide a valid mentor!")
+        }
+        const result = await prisma.mentorshipRequest.create({
+            data: {
+                menteeId,
+                mentorId: payload.mentorId,
+                actionItems: payload.actionItems,
+                learningGoals: payload.learningGoals
+            }
+        });
+        return result
+    },
+    // admin
+    getPendingMentors: async () => {
+        const result = await prisma.mentorProfile.findMany({
+            where: {
+                isApproved: false
+            },
+            select: {
+                id: true,
+                mentorName: true,
+                role: true,
+                company: true,
+                experienceYears: true,
+                isApproved: true,
+                user: {
+                    select: {
+                        id: true,
+                        profileImage: true
+                    }
+                }
+            }
+        });
+        return result
+    },
+
+    // admin
+    approveMentor: async (mentorId: string) => {
+        const mentor = await prisma.mentorProfile.findUnique({
+            where: {
+                id: mentorId
+            },
+        });
+        if (!mentor) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentor profile is not setted up yet!");
+        };
+
+        if (mentor.isApproved) {
+            throw new ApiError(httpStatus.NOT_ACCEPTABLE, "Mentor already approved!")
+        }
+
+        await prisma.mentorProfile.update({
+            where: {
+                id: mentorId
+            },
+            data: {
+                isApproved: true
+            }
+        });
+
+        return {
+            message: "Mentor approved successfully!"
+        }
+    }
+}

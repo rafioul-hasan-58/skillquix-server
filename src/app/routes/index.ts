@@ -8,6 +8,7 @@ import { PlanRoutes } from "../modules/plan/plan.routes";
 import { SubscriptionRouter } from "../modules/subscription/subscription.routes";
 import { SkillRouter } from "../modules/skill/skill.routes";
 import { AccomplishmentRoutes } from "../modules/accomplishment/accomplishment.routes";
+import { MentorRoutes } from "../modules/mentor/mentor.routes";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -46,6 +47,10 @@ const moduleRoutes = [
   {
     path: "/accomplishment",
     route: AccomplishmentRoutes,
+  },
+  {
+    path: "/mentor",
+    route: MentorRoutes,
   },
 ];
 

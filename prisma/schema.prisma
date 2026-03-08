@@ -115,6 +115,76 @@ model Invoice {
   createdAt          DateTime      @default(now())
 }
 
+model MentorProfile {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String   @unique @db.ObjectId
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Professional Info
+  mentorName        String
+  role              String
+  company           String?
+  experienceYears   Int // e.g. 7
+  skills            String[]
+  mentorshipDetails String
+  availability      String
+  maxActiveMentees  Int
+  // Status & Visibility
+  isApproved        Boolean  @default(false) // Admin approves mentors
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model MentorshipSession {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  // Participants
+  requestId     String            @db.ObjectId
+  request       MentorshipRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  // Session Info
+  topic         String? // What the mentee wants help with
+  scheduledAt   DateTime // Requested date & time
+  startDateTime DateTime?
+  endDateTime   DateTime?
+  availability  String?
+  status        SessionStatus     @default(PENDING)
+  // Google Meet
+  meetLink      String? // Generated after acceptance
+  googleEventId String? // Google Calendar event ID
+  mentorNotes   String? // Mentor's private notes
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MentorshipRequest {
+  id                 String                  @id @default(auto()) @map("_id") @db.ObjectId
+  menteeId           String                  @db.ObjectId
+  mentorId           String                  @db.ObjectId
+  mentee             User                    @relation("MenteeRequestRelation", fields: [menteeId], references: [id])
+  mentor             User                    @relation("MentorResuestRelation", fields: [mentorId], references: [id])
+  status             MentorshipRequestStatus @default(PENDING)
+  learningGoals      String
+  actionItems        String[]
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  mentorshipSessions MentorshipSession[]
+}
+
+model MentorGoogleAuth {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Google OAuth tokens — used to generate Meet links
+  googleId     String?
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model OTP {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   otpCode      String
@@ -236,33 +306,33 @@ model SavedGig {
 }
 
 model User {
-  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  id                   String              @id @default(auto()) @map("_id") @db.ObjectId
   fullName             String
-  email                String             @unique
+  email                String              @unique
   password             String?
-  profileImage         String             @default("")
+  profileImage         String              @default("")
   profession           String?
   location             String?
   experienceYear       String?
   bio                  String?
-  role                 UserRole           @default(USER)
-  isDeleted            Boolean            @default(false)
-  isBlocked            Boolean            @default(false)
+  role                 UserRole            @default(USER)
+  isDeleted            Boolean             @default(false)
+  isBlocked            Boolean             @default(false)
   lastLogin            DateTime?
-  subscriptionType     SubscriptionType   @default(FREE)
-  emailNotification    Toggle             @default(ON)
-  jobAlerts            Toggle             @default(ON)
-  marketingEmails      Toggle             @default(ON)
+  subscriptionType     SubscriptionType    @default(FREE)
+  emailNotification    Toggle              @default(ON)
+  jobAlerts            Toggle              @default(ON)
+  marketingEmails      Toggle              @default(ON)
   // manager role 
   isManagerAllowed     Boolean?
   resumeLink           String?
-  resumeParseCount     Int                @default(0)
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  resumeParseCount     Int                 @default(0)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
   // subscription
-  stripeCustomerId     String?            @unique
+  stripeCustomerId     String?             @unique
   stripeSubscriptionId String?
-  subscriptionStatus   SubscriptionStatus @default(INACTIVE)
+  subscriptionStatus   SubscriptionStatus  @default(INACTIVE)
   currentPeriodEnd     DateTime?
   OTP                  OTP?
   resumes              Resume?
@@ -274,6 +344,10 @@ model User {
   activityLogs         ActivityLog[]
   savedGigs            SavedGig[]
   appliedGigs          AppliedGig[]
+  mentorProfile        MentorProfile?
+  mentorGoogleAuth     MentorGoogleAuth?
+  menteesRequests      MentorshipRequest[] @relation("MenteeRequestRelation")
+  mentorShipRequests   MentorshipRequest[] @relation("MentorResuestRelation")
 }
 
 // Enums in alphabetical order
@@ -333,6 +407,22 @@ enum SkillSource {
   RESUME
   MANUAL
   RECOMMENDATION
+}
+
+enum SessionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum MentorshipRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
 }
 
 enum Toggle {
