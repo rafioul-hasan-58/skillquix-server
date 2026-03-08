@@ -16,6 +16,7 @@ export const MentorController = {
             data: result,
         });
     }),
+    // mentor
     getMyRequests: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.user;
         const result = await MentorService.getMyRequests(id, req.query);
@@ -27,6 +28,7 @@ export const MentorController = {
             data: result.data,
         });
     }),
+    // mentor
     acceptMentorshipRequest: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.params;
         const result = await MentorService.acceptMentorshipRequest(id);
@@ -37,6 +39,7 @@ export const MentorController = {
             data: result,
         });
     }),
+    // mentor
     rejectMentorshipRequest: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.params;
         const result = await MentorService.rejectMentorshipRequest(id);
@@ -57,6 +60,7 @@ export const MentorController = {
             data: result,
         });
     }),
+    // admin
     approveMentor: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.params;
         const result = await MentorService.approveMentor(id);
@@ -76,6 +80,17 @@ export const MentorController = {
             statusCode: httpStatus.OK,
             success: true,
             message: "Mentorship request sent!",
+            data: result,
+        });
+    }),
+    // mentee
+    myMentors: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.user;
+        const result = await MentorService.myMentors(id);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "My mentors fetched!",
             data: result,
         });
     }),

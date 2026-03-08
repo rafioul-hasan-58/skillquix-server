@@ -49,6 +49,11 @@ router.post(
     validateRequest(MentorValidations.mentorshipRequestSchema),
     MentorController.sendMentorshipRequest
 );
+router.get(
+    "/my",
+    auth(UserRole.USER),
+    MentorController.myMentors
+);
 
 
 

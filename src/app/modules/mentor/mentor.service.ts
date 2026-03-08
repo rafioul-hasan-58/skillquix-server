@@ -37,6 +37,7 @@ export const MentorService = {
             throw err;
         }
     },
+    // mentor
     getMyRequests: async (mentorId: string, query: Record<string, unknown>) => {
         const mentor = await prisma.user.findUnique({
             where: {
@@ -77,6 +78,7 @@ export const MentorService = {
             meta
         }
     },
+    // mentor
     acceptMentorshipRequest: async (requestId: string) => {
         const request = await prisma.mentorshipRequest.findUnique({
             where: {
@@ -98,6 +100,7 @@ export const MentorService = {
             message: "Request accepted!"
         }
     },
+    // mentor
     rejectMentorshipRequest: async (requestId: string) => {
         const request = await prisma.mentorshipRequest.findUnique({
             where: {
@@ -147,6 +150,38 @@ export const MentorService = {
                 mentorId: payload.mentorId,
                 actionItems: payload.actionItems,
                 learningGoals: payload.learningGoals
+            }
+        });
+        return result
+    },
+    // mentee
+    myMentors: async (menteeId: string) => {
+        const mentee = await prisma.user.findUnique({
+            where: {
+                id: menteeId
+            }
+        });
+        if (!mentee) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentee not found!")
+        };
+        const result = await prisma.mentorshipRequest.findMany({
+            where: {
+                menteeId
+            },
+            select: {
+                id: true,
+                status:true,
+                mentor: {
+                    select: {
+                        mentorProfile: {
+                            select: {
+                                id: true,
+                                mentorName:true,
+                                role:true,
+                            }
+                        }
+                    }
+                }
             }
         });
         return result
