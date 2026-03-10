@@ -142,18 +142,18 @@ model MentorshipSession {
   request       MentorshipRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   // Session Info
   topic         String? // What the mentee wants help with
-  scheduledAt   DateTime // Requested date & time
+  preferredTime DateTime
+  actionItems   String[]
   startDateTime DateTime?
   endDateTime   DateTime?
   availability  String?
   status        SessionStatus     @default(PENDING)
   // Google Meet
-  meetLink      String? // Generated after acceptance
+  meetLink      String?
   googleEventId String? // Google Calendar event ID
-  mentorNotes   String? // Mentor's private notes
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  mentorNotes   String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 }
 
 model MentorshipRequest {
@@ -178,8 +178,8 @@ model MentorGoogleAuth {
   // Google OAuth tokens — used to generate Meet links
   googleId     String?
   accessToken  String
-  refreshToken String
-  tokenExpiry  DateTime
+  refreshToken String?
+  tokenExpiry  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

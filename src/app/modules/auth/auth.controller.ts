@@ -116,12 +116,13 @@ export const AuthController = {
       httpOnly: true,
       sameSite: 'lax',
     });
-    const frontend_url = "http://72.62.87.243:3001"
+    // const frontend_url = "http://72.62.87.243:3001"
+    const frontend_url = "https://www.skillquix.tech"
     // Option 1: Redirect with token in URL (less secure but simpler)
     res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
   }),
   googleLogin: catchAsync(async (req: Request, res: Response) => {
-    const { token} = req.body;
+    const { token } = req.body;
     const payload = await verifyGoogleToken(token);
     if (!payload) {
       throw new ApiError(status.NOT_FOUND, "Google token payload not found");

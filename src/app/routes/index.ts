@@ -9,6 +9,7 @@ import { SubscriptionRouter } from "../modules/subscription/subscription.routes"
 import { SkillRouter } from "../modules/skill/skill.routes";
 import { AccomplishmentRoutes } from "../modules/accomplishment/accomplishment.routes";
 import { MentorRoutes } from "../modules/mentor/mentor.routes";
+import { SessionRoutes } from "../modules/session/session.routes";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -51,6 +52,10 @@ const moduleRoutes = [
   {
     path: "/mentor",
     route: MentorRoutes,
+  },
+  {
+    path: "/session",
+    route: SessionRoutes,
   },
 ];
 
