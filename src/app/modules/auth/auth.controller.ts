@@ -108,7 +108,7 @@ export const AuthController = {
       throw new ApiError(status.BAD_REQUEST, "Authorization code is required");
     }
 
-    const { accessToken, refreshToken} = await AuthService.linkedInCallback(code);
+    const { accessToken, refreshToken } = await AuthService.linkedInCallback(code);
 
     // Set refresh token in cookie
     res.cookie("refreshToken", refreshToken, {
@@ -117,9 +117,10 @@ export const AuthController = {
       sameSite: 'lax',
     });
     // const frontend_url = "http://72.62.87.243:3001"
-    // const frontend_url = "https://www.skillquix.tech"
+    const frontend_url = "https://www.skillquix.tech"
     // Option 1: Redirect with token in URL (less secure but simpler)
-    // res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
+    console.log("here comes in")
+    res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
   }),
   googleLogin: catchAsync(async (req: Request, res: Response) => {
     const { token } = req.body;

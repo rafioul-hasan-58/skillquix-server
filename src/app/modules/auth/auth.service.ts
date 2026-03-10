@@ -191,11 +191,14 @@ export const AuthService = {
       scope: 'openid profile email',
       state: Math.random().toString(36).substring(7), // CSRF protection
     });
+    console.log("redirecturl",params.toString())
+    
 
     return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
   },
 
   linkedInCallback: async (code: string) => {
+    console.log("code",code)
     try {
       const tokenResponse = await axios.post(
         'https://www.linkedin.com/oauth/v2/accessToken',
@@ -290,6 +293,7 @@ export const AuthService = {
       );
     }
   },
+
   googleLogin: async (payload: Partial<User>) => {
     const { fullName, email } = payload;
 
