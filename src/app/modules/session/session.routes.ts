@@ -23,4 +23,10 @@ router.post(
     "/auth/save-token",
     SessionController.handleCallback
 );
+// mentor
+router.get(
+    "/my-requests",
+    auth(UserRole.USER),
+    SessionController.mySessionRequests
+);
 export const SessionRoutes = router;

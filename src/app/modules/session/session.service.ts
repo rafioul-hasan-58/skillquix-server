@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma"
-import { MentorshipSession, UserRole } from "@prisma/client";
+import { MentorshipSession, SessionStatus, UserRole } from "@prisma/client";
 import { oauth2Client } from "./session.utils";
 import { google } from "googleapis";
 
@@ -48,14 +48,26 @@ export const SessionService = {
             throw new ApiError(httpStatus.BAD_REQUEST, "Invalid state parameter");
         }
 
-        const { tokens } = await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(tokens);
+        let tokens;
+        try {
+            const result = await oauth2Client.getToken(code);
+            tokens = result.tokens;
+            oauth2Client.setCredentials(tokens);
+        } catch (error: any) {
+            if (error.message === 'invalid_grant' || error.response?.data?.error === 'invalid_grant') {
+                throw new ApiError(
+                    httpStatus.BAD_REQUEST,
+                    'Google authorization expired or already used. Please try connecting your Google account again.'
+                );
+            }
+            throw error;
+        }
 
         if (!tokens.access_token) {
             throw new ApiError(httpStatus.BAD_REQUEST, "Failed to get access token from Google");
         }
         if (!tokens.refresh_token) {
-            throw new ApiError(httpStatus.BAD_REQUEST, "Failed to get access token from Google");
+            throw new ApiError(httpStatus.BAD_REQUEST, "Failed to get refresh token from Google");
         }
 
         // Get Google user info
@@ -66,9 +78,9 @@ export const SessionService = {
             throw new ApiError(httpStatus.BAD_REQUEST, "Failed to get user info from Google");
         }
 
-        // Save or update Google credentials directly on User
+        // Save or update Google credentials
         const mentorGoogleAuth = await prisma.mentorGoogleAuth.upsert({
-            where: { id: userId },
+            where: { userId },
             update: {
                 accessToken: tokens.access_token,
                 ...(tokens.refresh_token ? { refreshToken: tokens.refresh_token } : {}),
@@ -81,11 +93,10 @@ export const SessionService = {
                 accessToken: tokens.access_token,
                 refreshToken: tokens.refresh_token || undefined,
                 tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : undefined,
-
             },
         });
 
-        return mentorGoogleAuth
+        return mentorGoogleAuth;
     },
     // mentee
     sendSessionRequest: async (requestId: string, payload: MentorshipSession) => {
@@ -102,7 +113,7 @@ export const SessionService = {
         const existingPending = await prisma.mentorshipSession.findFirst({
             where: {
                 requestId,
-                status: "PENDING" // adjust to match your enum/string value
+                status: SessionStatus.PENDING
             }
         });
 
@@ -112,6 +123,7 @@ export const SessionService = {
                 "A pending mentorship session already exists for this request."
             );
         }
+
         const result = await prisma.mentorshipSession.create({
             data: {
                 preferredTime,
@@ -133,6 +145,23 @@ export const SessionService = {
     },
     // mentor
     acceptSessionRequest: async () => {
+
+    },
+    // mentor
+    mySessionRequests: async (mentorId: string) => {
+        const mentor = await prisma.user.findUnique({
+            where: {
+                id: mentorId
+            },
+            include: {
+                mentorProfile: true
+            }
+        });
+
+        if (!mentor?.mentorProfile) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentor profile not found!");
+        };
+        return mentor
 
     }
 

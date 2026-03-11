@@ -16,6 +16,17 @@ export const SessionController = {
             data: result
         });
     }),
+    // mentor
+    mySessionRequests: catchAsync(async (req: Request, res: Response) => {
+        const { id: mentorId } = req.user;
+        const result = await SessionService.mySessionRequests(mentorId);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "My Session requests fetched!",
+            data: result
+        });
+    }),
     // auth
     getAuthUrl: catchAsync(async (req: Request, res: Response) => {
         const userId = req.user?.id; // Get from auth middleware
