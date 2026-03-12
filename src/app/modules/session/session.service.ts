@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma"
 import { MentorshipRequestStatus, MentorshipSession, SessionStatus, UserRole } from "@prisma/client";
-import { oauth2Client } from "./session.utils";
+import { createMeetLink, oauth2Client } from "./session.utils";
 import { google } from "googleapis";
 
 
@@ -150,8 +150,41 @@ export const SessionService = {
         return result
     },
     // mentor
-    acceptSessionRequest: async () => {
+    acceptSessionRequest: async (sessionId: string, payload: { startDateTime: string, endDateTime: string }) => {
+        const { startDateTime, endDateTime } = payload;
+        const session = await prisma.mentorshipSession.findUnique({
+            where: {
+                id: sessionId
+            },
+            include: {
+                request: true
+            }
+        });
+        if (!session) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentorship session not found!");
+        }
 
+        const perameter = {
+            startDate: startDateTime,
+            endDate: endDateTime,
+            topic: session.topic ?? "",
+            mentorId: session.request.mentorId,
+            menteeId: session.request.menteeId
+        };
+        const res = await createMeetLink(perameter)
+
+        const update = await prisma.mentorshipSession.update({
+            where: {
+                id: sessionId
+            },
+            data: {
+                status: SessionStatus.UPCOMING,
+                startDateTime: payload.startDateTime,
+                endDateTime: payload.endDateTime,
+                meetLink: res.meetLink
+            }
+        });
+        return update
     },
     // mentor
     sessionDetails: async (sessionId: string) => {

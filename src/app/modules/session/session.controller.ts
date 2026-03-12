@@ -57,4 +57,15 @@ export const SessionController = {
             data: result,
         });
     }),
+    // mentor
+    acceptSessionRequest: catchAsync(async (req: Request, res: Response) => {
+        const { id: sessionId } = req.params; // Get from auth middleware
+        const result = await SessionService.acceptSessionRequest(sessionId, req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Session request accepted!",
+            data: result,
+        });
+    }),
 }

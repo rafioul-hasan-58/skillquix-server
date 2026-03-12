@@ -29,4 +29,10 @@ router.get(
     auth(UserRole.USER),
     SessionController.sessionDetails
 );
+router.get(
+    "/accept/:id",
+    auth(UserRole.USER),
+    validateRequest(SessionValidation.sessionScheduleSchema),
+    SessionController.acceptSessionRequest
+);
 export const SessionRoutes = router;

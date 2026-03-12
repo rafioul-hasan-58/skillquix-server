@@ -10,6 +10,7 @@ import { SkillRouter } from "../modules/skill/skill.routes";
 import { AccomplishmentRoutes } from "../modules/accomplishment/accomplishment.routes";
 import { MentorRoutes } from "../modules/mentor/mentor.routes";
 import { SessionRoutes } from "../modules/session/session.routes";
+import { ResumeProfileRoutes } from "../modules/resumeProfile/resumeProfile.routes";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -56,6 +57,10 @@ const moduleRoutes = [
   {
     path: "/session",
     route: SessionRoutes,
+  },
+  {
+    path: "/resumeProfile",
+    route: ResumeProfileRoutes,
   },
 ];
 

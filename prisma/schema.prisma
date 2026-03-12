@@ -150,7 +150,6 @@ model MentorshipSession {
   status        SessionStatus     @default(PENDING)
   // Google Meet
   meetLink      String?
-  googleEventId String? // Google Calendar event ID
   mentorNotes   String?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -276,10 +275,52 @@ model Resume {
   certificates Certificate[]
 }
 
+model ResumeProfile {
+  id                  String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String          @unique @db.ObjectId
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain              String
+  subDomain           String
+  name                String?
+  email               String?
+  location            String?
+  phone               String?
+  summary             String?
+  totalExparienceYear Int?
+  embedding           Json?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  resumeSections      ResumeSection[]
+  skills              Skill[]
+}
+
+model ResumeSection {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  resumeProfileId String        @db.ObjectId
+  resumeProfile   ResumeProfile @relation(fields: [resumeProfileId], references: [id], onDelete: Cascade)
+  sectionType     String // "experience" | "projects" | "research" | "education" | "certifications" etc.
+  title           String // Display name e.g. "Work Experience", "Research Papers"
+  orderIndex      Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items ResumeSectionItem[]
+}
+
+model ResumeSectionItem {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  resumeSectionId String        @db.ObjectId
+  resumeSection   ResumeSection @relation(fields: [resumeSectionId], references: [id], onDelete: Cascade)
+  data            Json
+  orderIndex      Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
 model Skill {
   id               String           @id @default(auto()) @map("_id") @db.ObjectId
-  resumeId         String?          @db.ObjectId
-  resume           Resume?          @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeProfileId  String?          @db.ObjectId
+  resumeProfile    ResumeProfile?   @relation(fields: [resumeProfileId], references: [id], onDelete: Cascade)
   userId           String?          @db.ObjectId
   user             User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   skillName        String
@@ -289,6 +330,8 @@ model Skill {
   source           SkillSource      @default(MANUAL)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+  resume           Resume?          @relation(fields: [resumeId], references: [id])
+  resumeId         String?          @db.ObjectId
 
   @@unique([userId, skillName])
 }
@@ -348,6 +391,7 @@ model User {
   mentorGoogleAuth     MentorGoogleAuth?
   menteesRequests      MentorshipRequest[] @relation("MenteeRequestRelation")
   mentorShipRequests   MentorshipRequest[] @relation("MentorResuestRelation")
+  resumeProfile        ResumeProfile?
 }
 
 // Enums in alphabetical order

@@ -1,0 +1,151 @@
+import { SkillSource } from "@prisma/client";
+import prisma from "../../lib/prisma";
+import { CreateResumeProfilePayload, ResumeSkill } from "./resumeProfile.interface";
+import ApiError from "../../errors/ApiError";
+import httpStatus from "http-status";
+
+export const ResumeProfileService = {
+    create: async (userId: string, payload: CreateResumeProfilePayload) => {
+        // upsert the profile
+        const result = await prisma.resumeProfile.upsert({
+            where: { userId },
+            create: {
+                name: payload.name,
+                email: payload.email,
+                phone: payload.phone,
+                domain: payload.domain,
+                subDomain: payload.subdomain,
+                userId,
+                location: payload.location,
+                summary: payload.summary,
+                totalExparienceYear: payload.totalExperienceYear,
+                resumeSections: {
+                    create: payload.sections.map(section => ({
+                        sectionType: section.sectionType,
+                        title: section.title,
+                        orderIndex: section.orderIndex,
+                        items: {
+                            create: section.items.map(item => ({
+                                orderIndex: item.orderIndex,
+                                data: item.data
+                            }))
+                        }
+                    }))
+                }
+            },
+            update: {
+                name: payload.name,
+                email: payload.email,
+                phone: payload.phone,
+                domain: payload.domain,
+                subDomain: payload.subdomain,
+                location: payload.location,
+                summary: payload.summary,
+                totalExparienceYear: payload.totalExperienceYear,
+                // delete old sections and recreate
+                resumeSections: {
+                    deleteMany: {},
+                    create: payload.sections.map(section => ({
+                        sectionType: section.sectionType,
+                        title: section.title,
+                        orderIndex: section.orderIndex,
+                        items: {
+                            create: section.items.map(item => ({
+                                orderIndex: item.orderIndex,
+                                data: item.data
+                            }))
+                        }
+                    }))
+                }
+            },
+            include: {
+                resumeSections: {
+                    include: { items: true }
+                }
+            }
+        });
+
+        // delete old skills and recreate
+        if (payload.skills) {
+            await prisma.skill.deleteMany({
+                where: { resumeProfileId: result.id }
+            });
+
+            await prisma.skill.createMany({
+                data: payload.skills.flatMap((skill: ResumeSkill) =>
+                    skill.Skills.map((s: string) => ({
+                        skillCategory: skill.category,
+                        skillName: s,
+                        resumeProfileId: result.id,
+                        source: SkillSource.RESUME
+                    }))
+                ),
+            });
+        }
+
+        return result;
+    },
+    getMyResumeProfile: async (userId: string) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        });
+
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found to get resume!")
+        };
+
+        const result = await prisma.resumeProfile.findUnique({
+            where: {
+                userId
+            },
+            select: {
+                id: true,
+                userId: true,
+                domain: true,
+                subDomain: true,
+                name: true,
+                email: true,
+                location: true,
+                phone: true,
+                summary: true,
+                totalExparienceYear: true,
+                embedding: true,
+                createdAt: true,
+                updatedAt: true,
+                skills: {
+                    select: {
+                        id: true,
+                        skillCategory: true,
+                        skillName: true,
+                        proficiencyLevel: true,
+                        yearOfExperience: true,
+                        source: true,
+                        createdAt: true,
+                        updatedAt: true
+                    }
+                },
+                resumeSections: {
+                    select: {
+                        id: true,
+                        title: true,
+                        orderIndex: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        items: {
+                            select: {
+                                id: true,
+                                orderIndex: true,
+                                data: true,
+                                createdAt: true,
+                                updatedAt: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        return result
+    }
+}

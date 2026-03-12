@@ -11,8 +11,13 @@ const sendSessionRequestSchema = z.object({
         .regex(isoDateTimeRegex, "Must be a valid ISO-8601 datetime")
         .optional(), actionItems: z.array(z.string()).optional(), // array of strings if provided
 });
+export const sessionScheduleSchema = z.object({
+    startDateTime: z.string().datetime({ message: "Invalid startDateTime format. Use ISO 8601 (e.g. 2026-03-12T13:15:00.000Z)" }),
+    endDateTime: z.string().datetime({ message: "Invalid endDateTime format. Use ISO 8601 (e.g. 2026-03-12T13:45:00.000Z)" }),
+});
 
 
 export const SessionValidation = {
-    sendSessionRequestSchema
+    sendSessionRequestSchema,
+    sessionScheduleSchema
 }
