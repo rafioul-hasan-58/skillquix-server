@@ -88,6 +88,15 @@ export const AuthService = {
       config.jwt.refresh_token_secret as string,
       config.jwt.refresh_token_expires_in as string
     );
+    // update last login
+    await prisma.user.update({
+      where: {
+        id: user.id
+      },
+      data: {
+        lastLogin: new Date()
+      }
+    });
     return {
       accessToken,
       refreshToken
@@ -191,14 +200,14 @@ export const AuthService = {
       scope: 'openid profile email',
       state: Math.random().toString(36).substring(7), // CSRF protection
     });
-    console.log("redirecturl",params.toString())
-    
+    console.log("redirecturl", params.toString())
+
 
     return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
   },
 
   linkedInCallback: async (code: string) => {
-    console.log("code",code)
+    console.log("code", code)
     try {
       const tokenResponse = await axios.post(
         'https://www.linkedin.com/oauth/v2/accessToken',
