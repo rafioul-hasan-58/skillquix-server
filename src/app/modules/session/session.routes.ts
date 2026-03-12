@@ -25,8 +25,8 @@ router.post(
 );
 // mentor
 router.get(
-    "/my-requests",
+    "/details/:id",
     auth(UserRole.USER),
-    SessionController.mySessionRequests
+    SessionController.sessionDetails
 );
 export const SessionRoutes = router;

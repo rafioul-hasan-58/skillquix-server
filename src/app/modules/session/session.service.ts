@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma"
-import { MentorshipSession, SessionStatus, UserRole } from "@prisma/client";
+import { MentorshipRequestStatus, MentorshipSession, SessionStatus, UserRole } from "@prisma/client";
 import { oauth2Client } from "./session.utils";
 import { google } from "googleapis";
 
@@ -109,6 +109,9 @@ export const SessionService = {
         if (!request) {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentorship Request not found!");
         };
+        if (request.status === MentorshipRequestStatus.PENDING) {
+            throw new ApiError(httpStatus.NOT_ACCEPTABLE, "This request is pending!wait for mentor approval!");
+        };
         // Check if there is already a pending session for this request
         const existingPending = await prisma.mentorshipSession.findFirst({
             where: {
@@ -124,6 +127,9 @@ export const SessionService = {
             );
         }
 
+        if (request.status === MentorshipRequestStatus.COMPLETED) {
+            throw new ApiError(httpStatus.CONFLICT, "This mentorship already completed!")
+        }
         const result = await prisma.mentorshipSession.create({
             data: {
                 preferredTime,
@@ -148,20 +154,33 @@ export const SessionService = {
 
     },
     // mentor
-    mySessionRequests: async (mentorId: string) => {
-        const mentor = await prisma.user.findUnique({
+    sessionDetails: async (sessionId: string) => {
+        const request = await prisma.mentorshipRequest.findUnique({
             where: {
-                id: mentorId
+                id: sessionId
             },
-            include: {
-                mentorProfile: true
+            select: {
+                id: true,
+                mentee: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        profession: true,
+                    }
+                },
+                status: true,
+                learningGoals: true,
+                actionItems: true,
+                mentorshipSessions: true
             }
+
         });
 
-        if (!mentor?.mentorProfile) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Mentor profile not found!");
+        if (!request) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentorship request not found!");
         };
-        return mentor
+
+        return request
 
     }
 

@@ -17,9 +17,9 @@ export const SessionController = {
         });
     }),
     // mentor
-    mySessionRequests: catchAsync(async (req: Request, res: Response) => {
-        const { id: mentorId } = req.user;
-        const result = await SessionService.mySessionRequests(mentorId);
+    sessionDetails: catchAsync(async (req: Request, res: Response) => {
+        const { id: sessionId } = req.params;
+        const result = await SessionService.sessionDetails(sessionId);
         sendResponse(res, {
             success: true,
             statusCode: httpStatus.OK,

@@ -411,10 +411,9 @@ enum SkillSource {
 
 enum SessionStatus {
   PENDING
-  ACCEPTED
+  UPCOMING
   REJECTED
   COMPLETED
-  CANCELLED
 }
 
 enum MentorshipRequestStatus {
