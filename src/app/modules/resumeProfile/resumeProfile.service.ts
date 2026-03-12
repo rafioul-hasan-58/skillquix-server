@@ -129,6 +129,7 @@ export const ResumeProfileService = {
                 resumeSections: {
                     select: {
                         id: true,
+                        sectionType: true,
                         title: true,
                         orderIndex: true,
                         createdAt: true,
