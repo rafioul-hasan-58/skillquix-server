@@ -66,7 +66,7 @@ export const ResumeProfileService = {
         });
 
         // delete old skills and recreate
-        if (payload.skills) {
+        if (payload.skills && payload.skills.length > 0) {
             await prisma.skill.deleteMany({
                 where: { resumeProfileId: result.id }
             });
