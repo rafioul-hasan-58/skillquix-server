@@ -148,5 +148,80 @@ export const ResumeProfileService = {
             }
         });
         return result
+    },
+    // Update section meta
+    updateSection: async (sectionId: string, payload: { title?: string, orderIndex?: number, sectionType?: string }) => {
+        const section = await prisma.resumeSection.findUnique({
+            where: {
+                id: sectionId
+            }
+        });
+        if (!section) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume section not found!")
+        }
+        const result = await prisma.resumeSection.update({
+            where: { id: sectionId },
+            data: {
+                title: payload.title,
+                orderIndex: payload.orderIndex,
+                sectionType: payload.sectionType
+            }
+        });
+        return result
+    },
+    deleteSection: async (sectionId: string) => {
+        const section = await prisma.resumeSection.findUnique({
+            where: {
+                id: sectionId
+            }
+        });
+        if (!section) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume section not found!")
+        }
+        await prisma.resumeSection.delete({
+            where: { id: sectionId },
+        });
+        return {
+            message: "Section deleted!"
+        }
+    },
+
+    // Update a single item's data
+    updateSectionItem: async (itemId: string, data: Record<string, any>) => {
+        const sectionItem = await prisma.resumeSectionItem.findUnique({
+            where: {
+                id: itemId
+            }
+        });
+        if (!sectionItem) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume section item not found!")
+        }
+        const result = await prisma.resumeSectionItem.update({
+            where: { id: itemId },
+            data: {
+                data: {
+                    ...(sectionItem.data as object),
+                    ...data
+                }
+            }
+        });
+        return result
+    },
+    deleteSectionItem: async (itemId: string) => {
+        const sectionItem = await prisma.resumeSectionItem.findUnique({
+            where: {
+                id: itemId
+            }
+        });
+        if (!sectionItem) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Resume section item not found!")
+        }
+        await prisma.resumeSectionItem.delete({
+            where: { id: itemId },
+
+        });
+        return {
+            message: "Item Deleted!"
+        }
     }
 }

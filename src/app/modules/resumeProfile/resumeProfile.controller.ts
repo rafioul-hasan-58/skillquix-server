@@ -25,4 +25,44 @@ export const ResumeProfileController = {
             data: result,
         });
     }),
+    updateSection: catchAsync(async (req: Request, res: Response) => {
+        const { id: sectionId } = req.params; // Get from auth middleware
+        const result = await ResumeProfileService.updateSection(sectionId, req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume profile section updated!",
+            data: result,
+        });
+    }),
+    deleteSection: catchAsync(async (req: Request, res: Response) => {
+        const { id: sectionId } = req.params; // Get from auth middleware
+        const result = await ResumeProfileService.deleteSection(sectionId);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume profile section deleted!",
+            data: result,
+        });
+    }),
+    updateSectionItem: catchAsync(async (req: Request, res: Response) => {
+        const { id: itemId } = req.params; // Get from auth middleware
+        const result = await ResumeProfileService.updateSectionItem(itemId, req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume profile section item updated!",
+            data: result,
+        });
+    }),
+    deleteSectionItem: catchAsync(async (req: Request, res: Response) => {
+        const { id: itemId } = req.params; // Get from auth middleware
+        const result = await ResumeProfileService.deleteSectionItem(itemId);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Resume profile section item deleted!",
+            data: result,
+        });
+    }),
 }
