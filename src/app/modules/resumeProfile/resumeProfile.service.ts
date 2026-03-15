@@ -18,7 +18,7 @@ export const ResumeProfileService = {
                 userId,
                 location: payload.location,
                 summary: payload.summary,
-                totalExparienceYear: payload.totalExperienceYear,
+                totalExperienceYear: payload.totalExp,
                 resumeSections: {
                     create: payload.sections.map(section => ({
                         sectionType: section.sectionType,
@@ -41,7 +41,7 @@ export const ResumeProfileService = {
                 subDomain: payload.subdomain,
                 location: payload.location,
                 summary: payload.summary,
-                totalExparienceYear: payload.totalExperienceYear,
+                totalExperienceYear: payload.totalExp,
                 // delete old sections and recreate
                 resumeSections: {
                     deleteMany: {},
@@ -110,7 +110,7 @@ export const ResumeProfileService = {
                 location: true,
                 phone: true,
                 summary: true,
-                totalExparienceYear: true,
+                totalExperienceYear: true,
                 embedding: true,
                 createdAt: true,
                 updatedAt: true,

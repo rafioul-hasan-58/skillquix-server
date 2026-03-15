@@ -25,8 +25,7 @@ export interface CreateResumeProfilePayload {
   phone?: string;
   location?: string;
   summary?: string;
-  totalExperienceYear?: number;
-  avatarUrl?: string;
+  totalExp?: number;
   sections: ResumeSectionPayload[];
   skills: ResumeSkill[]
 }
