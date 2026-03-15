@@ -3,9 +3,14 @@ import prisma from "../../lib/prisma";
 import { CreateResumeProfilePayload, ResumeSkill } from "./resumeProfile.interface";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
+import { generateResumeEmbedding, upsertResumeEmbedding } from "../resume/resume.helper";
+import { generateResumeProfileEmbedding } from "./resumeProfile.utils";
 
 export const ResumeProfileService = {
     create: async (userId: string, payload: CreateResumeProfilePayload) => {
+        const embedding = await generateResumeProfileEmbedding(payload);
+        
+
         // upsert the profile
         const result = await prisma.resumeProfile.upsert({
             where: { userId },
@@ -19,6 +24,7 @@ export const ResumeProfileService = {
                 location: payload.location,
                 summary: payload.summary,
                 totalExperienceYear: payload.totalExp,
+                embedding,
                 resumeSections: {
                     create: payload.sections.map(section => ({
                         sectionType: section.sectionType,
@@ -42,6 +48,7 @@ export const ResumeProfileService = {
                 location: payload.location,
                 summary: payload.summary,
                 totalExperienceYear: payload.totalExp,
+                embedding,
                 // delete old sections and recreate
                 resumeSections: {
                     deleteMany: {},
@@ -82,8 +89,8 @@ export const ResumeProfileService = {
                 ),
             });
         }
-
-        return result;
+        const res = await upsertResumeEmbedding(result.id, embedding);
+        return res;
     },
     getMyResumeProfile: async (userId: string) => {
         const user = await prisma.user.findUnique({

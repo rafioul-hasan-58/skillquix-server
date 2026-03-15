@@ -101,6 +101,7 @@ export const upsertResumeEmbedding = async (
             "Upsert Resume Embedding Error:",
             error?.response?.data || error.message
         );
+        console.log(error)
         throw new Error("Failed to upsert resume embedding");
     }
 };
