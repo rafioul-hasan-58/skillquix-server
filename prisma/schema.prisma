@@ -332,8 +332,6 @@ model Skill {
   updatedAt        DateTime         @updatedAt
   resume           Resume?          @relation(fields: [resumeId], references: [id])
   resumeId         String?          @db.ObjectId
-
-  @@unique([userId, skillName])
 }
 
 model SavedGig {
