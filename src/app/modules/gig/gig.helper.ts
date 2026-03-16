@@ -99,18 +99,16 @@ export const upsertGigEmbedding = async (
     try {
         const response = await axios.post(
             `${config.ai_base_url}/v1/upsert_gig_embedding`,
-            {
-                embedding,
-            },
+            { embedding },           
             {
                 params: {
-                    gig_id: gigId, // query param
+                    gig_id: gigId,   
                 },
                 headers: {
                     "Content-Type": "application/json",
                     accept: "application/json",
                 },
-                timeout: 10000, // optional (10s timeout)
+                timeout: 10000,
             }
         );
 

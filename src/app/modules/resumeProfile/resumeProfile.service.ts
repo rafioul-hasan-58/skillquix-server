@@ -118,7 +118,7 @@ export const ResumeProfileService = {
                 phone: true,
                 summary: true,
                 totalExperienceYear: true,
-                embedding: true,
+                // embedding: true,
                 createdAt: true,
                 updatedAt: true,
                 skills: {
