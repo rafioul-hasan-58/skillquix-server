@@ -118,3 +118,21 @@ export const upsertGigEmbedding = async (
         throw new Error("Failed to upsert gig embedding");
     }
 };
+
+export const fetchSkillGap = async (userId: string, gigId: string) => {
+    try {
+        const response = await axios.get(`${config.ai_base_url}/v1/user_skillgap`, {
+            params: {
+                user_id: userId,
+                gig_id: gigId,
+            },
+            headers: {
+                accept: "application/json",
+            },
+        });
+        return response.data ?? null;
+    } catch (err: any) {
+        console.warn("Failed to fetch skill gap:", err?.response?.status, err?.message);
+        return null;
+    }
+};

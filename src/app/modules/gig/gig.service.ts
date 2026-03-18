@@ -3,7 +3,7 @@ import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { ActivityType, Gig, Source } from "@prisma/client";
-import { generateGigEmbedding, upsertGigEmbedding } from "./gig.helper";
+import { fetchSkillGap, generateGigEmbedding, upsertGigEmbedding } from "./gig.helper";
 import config from "../../../config";
 import { ActivityLogService } from "../activitylog/activitylog.service";
 import { mailService } from "../../mail/mail.service";
@@ -108,14 +108,40 @@ export const GigService = {
     },
 
     // Get single gig by ID
-    getSingleGigByIdFromDB: async (gigId: string) => {
+    getSingleGigByIdFromDB: async (gigId: string, userId: string) => {
         const gig = await prisma.gig.findUnique({
             where: { id: gigId },
+            select: {
+                id: true,
+                industryName: true,
+                industryEmail: true,
+                gigTitle: true,
+                category: true,
+                source: true,
+                description: true,
+                gigType: true,
+                experienceLevel: true,
+                duration: true,
+                location: true,
+                jobDescription: true,
+                responsibilities: true,
+                benefits: true,
+                gigStatus: true,
+                userId: true,
+                validUntil: true,
+                createdAt: true,
+                updatedAt: true,
+                // embedding excluded
+            },
         });
+
         if (!gig) {
             throw new ApiError(status.NOT_FOUND, "Gig not found!");
         }
-        return gig;
+
+        const skillGap = await fetchSkillGap(userId, gigId);
+
+        return { ...gig, skillGap };
     },
 
     // Update gig

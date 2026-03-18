@@ -28,7 +28,8 @@ const getAllGigs = catchAsync(async (req: Request, res: Response) => {
 // Get Single Gig
 const getSingleGig = catchAsync(async (req: Request, res: Response) => {
     const { gigId } = req.params;
-    const result = await GigService.getSingleGigByIdFromDB(gigId);
+    const { id: userId } = req.user;
+    const result = await GigService.getSingleGigByIdFromDB(gigId, userId);
     sendResponse(res, {
         statusCode: status.OK,
         message: "Gig retrieved successfully!",
