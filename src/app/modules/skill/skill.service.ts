@@ -6,17 +6,17 @@ import QueryBuilder from "../../builder/QueryBuilder";
 
 export const SkillService = {
     create: async (userId: string, payload: Skill) => {
-        const skillExists = await prisma.skill.findUnique({
-            where: {
-                userId_skillName: {
-                    userId,
-                    skillName: payload.skillName
-                }
-            }
-        });
-        if (skillExists) {
-            throw new ApiError(httpStatus.CONFLICT, "You already have this skill!")
-        }
+        // const skillExists = await prisma.skill.findUnique({
+        //     where: {
+        //         userId_skillName: {
+        //             userId,
+        //             skillName: payload.skillName
+        //         }
+        //     }
+        // });
+        // if (skillExists) {
+        //     throw new ApiError(httpStatus.CONFLICT, "You already have this skill!")
+        // }
         const result = await prisma.skill.create({
             data: {
                 ...payload,

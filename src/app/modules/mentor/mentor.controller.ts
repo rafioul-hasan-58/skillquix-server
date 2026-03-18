@@ -17,6 +17,19 @@ export const MentorController = {
         });
     }),
     // mentor
+    updateMentorProfile: async (req: Request, res: Response) => {
+        const userId = req.user?.id;
+        const payload = req.body;
+        const result = await MentorService.updateMentorProfile(userId, payload);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Mentor profile updated successfully!",
+            data: result,
+        });
+    },
+    // mentor
     getMyRequests: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.user;
         const result = await MentorService.getMyRequests(id, req.query);
@@ -94,5 +107,30 @@ export const MentorController = {
             data: result,
         });
     }),
+    // mentor
+    activateMentorProfile: catchAsync(async (req: Request, res: Response) => {
+        const userId = req.user?.id;
 
+        const result = await MentorService.activateMentorProfile(userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Mentor profile activated successfully!",
+            data: result,
+        });
+    }),
+
+    deactivateMentorProfile: catchAsync(async (req: Request, res: Response) => {
+        const userId = req.user?.id;
+
+        const result = await MentorService.deactivateMentorProfile(userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Mentor profile deactivated successfully!",
+            data: result,
+        });
+    }),
 }

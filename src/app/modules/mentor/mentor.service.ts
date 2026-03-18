@@ -4,38 +4,60 @@ import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import QueryBuilder from "../../builder/QueryBuilder";
+import { generateMentorshipEmbedding, upsertMentorEmbedding } from "./mentor.utils";
 
 export const MentorService = {
     // mentor
     setupMentorProfile: async (userId: string, payload: MentorProfile) => {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: userId
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found to setup mentor profile!");
+        }
+
+        return await prisma.$transaction(async (tx) => {
+            try {
+                // Step 1: Generate embedding
+                const embedding = await generateMentorshipEmbedding(payload.mentorshipDetails, payload.skills);
+                if (!embedding || embedding.success === false) {
+                    throw new ApiError(httpStatus.BAD_REQUEST, "Failed to generate mentorship embedding");
+                }
+
+                // Step 2: Create mentor profile
+                const result = await tx.mentorProfile.create({
+                    data: {
+                        ...payload,
+                        userId,
+                    },
+                });
+
+                // Step 3: Upsert embedding
+                const res = await upsertMentorEmbedding(result.id, embedding);
+
+                return res;
+            } catch (err: any) {
+                if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
+                    throw new ApiError(httpStatus.CONFLICT, "A mentor profile already exists for this user.");
+                }
+                throw err; // transaction will rollback automatically
             }
         });
-        if (!user) {
-            throw new ApiError(httpStatus.NOT_FOUND, "User not found to setup mentor profile!")
-        };
-
-        try {
-            const result = await prisma.mentorProfile.create({
-                data: {
-                    ...payload,
-                    userId
-                }
-            });
-            return result;
-        } catch (err: any) {
-            if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
-                // Unique constraint violation
-                throw new ApiError(
-                    httpStatus.CONFLICT,
-                    "A mentor profile already exists for this user."
-                );
-            }
-            // rethrow other errors
-            throw err;
+    },
+    // mentor
+    updateMentorProfile: async (userId: string, payload: Partial<MentorProfile>) => {
+        const mentorProfile = await prisma.mentorProfile.findUnique({ where: { userId } });
+        if (!mentorProfile) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentor profile not found!");
         }
+        // Step 2: Update mentor profile
+        const updated = await prisma.mentorProfile.update({
+            where: { userId },
+            data: {
+                ...payload,
+            },
+        });
+
+        return updated;
+
     },
     // mentor
     getMyRequests: async (mentorId: string, query: Record<string, unknown>) => {
@@ -47,6 +69,7 @@ export const MentorService = {
                 mentorProfile: true
             }
         });
+        console.log(mentor)
         if (!mentor?.mentorProfile) {
             throw new ApiError(httpStatus.NOT_FOUND, "No mentor found!setup your mentor profile first!")
         };
@@ -170,14 +193,14 @@ export const MentorService = {
             },
             select: {
                 id: true,
-                status:true,
+                status: true,
                 mentor: {
                     select: {
                         mentorProfile: {
                             select: {
                                 id: true,
-                                mentorName:true,
-                                role:true,
+                                mentorName: true,
+                                role: true,
                             }
                         }
                     }
@@ -237,5 +260,40 @@ export const MentorService = {
         return {
             message: "Mentor approved successfully!"
         }
-    }
+    },
+    // mentor
+    activateMentorProfile: async (userId: string) => {
+        const mentorProfile = await prisma.mentorProfile.findUnique({ where: { userId } });
+        if (!mentorProfile) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentor profile not found!");
+        }
+        if (mentorProfile.isActive) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Mentor profile is already active!");
+        }
+        await prisma.mentorProfile.update({
+            where: { userId },
+            data: { isActive: true },
+        });
+        return {
+            message: "Profile activated!"
+        }
+    },
+
+    deactivateMentorProfile: async (userId: string) => {
+        const mentorProfile = await prisma.mentorProfile.findUnique({ where: { userId } });
+        if (!mentorProfile) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentor profile not found!");
+        }
+        if (!mentorProfile.isActive) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Mentor profile is already inactive!");
+        }
+
+        await prisma.mentorProfile.update({
+            where: { userId },
+            data: { isActive: false },
+        });
+        return {
+            message: "Profile deactivated!"
+        }
+    },
 }

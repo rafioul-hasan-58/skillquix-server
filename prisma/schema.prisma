@@ -124,10 +124,11 @@ model MentorProfile {
   role              String
   company           String?
   experienceYears   Int // e.g. 7
-  skills            String[]
   mentorshipDetails String
   availability      String
   maxActiveMentees  Int
+  embedding         Json?
+  skills            String[]
   // Status & Visibility
   isApproved        Boolean  @default(false) // Admin approves mentors
   isActive          Boolean  @default(true)

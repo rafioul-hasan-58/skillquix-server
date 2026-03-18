@@ -15,6 +15,14 @@ router.post(
     validateRequest(MentorValidations.setupMentorProfileSchema),
     MentorController.setupMentorProfile
 );
+
+// mentor
+router.patch(
+    "/update-profile",
+    auth(UserRole.USER),
+    validateRequest(MentorValidations.updateMentorProfileSchema),
+    MentorController.updateMentorProfile
+);
 router.get(
     "/my-requests",
     auth(UserRole.USER),
@@ -54,7 +62,17 @@ router.get(
     auth(UserRole.USER),
     MentorController.myMentors
 );
+router.patch(
+    "/profile/activate",
+    auth(UserRole.USER),
+    MentorController.activateMentorProfile
+);
 
+router.patch(
+    "/profile/deactivate",
+    auth(UserRole.USER),
+    MentorController.deactivateMentorProfile
+);
 
 
 export const MentorRoutes = router;

@@ -10,6 +10,24 @@ const setupMentorProfileSchema = z.object({
     availability: z.string().min(3, "Availability must be specified"),
     maxActiveMentees: z.number().int().min(1, "Must allow at least 1 mentee"),
 });
+const updateMentorProfileSchema = z.object({
+    mentorName: z.string().min(2, "Mentor name must be at least 2 characters").optional(),
+    role: z.string().min(2, "Role must be at least 2 characters").optional(),
+    company: z.string().nullable().optional(),
+    experienceYears: z.number().int().min(0, "Experience must be non-negative").optional(),
+    skills: z
+        .array(z.string().min(1, "Skill cannot be empty"))
+        .nonempty("At least one skill required")
+        .optional(),
+    mentorshipDetails: z
+        .string()
+        .min(10, "Details must be at least 10 characters")
+        .optional(),
+    availability: z.string().min(3, "Availability must be specified").optional(),
+    maxActiveMentees: z.number().int().min(1, "Must allow at least 1 mentee").optional(),
+    isActive: z.boolean().optional(),
+})
+
 const mentorshipRequestSchema = z.object({
     mentorId: z
         .string()
@@ -27,5 +45,6 @@ const mentorshipRequestSchema = z.object({
 });
 export const MentorValidations = {
     setupMentorProfileSchema,
-    mentorshipRequestSchema
+    mentorshipRequestSchema,
+    updateMentorProfileSchema
 }
