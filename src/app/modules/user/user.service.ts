@@ -388,23 +388,47 @@ export const UserService = {
   },
   userDashboardOverview: async (userId: string) => {
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: {
+        resumeProfile: true
+      }
     });
 
     if (!user) {
       throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
     }
 
-    // 🗓 Get start & end of current month
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    const [skills, skillAddedThisMonth, response] = await Promise.all([
+    // Fetch similar gigs safely — don't crash dashboard if AI service fails
+    const fetchSimilarGigs = async () => {
+      try {
+        const response = await axios.get(
+          `${config.ai_base_url}/v1/gigs/similar/${userId}`,
+          {
+            params: { page: 1, page_size: 6 },
+            headers: { accept: "application/json" },
+          }
+        );
+        return response.data.gigs ?? [];
+      } catch (err: any) {
+        console.warn("Failed to fetch similar gigs:", err?.response?.status, err?.message);
+        return []; // fallback to empty array
+      }
+    };
+
+    const [skills, skillAddedThisMonth, opportunityMatches] = await Promise.all([
       prisma.skill.findMany({
-        where: { userId },
+        where: {
+          OR: [
+            { userId },
+            ...(user.resumeProfile ? [{ resumeProfileId: user.resumeProfile.id }] : [])
+          ]
+        },
         select: { skillName: true },
-        take: 6
+        take: 6,
       }),
 
       prisma.skill.count({
@@ -412,43 +436,31 @@ export const UserService = {
           userId,
           createdAt: {
             gte: startOfMonth,
-            lt: endOfMonth
-          }
-        }
+            lt: endOfMonth,
+          },
+        },
       }),
 
-      axios.get(`${config.ai_base_url}/v1/gigs/similar/${userId}`, {
-        params: {
-          page: 1,
-          page_size: 6,
-        },
-        headers: {
-          accept: "application/json",
-        },
-      })
-
+      fetchSimilarGigs(),
     ]);
 
-    const activityLog = await prisma.activityLog.findMany({
-      where: {
-        userId
-      },
-      orderBy: {
-        createdAt: "desc"
-      },
-      take: 3
-    })
-
-    const clarity = await getClearityScore(userId);
+    const [activityLog, clarity] = await Promise.all([
+      prisma.activityLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+      }),
+      getClearityScore(userId),
+    ]);
 
     return {
       topSkills: skills,
-      opportunityMatches: response.data.gigs,
+      opportunityMatches,
       monthlyInsights: {
         skillsAddedThisMonth: skillAddedThisMonth,
         clarity: clarity.currentMonth.score,
-        activityLog
-      }
+        activityLog,
+      },
     };
   },
   monthlyInsight: async (userId: string) => {
