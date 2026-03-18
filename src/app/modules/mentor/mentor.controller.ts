@@ -177,7 +177,7 @@ export const MentorController = {
     }),
     rejectMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
         const completionId = req.params?.id;
-        const result = await MentorService.rejectMentorshipCompletion(completionId);
+        const result = await MentorService.rejectMentorshipCompletion(completionId, req.body.feedback);
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,

@@ -32,6 +32,8 @@ const mentorshipRequestSchema = z.object({
     mentorId: z
         .string()
         .regex(/^[0-9a-fA-F]{24}$/, "mentorId must be a valid ObjectId"), // Ensures MongoDB ObjectId format
+    matchPercentage: z
+        .number({ required_error: "Match percentage is required!" }),
     learningGoals: z
         .string()
         .min(5, "Learning goals must be at least 5 characters long")
@@ -54,11 +56,15 @@ const AcceptMentorshipCompletionSchema = z.object({
     completionId: z.string().min(1, "Request ID is required"), // ObjectId as string
     actionItems: z.array(z.string()).nonempty("At least one action item is required"),
 });
+const rejectMentorshipCompletionSchema = z.object({
+    feedback: z.string().min(1, "Feedback is required"), // ObjectId as string
+});
 
 export const MentorValidations = {
     setupMentorProfileSchema,
     mentorshipRequestSchema,
     updateMentorProfileSchema,
     MentorshipCompletionSchema,
-    AcceptMentorshipCompletionSchema
+    AcceptMentorshipCompletionSchema,
+    rejectMentorshipCompletionSchema
 }

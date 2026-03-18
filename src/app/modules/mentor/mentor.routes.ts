@@ -98,6 +98,7 @@ router.post(
 router.post(
     "/reject-completion/:id",
     auth(UserRole.USER),
+    validateRequest(MentorValidations.rejectMentorshipCompletionSchema),
     MentorController.rejectMentorshipCompletion
 );
 

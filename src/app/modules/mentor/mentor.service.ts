@@ -51,7 +51,7 @@ export const MentorService = {
         });
         const recentApplications = await prisma.mentorshipRequest.findMany({
             where: {
-                mentorId: mentor?.id
+                mentorId: mentor?.userId
             }
         });
         return {
@@ -276,6 +276,7 @@ export const MentorService = {
             data: {
                 menteeId,
                 mentorId: payload.mentorId,
+                matchPercentage: payload.matchPercentage,
                 actionItems: payload.actionItems,
                 learningGoals: payload.learningGoals
             }
@@ -300,6 +301,7 @@ export const MentorService = {
             .select({
                 id: true,
                 status: true,
+                matchPercentage: true,
                 mentor: {
                     select: {
                         mentorProfile: {
@@ -466,7 +468,7 @@ export const MentorService = {
         return result
     },
     // mentor
-    rejectMentorshipCompletion: async (completionId: string) => {
+    rejectMentorshipCompletion: async (completionId: string, feedback: string) => {
         const completion = await prisma.mentorshipCompletion.findUnique({
             where: {
                 id: completionId
@@ -480,7 +482,8 @@ export const MentorService = {
                 id: completionId
             },
             data: {
-                status: MentorshipCompletionStatus.REJECTED
+                status: MentorshipCompletionStatus.REJECTED,
+
             }
         });
         return result
