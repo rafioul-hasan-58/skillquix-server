@@ -276,6 +276,13 @@ const getMySubscription = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
       id: userId
+    },
+    select: {
+      id: true,
+      subscriptionType: true,
+      stripeSubscriptionId: true,
+      subscriptionStatus: true,
+      currentPeriodEnd: true
     }
   });
   if (!user) {
@@ -298,7 +305,11 @@ const getMySubscription = async (userId: string) => {
   const plan = await prisma.plan.findFirst({
     where: { stripePriceId: subscription.items.data[0].price.id },
   });
-  return plan
+  return {
+    ...plan,
+    subscriptionStatus: user.subscriptionStatus,
+    currentPeriodEnds: user.currentPeriodEnd,
+  }
 };
 export const SubscriptionService = {
   createSubscription,

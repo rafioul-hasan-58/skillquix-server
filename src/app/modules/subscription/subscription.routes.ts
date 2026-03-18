@@ -41,6 +41,7 @@ router.get(
     auth(UserRole.ADMIN),
     SubscriptionController.getSubscriptions
 );
+
 router.get(
     "/my-subscription",
     auth(UserRole.USER),

@@ -5,8 +5,6 @@ import sendResponse from "../../helpers/sendResponse";
 import httpStatus from "http-status";
 
 
-
-
 const createSubscription = catchAsync(async (req: Request, res: Response) => {
     const { id: userId } = req.user;
     const result = await SubscriptionService.createSubscription(userId, req.body.planId, req.body.paymentMethodId);

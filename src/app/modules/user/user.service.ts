@@ -400,7 +400,7 @@ export const UserService = {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    const [skills, skillAddedThisMonth] = await Promise.all([
+    const [skills, skillAddedThisMonth, response] = await Promise.all([
       prisma.skill.findMany({
         where: { userId },
         select: { skillName: true },
@@ -417,15 +417,16 @@ export const UserService = {
         }
       }),
 
-      // axios.get(`${config.ai_base_url}/v1/gigs/similar/${userId}`, {
-      //   params: {
-      //     page: 1,
-      //     page_size: 6,
-      //   },
-      //   headers: {
-      //     accept: "application/json",
-      //   },
-      // })
+      axios.get(`${config.ai_base_url}/v1/gigs/similar/${userId}`, {
+        params: {
+          page: 1,
+          page_size: 6,
+        },
+        headers: {
+          accept: "application/json",
+        },
+      })
+
     ]);
 
     const activityLog = await prisma.activityLog.findMany({
@@ -442,7 +443,7 @@ export const UserService = {
 
     return {
       topSkills: skills,
-      // opportunityMatches: response.data.gigs,
+      opportunityMatches: response.data.gigs,
       monthlyInsights: {
         skillsAddedThisMonth: skillAddedThisMonth,
         clarity: clarity.currentMonth.score,
