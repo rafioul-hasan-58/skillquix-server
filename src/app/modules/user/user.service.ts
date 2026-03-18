@@ -128,6 +128,7 @@ export const UserService = {
         role: true,
         bio: true,
         location: true,
+        mentorProfile: true,
         createdAt: true,
         updatedAt: true
       }
