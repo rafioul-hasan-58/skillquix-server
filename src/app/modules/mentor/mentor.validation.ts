@@ -43,8 +43,22 @@ const mentorshipRequestSchema = z.object({
         .min(1, "At least one action item is required")
         .max(20, "Too many action items"),
 });
+
+// Enum for status
+
+const MentorshipCompletionSchema = z.object({
+    requestId: z.string().min(1, "Request ID is required"), // ObjectId as string
+    actionItems: z.array(z.string()).nonempty("At least one action item is required"),
+});
+const AcceptMentorshipCompletionSchema = z.object({
+    completionId: z.string().min(1, "Request ID is required"), // ObjectId as string
+    actionItems: z.array(z.string()).nonempty("At least one action item is required"),
+});
+
 export const MentorValidations = {
     setupMentorProfileSchema,
     mentorshipRequestSchema,
-    updateMentorProfileSchema
+    updateMentorProfileSchema,
+    MentorshipCompletionSchema,
+    AcceptMentorshipCompletionSchema
 }

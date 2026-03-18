@@ -100,7 +100,7 @@ export const SessionService = {
     },
     // mentee
     sendSessionRequest: async (requestId: string, payload: MentorshipSession) => {
-        const { topic, preferredTime, actionItems } = payload;
+        const { actionItems, menteeRequestNote } = payload;
         const request = await prisma.mentorshipRequest.findUnique({
             where: {
                 id: requestId
@@ -132,15 +132,13 @@ export const SessionService = {
         }
         const result = await prisma.mentorshipSession.create({
             data: {
-                preferredTime,
-                topic,
+                menteeRequestNote,
                 actionItems,
                 requestId
             },
             select: {
                 id: true,
                 requestId: true,
-                preferredTime: true,
                 actionItems: true,
                 status: true,
                 createdAt: true,
@@ -150,41 +148,66 @@ export const SessionService = {
         return result
     },
     // mentor
-    acceptSessionRequest: async (sessionId: string, payload: { startDateTime: string, endDateTime: string }) => {
-        const { startDateTime, endDateTime } = payload;
+    acceptSessionRequest: async (
+        payload: { sessionId: string, startDateTime: string; endDateTime: string; meetLink: string }
+    ) => {
+        const { startDateTime, endDateTime, meetLink, sessionId } = payload;
+
         const session = await prisma.mentorshipSession.findUnique({
-            where: {
-                id: sessionId
-            },
-            include: {
-                request: true
-            }
+            where: { id: sessionId },
+            include: { request: true },
         });
+
+        if (!session) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentorship session not found!");
+        }
+        await prisma.mentorshipRequest.update({
+            where: {
+                id: session.requestId
+            },
+            data: {
+                status: MentorshipRequestStatus.ACTIVE
+            }
+        })
+        const update = await prisma.mentorshipSession.update({
+            where: { id: sessionId },
+            data: {
+                status: SessionStatus.UPCOMING,
+                startDateTime,
+                endDateTime,
+                meetLink, // use directly from payload
+            },
+        });
+        return update;
+    },
+    // mentor
+    declineSessionRequest: async (
+        payload: { declineReason: string; sessionId: string }
+    ) => {
+        const { declineReason, sessionId } = payload;
+
+        const session = await prisma.mentorshipSession.findUnique({
+            where: { id: sessionId },
+            // include only if you really need request data
+        });
+
         if (!session) {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentorship session not found!");
         }
 
-        const perameter = {
-            startDate: startDateTime,
-            endDate: endDateTime,
-            topic: session.topic ?? "",
-            mentorId: session.request.mentorId,
-            menteeId: session.request.menteeId
-        };
-        const res = await createMeetLink(perameter)
 
+        // ✅ Update session status and decline reason
         const update = await prisma.mentorshipSession.update({
-            where: {
-                id: sessionId
-            },
+            where: { id: sessionId },
             data: {
-                status: SessionStatus.UPCOMING,
-                startDateTime: payload.startDateTime,
-                endDateTime: payload.endDateTime,
-                meetLink: res.meetLink
-            }
+                status: SessionStatus.REJECTED,
+                declineReason,
+            },
         });
-        return update
+
+        return {
+            message: "Session declined!"
+        }
     },
     // mentor
     sessionDetails: async (sessionId: string) => {

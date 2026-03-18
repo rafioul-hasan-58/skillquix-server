@@ -15,6 +15,11 @@ router.post(
     validateRequest(MentorValidations.setupMentorProfileSchema),
     MentorController.setupMentorProfile
 );
+router.get(
+    "/get-profile",
+    auth(UserRole.USER),
+    MentorController.getMentorProfile
+);
 
 // mentor
 router.patch(
@@ -27,6 +32,11 @@ router.get(
     "/my-requests",
     auth(UserRole.USER),
     MentorController.getMyRequests
+);
+router.get(
+    "/request/details/:id",
+    auth(UserRole.USER),
+    MentorController.requestDetails
 );
 router.post(
     "/request/accept/:id",
@@ -72,6 +82,23 @@ router.patch(
     "/profile/deactivate",
     auth(UserRole.USER),
     MentorController.deactivateMentorProfile
+);
+router.post(
+    "/send-completion",
+    auth(UserRole.USER),
+    validateRequest(MentorValidations.MentorshipCompletionSchema),
+    MentorController.sendMentorshipCompletion
+);
+router.post(
+    "/accpet-completion",
+    auth(UserRole.USER),
+    validateRequest(MentorValidations.AcceptMentorshipCompletionSchema),
+    MentorController.accpeptMentorshipCompletion
+);
+router.post(
+    "/reject-completion/:id",
+    auth(UserRole.USER),
+    MentorController.rejectMentorshipCompletion
 );
 
 

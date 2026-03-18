@@ -29,10 +29,16 @@ router.get(
     auth(UserRole.USER),
     SessionController.sessionDetails
 );
-router.get(
-    "/accept/:id",
+router.post(
+    "/accept",
     auth(UserRole.USER),
-    validateRequest(SessionValidation.sessionScheduleSchema),
+    validateRequest(SessionValidation.acceptSessionRequestSchema),
     SessionController.acceptSessionRequest
+);
+router.post(
+    "/decline",
+    auth(UserRole.USER),
+    validateRequest(SessionValidation.declineSessionRequestSchema),
+    SessionController.declineSessionRequest
 );
 export const SessionRoutes = router;

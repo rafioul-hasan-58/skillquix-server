@@ -137,37 +137,48 @@ model MentorProfile {
 }
 
 model MentorshipSession {
-  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
   // Participants
-  requestId     String            @db.ObjectId
-  request       MentorshipRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId         String            @db.ObjectId
+  request           MentorshipRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   // Session Info
-  topic         String? // What the mentee wants help with
-  preferredTime DateTime
-  actionItems   String[]
-  startDateTime DateTime?
-  endDateTime   DateTime?
-  availability  String?
-  status        SessionStatus     @default(PENDING)
+  menteeRequestNote String
+  topic             String? // What the mentee wants help with
+  actionItems       String[]
+  startDateTime     DateTime?
+  endDateTime       DateTime?
+  status            SessionStatus     @default(PENDING)
   // Google Meet
-  meetLink      String?
-  mentorNotes   String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  meetLink          String?
+  mentorNotes       String?
+  declineReason     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
 model MentorshipRequest {
-  id                 String                  @id @default(auto()) @map("_id") @db.ObjectId
-  menteeId           String                  @db.ObjectId
-  mentorId           String                  @db.ObjectId
-  mentee             User                    @relation("MenteeRequestRelation", fields: [menteeId], references: [id])
-  mentor             User                    @relation("MentorResuestRelation", fields: [mentorId], references: [id])
-  status             MentorshipRequestStatus @default(PENDING)
-  learningGoals      String
-  actionItems        String[]
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  mentorshipSessions MentorshipSession[]
+  id                   String                  @id @default(auto()) @map("_id") @db.ObjectId
+  menteeId             String                  @db.ObjectId
+  mentorId             String                  @db.ObjectId
+  mentee               User                    @relation("MenteeRequestRelation", fields: [menteeId], references: [id])
+  mentor               User                    @relation("MentorResuestRelation", fields: [mentorId], references: [id])
+  status               MentorshipRequestStatus @default(PENDING)
+  learningGoals        String
+  actionItems          String[]
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  mentorshipSessions   MentorshipSession[]
+  mentorshipCompletion MentorshipCompletion?
+}
+
+model MentorshipCompletion {
+  id          String                     @id @default(auto()) @map("_id") @db.ObjectId
+  requestId   String                     @unique @db.ObjectId
+  request     MentorshipRequest          @relation(fields: [requestId], references: [id])
+  actionItems String[]
+  status      MentorshipCompletionStatus @default(PENDING)
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
 }
 
 model MentorGoogleAuth {
@@ -460,8 +471,10 @@ enum SessionStatus {
 }
 
 enum MentorshipRequestStatus {
+  ACTIVE
   PENDING
   ACCEPTED
+  REQUESTED
   REJECTED
   COMPLETED
   CANCELLED
@@ -483,4 +496,10 @@ enum ProficiencyLevel {
   Intermediate
   Advanced
   Expert
+}
+
+enum MentorshipCompletionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

@@ -1,4 +1,4 @@
-import { MentorProfile, MentorshipRequest, MentorshipRequestStatus } from "@prisma/client";
+import { MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -42,6 +42,22 @@ export const MentorService = {
             }
         });
     },
+    getMentorProfile: async (userId: string) => {
+        const mentor = await prisma.mentorProfile.findUnique({
+            where: {
+                userId
+            }
+        });
+        const recentApplications = await prisma.mentorshipRequest.findMany({
+            where: {
+                mentorId: mentor?.id
+            }
+        });
+        return {
+            ...mentor,
+            recentApplications
+        }
+    },
     // mentor
     updateMentorProfile: async (userId: string, payload: Partial<MentorProfile>) => {
         const mentorProfile = await prisma.mentorProfile.findUnique({ where: { userId } });
@@ -75,6 +91,7 @@ export const MentorService = {
         };
         const userQuery = new QueryBuilder(prisma.mentorshipRequest, query)
             .filter()
+            .search(["mentee.fullName", "mentee.profession"])
             .rawFilter({ mentorId })
             .paginate()
             .select({
@@ -99,6 +116,93 @@ export const MentorService = {
         return {
             data,
             meta
+        }
+    },
+    // mentor
+    requestDetails: async (requestId: string, userId: string, query: Record<string, unknown>) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            },
+            include: {
+                mentorProfile: true
+            }
+        });
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
+        }
+        let result;
+        if (user.mentorProfile) {
+            result = await prisma.mentorshipRequest.findUnique({
+                where: {
+                    id: requestId,
+                },
+                select: {
+                    id: true,
+                    learningGoals: true,
+                    actionItems: true,
+                    mentee: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            profession: true,
+                            profileImage: true,
+                        },
+                    },
+                    mentorshipCompletion: true
+
+                },
+            });
+
+        } else {
+            result = await prisma.mentorshipRequest.findUnique({
+                where: {
+                    id: requestId,
+                },
+                select: {
+                    id: true,
+                    learningGoals: true,
+                    actionItems: true,
+                    mentor: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            profession: true,
+                            profileImage: true,
+                        },
+                    },
+                },
+            });
+
+        }
+
+        if (!result) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentorship request not found!");
+        }
+
+        const mentorshipsessionsQuery = new QueryBuilder(prisma.mentorshipSession, query)
+            .filter()
+            .rawFilter({ requestId })
+            .select({
+                id: true,
+                topic: true,
+                meetLink: true,
+                mentorNotes: true,
+                startDateTime: true,
+                endDateTime: true,
+                status: true,
+                declineReason: true,
+                menteeRequestNote: true
+            })
+
+        const [mentorshipSessions] = await Promise.all([
+            mentorshipsessionsQuery.execute(),
+        ]);
+
+
+        return {
+            ...result,
+            mentorshipSessions
         }
     },
     // mentor
@@ -295,5 +399,67 @@ export const MentorService = {
         return {
             message: "Profile deactivated!"
         }
+    },
+    // mentee
+    sendMentorshipCompletion: async (payload: { requestId: string, actionItems: string[] }) => {
+        const { requestId, actionItems } = payload;
+        const request = await prisma.mentorshipRequest.findUnique({
+            where: {
+                id: requestId
+            }
+        });
+        if (!request) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Request not found!")
+        }
+        const result = await prisma.mentorshipCompletion.create({
+            data: {
+                requestId,
+                actionItems: actionItems,
+                status: MentorshipCompletionStatus.PENDING
+            }
+        });
+        return result
+    },
+    // mentee
+    acceptMentorshipCompletion: async (payload: { completionId: string, actionItems: string[] }) => {
+        const { completionId, actionItems } = payload;
+        const completion = await prisma.mentorshipCompletion.findUnique({
+            where: {
+                id: completionId
+            }
+        });
+        if (!completion) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Completion request not found!")
+        }
+        const result = await prisma.mentorshipCompletion.update({
+            where: {
+                id: completionId
+            },
+            data: {
+                actionItems: actionItems,
+                status: MentorshipCompletionStatus.ACCEPTED
+            }
+        });
+        return result
+    },
+    // mentor
+    rejectMentorshipCompletion: async (completionId: string) => {
+        const completion = await prisma.mentorshipCompletion.findUnique({
+            where: {
+                id: completionId
+            }
+        });
+        if (!completion) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Completion request not found!")
+        }
+        const result = await prisma.mentorshipCompletion.update({
+            where: {
+                id: completionId
+            },
+            data: {
+                status: MentorshipCompletionStatus.REJECTED
+            }
+        });
+        return result
     },
 }

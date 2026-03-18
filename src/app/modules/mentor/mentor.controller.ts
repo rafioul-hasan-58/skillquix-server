@@ -16,6 +16,16 @@ export const MentorController = {
             data: result,
         });
     }),
+    getMentorProfile: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.user;
+        const result = await MentorService.getMentorProfile(id);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Mentor profile fetched successfully!",
+            data: result,
+        });
+    }),
     // mentor
     updateMentorProfile: async (req: Request, res: Response) => {
         const userId = req.user?.id;
@@ -39,6 +49,18 @@ export const MentorController = {
             message: "My request fetched!",
             meta: result.meta,
             data: result.data,
+        });
+    }),
+    // mentor
+    requestDetails: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const { id: userId } = req.user;
+        const result = await MentorService.requestDetails(id, userId, req.query);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Mentorship request details retrieved successfully!",
+            data: result,
         });
     }),
     // mentor
@@ -130,6 +152,34 @@ export const MentorController = {
             statusCode: httpStatus.OK,
             success: true,
             message: "Mentor profile deactivated successfully!",
+            data: result,
+        });
+    }),
+    sendMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
+        const result = await MentorService.sendMentorshipCompletion(req.body);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Completion sent!",
+            data: result,
+        });
+    }),
+    accpeptMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
+        const result = await MentorService.acceptMentorshipCompletion(req.body);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Completion accepted!",
+            data: result,
+        });
+    }),
+    rejectMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
+        const completionId = req.params?.id;
+        const result = await MentorService.rejectMentorshipCompletion(completionId);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Completion rejected!",
             data: result,
         });
     }),
