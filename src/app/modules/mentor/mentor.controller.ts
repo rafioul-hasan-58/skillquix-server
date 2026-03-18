@@ -87,12 +87,13 @@ export const MentorController = {
     }),
     // admin
     getPendingMentors: catchAsync(async (req: Request, res: Response) => {
-        const result = await MentorService.getPendingMentors();
+        const result = await MentorService.getPendingMentors(req.query);
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
             message: "Pending mentors retrieved successfully!",
-            data: result,
+            meta: result.meta,
+            data: result.data,
         });
     }),
     // admin
@@ -121,12 +122,13 @@ export const MentorController = {
     // mentee
     myMentors: catchAsync(async (req: Request, res: Response) => {
         const { id } = req.user;
-        const result = await MentorService.myMentors(id);
+        const result = await MentorService.myMentors(id, req.query);
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
             message: "My mentors fetched!",
-            data: result,
+            meta: result.meta,
+            data: result.data,
         });
     }),
     // mentor

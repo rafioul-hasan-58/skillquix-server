@@ -5,6 +5,7 @@ import httpStatus from "http-status";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { generateMentorshipEmbedding, upsertMentorEmbedding } from "./mentor.utils";
+import { tuple } from "zod";
 
 export const MentorService = {
     // mentor
@@ -282,7 +283,7 @@ export const MentorService = {
         return result
     },
     // mentee
-    myMentors: async (menteeId: string) => {
+    myMentors: async (menteeId: string, query: Record<string, unknown>) => {
         const mentee = await prisma.user.findUnique({
             where: {
                 id: menteeId
@@ -291,11 +292,12 @@ export const MentorService = {
         if (!mentee) {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentee not found!")
         };
-        const result = await prisma.mentorshipRequest.findMany({
-            where: {
-                menteeId
-            },
-            select: {
+        const userQuery = new QueryBuilder(prisma.mentorshipRequest, query)
+            .search(["mentor.mentorProfile.mentorName", "mentor.mentorProfile.role"])
+            .filter()
+            .rawFilter({ menteeId })
+            .paginate()
+            .select({
                 id: true,
                 status: true,
                 mentor: {
@@ -309,32 +311,53 @@ export const MentorService = {
                         }
                     }
                 }
-            }
-        });
-        return result
+            })
+
+        const [result, meta] = await Promise.all([
+            userQuery.execute(),
+            userQuery.countTotal(),
+        ]);
+        return {
+            data: result,
+            meta
+        }
     },
     // admin
-    getPendingMentors: async () => {
-        const result = await prisma.mentorProfile.findMany({
-            where: {
-                isApproved: false
-            },
-            select: {
+    getPendingMentors: async (query: Record<string, unknown>) => {
+        const userQuery = new QueryBuilder(prisma.mentorProfile, query)
+            .search(["user.fullName", "user.email", "mentorName"])
+            .filter()
+            .rawFilter({ isApproved: false })
+            .paginate()
+            .select({
                 id: true,
                 mentorName: true,
                 role: true,
                 company: true,
                 experienceYears: true,
                 isApproved: true,
+                createdAt: true,
                 user: {
                     select: {
                         id: true,
-                        profileImage: true
+                        profileImage: true,
+                        fullName: true,
+                        email: true,
+                        isBlocked: true,
+                        isDeleted: true,
+                        subscriptionType: true,
                     }
                 }
-            }
-        });
-        return result
+            })
+
+        const [result, meta] = await Promise.all([
+            userQuery.execute(),
+            userQuery.countTotal(),
+        ]);
+        return {
+            data: result,
+            meta
+        }
     },
 
     // admin
