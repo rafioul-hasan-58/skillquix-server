@@ -428,7 +428,6 @@ export const UserService = {
           ]
         },
         select: { skillName: true },
-        take: 6,
       }),
 
       prisma.skill.count({
