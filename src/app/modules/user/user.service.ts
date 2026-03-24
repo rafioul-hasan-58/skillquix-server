@@ -406,16 +406,16 @@ export const UserService = {
     const fetchSimilarGigs = async () => {
       try {
         const response = await axios.get(
-          `${config.ai_base_url}/v1/gigs/similar/${userId}`,
+          `${config.ai_base_url}/v1/gigs/similar`,
           {
-            params: { page: 1, page_size: 6 },
+            params: { user_id: userId, page: 1, page_size: 3 },
             headers: { accept: "application/json" },
           }
         );
         return response.data.gigs ?? [];
       } catch (err: any) {
         console.warn("Failed to fetch similar gigs:", err?.response?.status, err?.message);
-        return []; // fallback to empty array
+        return [];
       }
     };
 
