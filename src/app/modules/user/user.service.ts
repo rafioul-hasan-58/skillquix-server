@@ -538,11 +538,12 @@ export const UserService = {
 
     const clarity = await getClearityScore(userId);
     const delta = getClarityPercentageChange(clarity)
+
     return {
       clarityScore: clarity.currentMonth.score,
       delta,
       skillCount,
-      newRoleIdentified: 7,
+      newRoleIdentified: clarity.matched_gigs_this_month,
       skillImpactDetails
     }
   }

@@ -136,7 +136,11 @@ export const ReflextionService = {
         // Update in DB
         const updated = await prisma.reflextion.update({
             where: { id },
-            data: dataToUpdate,
+            data: {
+                ...payload,
+                impectBullects: combinedImpectBullects,
+                extractedSkills: combinedExtractedSkills
+            },
         });
         return updated;
     },
