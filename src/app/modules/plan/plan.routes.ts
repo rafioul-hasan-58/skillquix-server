@@ -26,7 +26,6 @@ router.delete(
 );
 router.get(
     "/get-all",
-    auth(),
     PlanController.getAllPlans
 );
 router.get(
