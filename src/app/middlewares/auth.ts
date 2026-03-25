@@ -18,7 +18,7 @@ const auth = (...roles: string[]) => {
         throw new ApiError(status.UNAUTHORIZED, "You are not authorized!");
       }
 
-      const accessToken = token.split(" ")[1];
+        const accessToken = token.split(" ")[1];
       if (!accessToken) {
         throw new ApiError(status.UNAUTHORIZED, "Invalid token format");
       }

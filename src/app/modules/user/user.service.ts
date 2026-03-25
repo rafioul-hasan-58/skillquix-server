@@ -463,6 +463,17 @@ export const UserService = {
     };
   },
   monthlyInsight: async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        resumeProfile: true
+      }
+    });
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+    }
+
     // 🗓 Get start & end of current month
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -476,7 +487,8 @@ export const UserService = {
         }
       }
     });
-    const topThreeSkills = await prisma.skill.findMany({
+
+    const userSkills = await prisma.skill.findMany({
       where: {
         userId,
         createdAt: {
@@ -489,6 +501,19 @@ export const UserService = {
       },
       take: 3
     });
+
+
+    const topThreeSkills = userSkills.length > 0
+      ? userSkills
+      : await prisma.skill.findMany({
+        where: {
+          resumeProfileId: user.resumeProfile?.id,
+          createdAt: { gte: startOfMonth, lt: endOfMonth }
+        },
+        select: { skillName: true },
+        take: 3
+      });
+
     const skillImpactDetails = await Promise.all(
       topThreeSkills.map(async (skill) => {
         const response = await axios.post(
@@ -510,6 +535,7 @@ export const UserService = {
         };
       })
     );
+
     const clarity = await getClearityScore(userId);
     const delta = getClarityPercentageChange(clarity)
     return {
