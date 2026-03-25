@@ -110,37 +110,10 @@ export const ReflextionService = {
             throw new ApiError(status.NOT_FOUND, "Reflextion not found");
         }
 
-        // Combine impectBullects if payload contains new ones
-        let combinedImpectBullects = existing.impectBullects || [];
-        if (payload.impectBullects?.length) {
-            combinedImpectBullects = Array.from(new Set([
-                ...combinedImpectBullects,
-                ...payload.impectBullects
-            ]));
-        }
-        // Combine Skills if payload contains new ones
-        let combinedExtractedSkills = existing.extractedSkills || [];
-        if (payload.extractedSkills?.length) {
-            combinedExtractedSkills = Array.from(new Set([
-                ...combinedExtractedSkills,
-                ...payload.extractedSkills
-            ]));
-        }
-        // Prepare update object
-        const dataToUpdate: any = {
-            ...payload,
-            impectBullects: combinedImpectBullects,
-            extractedSkills: combinedExtractedSkills
-        };
-
         // Update in DB
         const updated = await prisma.reflextion.update({
             where: { id },
-            data: {
-                ...payload,
-                impectBullects: combinedImpectBullects,
-                extractedSkills: combinedExtractedSkills
-            },
+            data: payload,
         });
         return updated;
     },
