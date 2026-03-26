@@ -1,7 +1,7 @@
 import status from "http-status";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
-import { CreateReflextionInput } from "./reflextion.validation";
+import { CreateReflextionInput, UpdateReflextionInput } from "./reflextion.validation";
 import QueryBuilder from "../../builder/QueryBuilder";
 import httpStatus from "http-status";
 import { SubscriptionType } from "@prisma/client";
@@ -41,10 +41,21 @@ export const ReflextionService = {
         const reflextion = await prisma.reflextion.create({
             data: {
                 userId,
-                extractedSkills: payload.extractedSkills,
+                extractedSkills: {
+                    create: payload.extractedSkills.map(skill => ({
+                        skillName: skill.skillName,
+                        skillCategory: skill.skillCategory,
+                        proficiencyLevel: skill.proficiencyLevel,
+                        yearOfExperience: skill.yearOfExperience,
+                        userId: userId,
+                    }))
+                },
                 impectBullects: payload.impectBullects ?? [],
                 shortSummary: payload.shortSummary.trim(),
             },
+            include: {
+                extractedSkills: true
+            }
         });
         return reflextion;
     },
@@ -52,8 +63,9 @@ export const ReflextionService = {
     // GET ALL (with basic optional filtering + sorting)
     getAllReflextions: async (query: Record<string, unknown>) => {
         const reflextionQuery = new QueryBuilder(prisma.reflextion, query)
-            .search(["extractedSkills", "shortSummary"])
+            .search(["extractedSkills.some.skillName", "shortSummary"])
             .filter()
+            .include({ extractedSkills: true })
             .paginate();
 
         const [data, meta] = await Promise.all([
@@ -68,9 +80,10 @@ export const ReflextionService = {
     },
     getMyReflextions: async (userId: string, query: Record<string, unknown>) => {
         const reflextionQuery = new QueryBuilder(prisma.reflextion, query)
-            .search(["extractedSkills", "shortSummary"])
+            .search(["extractedSkills.some.skillName", "shortSummary"])
             .filter()
             .rawFilter({ userId })
+            .include({ extractedSkills: true })
             .paginate();
 
         const [data, meta] = await Promise.all([
@@ -87,6 +100,7 @@ export const ReflextionService = {
     getReflextionById: async (id: string) => {
         const reflextion = await prisma.reflextion.findUnique({
             where: { id },
+            include: { extractedSkills: true }
         });
 
         if (!reflextion) {
@@ -98,11 +112,7 @@ export const ReflextionService = {
 
     updateReflextion: async (
         id: string,
-        payload: Partial<{
-            extractedSkills: string[];
-            impectBullects: string[];
-            shortSummary: string;
-        }>,
+        payload: UpdateReflextionInput,
     ) => {
         // Fetch existing record
         const existing = await prisma.reflextion.findUnique({ where: { id } });
@@ -110,10 +120,31 @@ export const ReflextionService = {
             throw new ApiError(status.NOT_FOUND, "Reflextion not found");
         }
 
+        const updateData: any = {};
+        if (payload.impectBullects !== undefined) {
+            updateData.impectBullects = payload.impectBullects;
+        }
+        if (payload.shortSummary !== undefined) {
+            updateData.shortSummary = payload.shortSummary;
+        }
+        if (payload.extractedSkills !== undefined) {
+            updateData.extractedSkills = {
+                deleteMany: {},
+                create: payload.extractedSkills.map(skill => ({
+                    skillName: skill.skillName,
+                    skillCategory: skill.skillCategory,
+                    proficiencyLevel: skill.proficiencyLevel,
+                    yearOfExperience: skill.yearOfExperience,
+                    userId: existing.userId,
+                }))
+            };
+        }
+
         // Update in DB
         const updated = await prisma.reflextion.update({
             where: { id },
-            data: payload,
+            data: updateData,
+            include: { extractedSkills: true }
         });
         return updated;
     },
