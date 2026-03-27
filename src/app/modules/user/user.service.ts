@@ -161,7 +161,9 @@ export const UserService = {
         profession: payload.profession,
         marketingEmails: payload.marketingEmails,
         jobAlerts: payload.jobAlerts,
-        emailNotification: payload.emailNotification
+        emailNotification: payload.emailNotification,
+        careerStage: payload.careerStage,
+        isOnboarded: payload.isOnboarded,
       },
       select: {
         id: true,

@@ -1,4 +1,4 @@
-import { SubscriptionType, Toggle, UserRole } from "@prisma/client";
+import { Toggle } from "@prisma/client";
 import { z } from "zod";
 
 export const createUserValidationSchema = z.object({
@@ -67,6 +67,14 @@ const updateUserValidationSchema = z.object({
     .string({
       invalid_type_error: "Professional Title must be a string.",
     })
+    .optional(),
+  careerStage: z
+    .string({
+      invalid_type_error: "Career Stage must be a string.",
+    })
+    .optional(),
+  isOnboarded: z
+    .boolean()
     .optional(),
   location: z
     .string({

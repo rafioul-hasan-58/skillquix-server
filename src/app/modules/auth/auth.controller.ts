@@ -24,7 +24,7 @@ export const AuthController = {
 
   login: catchAsync(async (req: Request, res: Response) => {
     const { email, password } = req.body;
-    const { accessToken, refreshToken } = await AuthService.loginUser(email, password);
+    const { accessToken, refreshToken, isOnboarded } = await AuthService.loginUser(email, password);
     res.cookie("refreshToken", refreshToken, {
       secure: false,
       httpOnly: true,
@@ -34,7 +34,8 @@ export const AuthController = {
       statusCode: status.OK,
       message: "User Logged In successfully!",
       data: {
-        accessToken
+        accessToken,
+        isOnboarded
       },
 
     });

@@ -391,6 +391,9 @@ model User {
   stripeSubscriptionId String?
   subscriptionStatus   SubscriptionStatus  @default(INACTIVE)
   currentPeriodEnd     DateTime?
+  // on borading
+  careerStage          String?
+  isOnboarded          Boolean             @default(false)
   OTP                  OTP?
   resumes              Resume?
   reflextions          Reflextion[]

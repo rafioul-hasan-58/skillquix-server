@@ -99,7 +99,8 @@ export const AuthService = {
     });
     return {
       accessToken,
-      refreshToken
+      refreshToken,
+      isOnboarded: user.isOnboarded
     }
   },
   changePassword: async (
