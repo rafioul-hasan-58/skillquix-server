@@ -5,7 +5,6 @@ import httpStatus from "http-status";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { generateMentorshipEmbedding, upsertMentorEmbedding } from "./mentor.utils";
-import { tuple } from "zod";
 
 export const MentorService = {
     // mentor
@@ -90,6 +89,12 @@ export const MentorService = {
         if (!mentor?.mentorProfile) {
             throw new ApiError(httpStatus.NOT_FOUND, "No mentor found!setup your mentor profile first!")
         };
+
+        // update last mentor action
+        await prisma.mentorProfile.update({
+            where: { userId: mentorId },
+            data: { lastMentorAction: new Date() }
+        });
         const userQuery = new QueryBuilder(prisma.mentorshipRequest, query)
             .filter()
             .search(["mentee.fullName", "mentee.profession"])
@@ -134,6 +139,12 @@ export const MentorService = {
         }
         let result;
         if (user.mentorProfile) {
+            // update last mentor action
+            await prisma.mentorProfile.update({
+                where: { userId },
+                data: { lastMentorAction: new Date() }
+            });
+
             result = await prisma.mentorshipRequest.findUnique({
                 where: {
                     id: requestId,
@@ -224,6 +235,13 @@ export const MentorService = {
                 status: MentorshipRequestStatus.ACCEPTED
             }
         });
+
+        // update last response to request
+        await prisma.mentorProfile.update({
+            where: { userId: request.mentorId },
+            data: { lastResponseToRequest: new Date() }
+        });
+
         return {
             message: "Request accepted!"
         }
@@ -246,6 +264,13 @@ export const MentorService = {
                 status: MentorshipRequestStatus.REJECTED
             }
         });
+
+        // update last response to request
+        await prisma.mentorProfile.update({
+            where: { userId: request.mentorId },
+            data: { lastResponseToRequest: new Date() }
+        });
+
         return {
             message: "Request rejected!"
         }
@@ -465,6 +490,18 @@ export const MentorService = {
                 status: MentorshipCompletionStatus.ACCEPTED
             }
         });
+
+        // update last response to request (mentor action)
+        const request = await prisma.mentorshipRequest.findUnique({
+            where: { id: completion.requestId }
+        });
+        if (request) {
+            await prisma.mentorProfile.update({
+                where: { userId: request.mentorId },
+                data: { lastResponseToRequest: new Date() }
+            });
+        }
+
         return result
     },
     // mentor
@@ -486,6 +523,18 @@ export const MentorService = {
 
             }
         });
+
+        // update last response to request (mentor action)
+        const request = await prisma.mentorshipRequest.findUnique({
+            where: { id: completion.requestId }
+        });
+        if (request) {
+            await prisma.mentorProfile.update({
+                where: { userId: request.mentorId },
+                data: { lastResponseToRequest: new Date() }
+            });
+        }
+
         return result
     },
 }

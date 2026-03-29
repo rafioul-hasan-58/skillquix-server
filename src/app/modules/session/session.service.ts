@@ -178,6 +178,13 @@ export const SessionService = {
                 meetLink, // use directly from payload
             },
         });
+
+        // update last response to request (mentor action)
+        await prisma.mentorProfile.update({
+            where: { userId: session.request.mentorId },
+            data: { lastResponseToRequest: new Date() }
+        });
+
         return update;
     },
     // mentor
@@ -203,6 +210,13 @@ export const SessionService = {
                 status: SessionStatus.REJECTED,
                 declineReason,
             },
+            include: { request: true }
+        });
+
+        // update last response to request (mentor action)
+        await prisma.mentorProfile.update({
+            where: { userId: update.request.mentorId },
+            data: { lastResponseToRequest: new Date() }
         });
 
         return {

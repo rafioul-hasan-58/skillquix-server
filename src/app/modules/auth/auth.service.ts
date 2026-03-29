@@ -7,7 +7,7 @@ import config from "../../../config";
 import { comparePassword } from "../../utils/comparePassword";
 import { sendOTP } from "../../utils/sendOTP";
 import axios from "axios"
-import { User } from "@prisma/client";
+import { User, UserRole } from "@prisma/client";
 import crypto from 'crypto';
 import stripe from "../../stripe/stripe";
 
@@ -57,6 +57,9 @@ export const AuthService = {
   loginUser: async (email: string, password: string) => {
     const user = await prisma.user.findUnique({
       where: { email },
+      include: {
+        mentorProfile: true
+      }
     });
 
     if (!user) {
@@ -69,6 +72,17 @@ export const AuthService = {
       throw new ApiError(status.UNAUTHORIZED, "Password is incorrect!");
     }
 
+    // // if user is a mentor
+    // if (user.mentorProfile) {
+    //   await prisma.mentorProfile.update({
+    //     where:{
+    //       userId:user.id
+    //     },
+    //     data:{
+
+    //     }
+    //   })
+    // }
 
     const jwtPayload = {
       id: user.id,
@@ -89,14 +103,16 @@ export const AuthService = {
       config.jwt.refresh_token_expires_in as string
     );
     // update last login
-    await prisma.user.update({
-      where: {
-        id: user.id
-      },
-      data: {
-        lastLogin: new Date()
-      }
-    });
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() }
+      }),
+      prisma.mentorProfile.updateMany({
+        where: { userId: user.id },
+        data: { lastLogin: new Date() }
+      })
+    ]);
     return {
       accessToken,
       refreshToken,
@@ -255,6 +271,18 @@ export const AuthService = {
         });
       }
 
+      // update last login
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: { lastLogin: new Date() }
+        }),
+        prisma.mentorProfile.updateMany({
+          where: { userId: user.id },
+          data: { lastLogin: new Date() }
+        })
+      ]);
+
       // New user — create Stripe customer
       if (isNewUser) {
         try {
@@ -338,6 +366,18 @@ export const AuthService = {
         console.error("Stripe customer creation failed:", err);
       }
     }
+
+    // update last login
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user!.id },
+        data: { lastLogin: new Date() }
+      }),
+      prisma.mentorProfile.updateMany({
+        where: { userId: user!.id },
+        data: { lastLogin: new Date() }
+      })
+    ]);
 
     if (user?.isBlocked) throw new ApiError(status.FORBIDDEN, 'User is blocked');
 

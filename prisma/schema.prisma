@@ -116,24 +116,27 @@ model Invoice {
 }
 
 model MentorProfile {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String   @unique @db.ObjectId
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String    @unique @db.ObjectId
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   // Professional Info
-  mentorName        String
-  role              String
-  company           String?
-  experienceYears   Int // e.g. 7
-  mentorshipDetails String
-  availability      String
-  maxActiveMentees  Int
-  embedding         Json?
-  skills            String[]
+  mentorName            String
+  role                  String
+  company               String?
+  experienceYears       Int // e.g. 7
+  mentorshipDetails     String
+  availability          String
+  maxActiveMentees      Int
+  embedding             Json?
+  skills                String[]
   // Status & Visibility
-  isApproved        Boolean  @default(false) // Admin approves mentors
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  isApproved            Boolean   @default(false) // Admin approves mentors
+  isActive              Boolean   @default(true)
+  lastLogin             DateTime?
+  lastMentorAction      DateTime?
+  lastResponseToRequest DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 }
 
 model MentorshipSession {
