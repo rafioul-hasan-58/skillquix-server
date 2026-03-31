@@ -20,10 +20,11 @@ export default {
   image_url: process.env.IMAGE_URL,
   environment: process.env.ENVIRONMENT,
   frontend_url: process.env.FRONTEND_URL,
-  google_client_id: process.env.GOOGLE_CLIENT_ID, 
+  google_client_id: process.env.GOOGLE_CLIENT_ID,
   admin: {
     email: process.env.ADMIN_EMAIL,
-    password: process.env.ADMIN_PASSWORD
+    password: process.env.ADMIN_PASSWORD,
+    contact_email: process.env.CONTACT_EMAIL
   },
   linkedin: {
     client_id: process.env.LINKEDIN_CLIENT_ID,
@@ -58,5 +59,6 @@ export default {
     bucketName: process.env.S3_BUCKET_NAME || "smtech-space",
     endpoint: process.env.S3_ENDPOINT,
   },
+
 
 };

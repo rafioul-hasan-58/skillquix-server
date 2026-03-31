@@ -1,6 +1,7 @@
 import config from "../../config";
 import { transporter } from "./mail.config";
 import { AuthTemplates } from "./Templates/AuthTemplates";
+import { ContactMessageTemplates } from "./Templates/ContactMessageTemplate";
 import { GigTemplates } from "./Templates/GigTemplates";
 
 export const mailService = {
@@ -23,13 +24,30 @@ export const mailService = {
     },
     sendApplyGigConfirmation: async (to: string, name: string, subject: string) => {
 
-
         const html = GigTemplates.applyGig(name);
 
         const res = await transporter.sendMail({
             from: `${config.smtp.name} <${config.smtp.email_from}>`,
             to,
             subject,
+            html,
+        });
+        return res
+    },
+    sendContactMessage: async (payload: {
+        name: string;
+        email: string;
+        phoneNumber?: string;
+        organization?: string;
+        message: string;
+        messageCategory: string;
+    }) => {
+        const html = ContactMessageTemplates.supportEmail(payload);
+
+        const res = await transporter.sendMail({
+            from: `${config.smtp.name} <${config.smtp.email_from}>`,
+            to: config.admin.contact_email, // sends to your own support email
+            subject: `New Support Message - ${payload.messageCategory.replace(/_/g, " ")}`,
             html,
         });
         return res

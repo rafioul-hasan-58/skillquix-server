@@ -11,6 +11,8 @@ import { AccomplishmentRoutes } from "../modules/accomplishment/accomplishment.r
 import { MentorRoutes } from "../modules/mentor/mentor.routes";
 import { SessionRoutes } from "../modules/session/session.routes";
 import { ResumeProfileRoutes } from "../modules/resumeProfile/resumeProfile.routes";
+import { FaqRoutes } from "../modules/faq/faq.route";
+import { ContactMessageRoutes } from "../modules/contactMessage/contactMessage.route";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -61,6 +63,14 @@ const moduleRoutes = [
   {
     path: "/resumeProfile",
     route: ResumeProfileRoutes,
+  },
+  {
+    path: "/faq",
+    route: FaqRoutes,
+  },
+  {
+    path: "/contactMessage",
+    route: ContactMessageRoutes,
   },
 ];
 
