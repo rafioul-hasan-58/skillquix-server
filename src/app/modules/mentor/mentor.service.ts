@@ -55,6 +55,35 @@ export const MentorService = {
             recentApplications
         }
     },
+    // admin
+    getMentorById: async (mentorId: string) => {
+        const mentor = await prisma.mentorProfile.findUnique({
+            where: {
+                id: mentorId
+            },
+            select: {
+                id: true,
+                userId: true,
+                mentorshipDetails: true,
+                skills: true,
+                availability: true,
+                isActive: true,
+                isApproved: true,
+                lastMentorAction: true,
+                user: {
+                    select: {
+                        id: true,
+                        profileImage: true,
+                        fullName: true,
+                        email: true,
+                        isBlocked: true,
+                        subscriptionType: true,
+                    }
+                }
+            }
+        });
+        return mentor
+    },
     // mentor
     updateMentorProfile: async (userId: string, payload: Partial<MentorProfile>) => {
         const mentorProfile = await prisma.mentorProfile.findUnique({ where: { userId } });
@@ -347,11 +376,18 @@ export const MentorService = {
         }
     },
     // admin
-    getPendingMentors: async (query: Record<string, unknown>) => {
+    getMentors: async (query: Record<string, unknown>) => {
+        if (query.isApproved) {
+            if (query.isApproved === "true") {
+                query.isApproved = true
+            }
+            else {
+                query.isApproved = false
+            }
+        }
         const userQuery = new QueryBuilder(prisma.mentorProfile, query)
             .search(["user.fullName", "user.email", "mentorName"])
             .filter()
-            .rawFilter({ isApproved: false })
             .paginate()
             .select({
                 id: true,
@@ -368,7 +404,6 @@ export const MentorService = {
                         fullName: true,
                         email: true,
                         isBlocked: true,
-                        isDeleted: true,
                         subscriptionType: true,
                     }
                 }

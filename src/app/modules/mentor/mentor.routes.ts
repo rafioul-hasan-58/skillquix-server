@@ -15,10 +15,17 @@ router.post(
     validateRequest(MentorValidations.setupMentorProfileSchema),
     MentorController.setupMentorProfile
 );
+// mentor
 router.get(
     "/get-profile",
     auth(UserRole.USER),
     MentorController.getMentorProfile
+);
+// admin
+router.get(
+    "/get-mentor/:id",
+    auth(UserRole.ADMIN),
+    MentorController.getMentorById
 );
 
 // mentor
@@ -51,9 +58,9 @@ router.post(
 
 // admin
 router.get(
-    "/pending",
+    "/get-all",
     auth(UserRole.ADMIN),
-    MentorController.getPendingMentors
+    MentorController.allMentor
 );
 router.post(
     "/approve/:id",

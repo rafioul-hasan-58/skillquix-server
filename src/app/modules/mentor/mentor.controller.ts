@@ -26,6 +26,16 @@ export const MentorController = {
             data: result,
         });
     }),
+    getMentorById: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const result = await MentorService.getMentorById(id);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Mentor profile fetched successfully!",
+            data: result,
+        });
+    }),
     // mentor
     updateMentorProfile: async (req: Request, res: Response) => {
         const userId = req.user?.id;
@@ -86,8 +96,8 @@ export const MentorController = {
         });
     }),
     // admin
-    getPendingMentors: catchAsync(async (req: Request, res: Response) => {
-        const result = await MentorService.getPendingMentors(req.query);
+    allMentor: catchAsync(async (req: Request, res: Response) => {
+        const result = await MentorService.getMentors(req.query);
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
