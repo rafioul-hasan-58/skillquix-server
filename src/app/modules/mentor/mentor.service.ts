@@ -9,37 +9,34 @@ import { generateMentorshipEmbedding, upsertMentorEmbedding } from "./mentor.uti
 export const MentorService = {
     // mentor
     setupMentorProfile: async (userId: string, payload: MentorProfile) => {
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user) {
-            throw new ApiError(httpStatus.NOT_FOUND, "User not found to setup mentor profile!");
-        }
-
+        // Combine user check + mentor profile creation in one transaction
         return await prisma.$transaction(async (tx) => {
-            try {
-                // Step 1: Generate embedding
-                const embedding = await generateMentorshipEmbedding(payload.mentorshipDetails, payload.skills);
-                if (!embedding || embedding.success === false) {
-                    throw new ApiError(httpStatus.BAD_REQUEST, "Failed to generate mentorship embedding");
-                }
+            const user = await tx.user.findUnique({ where: { id: userId } });
+            if (!user) {
+                throw new ApiError(httpStatus.NOT_FOUND, "User not found to setup mentor profile!");
+            }
 
-                // Step 2: Create mentor profile
-                const result = await tx.mentorProfile.create({
-                    data: {
-                        ...payload,
-                        userId,
-                    },
-                });
+            // Generate embedding outside the DB ops but inside transaction for atomicity
+            const embedding = await generateMentorshipEmbedding(
+                payload.mentorshipDetails,
+                payload.skills
+            );
+            if (!embedding || embedding.success === false) {
+                throw new ApiError(httpStatus.BAD_REQUEST, "Failed to generate mentorship embedding");
+            }
 
-                // Step 3: Upsert embedding
-                const res = await upsertMentorEmbedding(result.id, embedding);
-
-                return res;
-            } catch (err: any) {
+            // Create profile with embedding in a single DB write instead of create + update
+            const mentor = await tx.mentorProfile.create({
+                data: { ...payload, userId, embedding },
+            }).catch((err) => {
                 if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
                     throw new ApiError(httpStatus.CONFLICT, "A mentor profile already exists for this user.");
                 }
-                throw err; // transaction will rollback automatically
-            }
+                throw err;
+            });
+
+            // Upsert to vector store — if this fails, transaction rolls back the DB write
+            return await upsertMentorEmbedding(mentor.id, embedding);
         });
     },
     getMentorProfile: async (userId: string) => {
