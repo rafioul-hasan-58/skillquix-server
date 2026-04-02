@@ -7,7 +7,7 @@ import config from "../../../config";
 import { comparePassword } from "../../utils/comparePassword";
 import { sendOTP } from "../../utils/sendOTP";
 import axios from "axios"
-import { User, UserRole } from "@prisma/client";
+import { User } from "@prisma/client";
 import crypto from 'crypto';
 import stripe from "../../stripe/stripe";
 
@@ -150,13 +150,14 @@ export const AuthService = {
     return null;
   },
   forgotPassword: async (email: string) => {
+    console.log("here")
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       throw new ApiError(status.NOT_FOUND, "User not found!");
     }
-
-    // Step 1: Generate OTP
+    console.log("here")
+    // Step 1: send otp
     const res = await sendOTP(user.id);
     return {
       message: res.message
