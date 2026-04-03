@@ -37,6 +37,7 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                 const customerId = invoice.customer as string;
 
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                console.log("subscription", subscription)
                 const plan = await prisma.plan.findFirst({
                     where: { stripePriceId: subscription.items.data[0].price.id },
                 });
@@ -51,23 +52,23 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                         subscriptionStatus: SubscriptionStatus.ACTIVE,
                         subscriptionType: plan?.type ?? SubscriptionType.PRO,
                         stripeSubscriptionId: subscriptionId,
-                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        // currentPeriodEnd: new Date(subscription.current_period_end * 1000),
                     },
                 });
 
-                await prisma.invoice.create({
-                    data: {
-                        stripeInvoiceId: invoice.id,
-                        userId: user.id, // ✅ reuse
-                        amount: invoice.amount_paid / 100,
-                        currency: invoice.currency,
-                        status: InvoiceStatus.PAID,
-                        planName: plan?.name ?? "Unknown",
-                        billingPeriodStart: new Date(invoice.period_start * 1000),
-                        billingPeriodEnd: new Date(invoice.period_end * 1000),
-                        invoiceUrl: invoice.hosted_invoice_url ?? null,
-                    },
-                });
+                // await prisma.invoice.create({
+                //     data: {
+                //         stripeInvoiceId: invoice.id,
+                //         userId: user.id, // ✅ reuse
+                //         amount: invoice.amount_paid / 100,
+                //         currency: invoice.currency,
+                //         status: InvoiceStatus.PAID,
+                //         planName: plan?.name ?? "Unknown",
+                //         billingPeriodStart: new Date(invoice.period_start * 1000),
+                //         billingPeriodEnd: new Date(invoice.period_end * 1000),
+                //         invoiceUrl: invoice.hosted_invoice_url ?? null,
+                //     },
+                // });
                 break;
             }
 
