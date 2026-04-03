@@ -177,37 +177,37 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
         // Always return 200 to Stripe so it knows you received the event
         switch (event.type) {
 
-            case "customer.subscription.created":
-            case "customer.subscription.updated": {
-                const subscription = event.data.object as Stripe.Subscription;
-                const customerId = subscription.customer as string;
+            // case "customer.subscription.created":
+            // case "customer.subscription.updated": {
+            //     const subscription = event.data.object as Stripe.Subscription;
+            //     const customerId = subscription.customer as string;
 
-                const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
-                if (!user) break;
+            //     const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
+            //     if (!user) break;
 
-                const plan = await prisma.plan.findFirst({
-                    where: { stripePriceId: subscription.items.data[0].price.id },
-                });
-                const currentDate = new Date();
-                const currentPeriodEnd = new Date(currentDate);
-                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+            //     const plan = await prisma.plan.findFirst({
+            //         where: { stripePriceId: subscription.items.data[0].price.id },
+            //     });
+            //     const currentDate = new Date();
+            //     const currentPeriodEnd = new Date(currentDate);
+            //     currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
 
-                // ✅ Check if cancel is scheduled
-                const isCancelScheduled = subscription.cancel_at_period_end;
+            //     // ✅ Check if cancel is scheduled
+            //     const isCancelScheduled = subscription.cancel_at_period_end;
 
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: {
-                        subscriptionStatus: isCancelScheduled
-                            ? SubscriptionStatus.CANCELED       // mark canceled immediately
-                            : SubscriptionStatus.ACTIVE,
-                        subscriptionType: plan?.type ?? user.subscriptionType,
-                        stripeSubscriptionId: subscription.id,
-                        currentPeriodEnd,
-                    },
-                });
-                break;
-            }
+            //     await prisma.user.update({
+            //         where: { id: user.id },
+            //         data: {
+            //             subscriptionStatus: isCancelScheduled
+            //                 ? SubscriptionStatus.CANCELED       // mark canceled immediately
+            //                 : SubscriptionStatus.ACTIVE,
+            //             subscriptionType: plan?.type ?? user.subscriptionType,
+            //             stripeSubscriptionId: subscription.id,
+            //             currentPeriodEnd,
+            //         },
+            //     });
+            //     break;
+            // }
 
 
             case "invoice.paid": {
