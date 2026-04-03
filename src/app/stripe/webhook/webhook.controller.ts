@@ -134,7 +134,7 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                     where: { stripeCustomerId: customerId },
                     data: {
                         subscriptionType: plan?.type ?? "PRO",
-                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        // currentPeriodEnd: new Date(subscription.current_period_end * 1000),
                     },
                 });
                 break;
