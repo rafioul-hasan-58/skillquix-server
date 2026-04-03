@@ -249,6 +249,8 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                 }
 
                 const isCancelScheduled = subscription.cancel_at_period_end;
+                let currentPeriodEnd = new Date();
+                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1); // default: 1 month
 
                 await prisma.user.update({
                     where: { id: user.id },
@@ -258,7 +260,7 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                             : SubscriptionStatus.ACTIVE,
                         subscriptionType: plan.type,  // ✅ upgrade/downgrade reflected correctly
                         stripeSubscriptionId: subscription.id,
-                        currentPeriodEnd: new Date(subscription.current_period_end * 1000), // ✅ from Stripe, not manual
+                        currentPeriodEnd, // ✅ from Stripe, not manual
                     },
                 });
 
