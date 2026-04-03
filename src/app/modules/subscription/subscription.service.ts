@@ -145,144 +145,211 @@ const getSubscriptions = async (query: Record<string, unknown>) => {
   };
 };
 const upgradeSubscription = async (userId: string, newPlanId: string) => {
-  // Step 1 — Get user
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(status.NOT_FOUND, "User not found");
   if (!user.stripeSubscriptionId) throw new ApiError(status.BAD_REQUEST, "No active subscription found");
   if (user.subscriptionStatus !== "ACTIVE") throw new ApiError(status.BAD_REQUEST, "Subscription is not active");
 
-  // Step 2 — Get new plan
   const newPlan = await prisma.plan.findUnique({ where: { id: newPlanId } });
   if (!newPlan) throw new ApiError(status.NOT_FOUND, "Plan not found");
   if (!newPlan.isActive || newPlan.isDeleted) throw new ApiError(status.BAD_REQUEST, "Plan is not available");
   if (!newPlan.stripePriceId) throw new ApiError(status.BAD_REQUEST, "Plan has no price configured");
 
-  // Step 3 — Prevent upgrading to same or lower plan
   const planHierarchy = { FREE: 0, PRO: 1, PREMIUM: 2 };
-  const currentPlanLevel = planHierarchy[user.subscriptionType];
-  const newPlanLevel = planHierarchy[newPlan.type];
-
-  if (newPlanLevel <= currentPlanLevel) {
+  if (planHierarchy[newPlan.type] <= planHierarchy[user.subscriptionType]) {
     throw new ApiError(status.BAD_REQUEST, "New plan must be higher than current plan");
   }
 
-  // Step 4 — Get current subscription from Stripe
   const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
 
-  // Step 5 — Upgrade immediately with proration and charge immediately
-  const updatedSubscription = await stripe.subscriptions.update(
-    user.stripeSubscriptionId,
-    {
-      items: [
-        {
-          id: subscription.items.data[0].id,
-          price: newPlan.stripePriceId,
-        },
-      ],
-      proration_behavior: "always_invoice", // creates AND pays proration invoice immediately
-    }
-  );
-  // Find the pending proration invoice and pay it immediately
-  const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
-    customer: user.stripeCustomerId!,
-    subscription: user.stripeSubscriptionId,
+  // ✅ always_invoice handles proration invoice automatically — nothing else needed
+  await stripe.subscriptions.update(user.stripeSubscriptionId, {
+    items: [{ id: subscription.items.data[0].id, price: newPlan.stripePriceId }],
+    proration_behavior: "always_invoice",
   });
 
-  // Only charge if there's an amount due
-  if (upcomingInvoice.amount_due > 0) {
-    const invoice = await stripe.invoices.create({
-      customer: user.stripeCustomerId!,
-      subscription: user.stripeSubscriptionId,
-    });
-
-    const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-
-    if (finalizedInvoice.amount_due > 0) {
-      await stripe.invoices.pay(invoice.id);
-    }
-  }
-  // Step 6 — Update DB immediately (webhook will also update but this is faster)
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      subscriptionType: newPlan.type,
-      currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
-    },
-  });
+  // ✅ NO retrieveUpcoming — causes crash
+  // ✅ NO manual invoice create/pay — double charges user
+  // ✅ NO DB update — webhook handles it
 
   return {
     message: "Subscription upgraded successfully",
     newPlan: newPlan.name,
-    currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
   };
 };
 const downgradeSubscription = async (userId: string, newPlanId: string) => {
-  // Step 1 — Get user
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(status.NOT_FOUND, "User not found");
   if (!user.stripeSubscriptionId) throw new ApiError(status.BAD_REQUEST, "No active subscription found");
   if (user.subscriptionStatus !== "ACTIVE") throw new ApiError(status.BAD_REQUEST, "Subscription is not active");
 
-  // Step 2 — Get new plan
   const newPlan = await prisma.plan.findUnique({ where: { id: newPlanId } });
   if (!newPlan) throw new ApiError(status.NOT_FOUND, "Plan not found");
   if (!newPlan.isActive || newPlan.isDeleted) throw new ApiError(status.BAD_REQUEST, "Plan is not available");
   if (!newPlan.stripePriceId) throw new ApiError(status.BAD_REQUEST, "Plan has no price configured");
 
-  // Step 3 — Prevent downgrading to same or higher plan
   const planHierarchy = { FREE: 0, PRO: 1, PREMIUM: 2 };
-  const currentPlanLevel = planHierarchy[user.subscriptionType];
-  const newPlanLevel = planHierarchy[newPlan.type];
-
-  if (newPlanLevel >= currentPlanLevel) {
+  if (planHierarchy[newPlan.type] >= planHierarchy[user.subscriptionType]) {
     throw new ApiError(status.BAD_REQUEST, "New plan must be lower than current plan");
   }
 
-  // Step 4 — Get current subscription from Stripe
   const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
 
-  // Step 5 — Downgrade at period end (no proration, no immediate charge)
-  await stripe.subscriptions.update(
-    user.stripeSubscriptionId,
-    {
-      items: [
-        {
-          id: subscription.items.data[0].id,
-          price: newPlan.stripePriceId,
-        },
-      ],
-      proration_behavior: "none", // no charge, no refund
-      billing_cycle_anchor: "unchanged", // keep same billing date
-    }
-  );
-  if (newPlan.type === SubscriptionType.FREE) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        subscriptionStatus: SubscriptionStatus.PAST_DUE,
-        subscriptionType: newPlan.type,
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        stripeSubscriptionId: null,
-      },
-    });
-  } else {
-    // Step 6 — Update DB
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        subscriptionType: newPlan.type,
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      },
-    });
-  }
+  // ✅ Update price in Stripe — webhook will update DB
+  await stripe.subscriptions.update(user.stripeSubscriptionId, {
+    items: [{ id: subscription.items.data[0].id, price: newPlan.stripePriceId }],
+    proration_behavior: "none",       // no charge, no refund
+    billing_cycle_anchor: "unchanged", // keep same billing date
+  });
 
+  // ✅ NO DB update here — webhook handles it
+  // ✅ NO stripeSubscriptionId: null — breaks future webhook lookup
 
   return {
-    message: `Subscription downgraded successfully. You will be charged $${newPlan.monthlyPrice} from next billing cycle.`,
+    message: `Subscription downgraded. You will be charged $${newPlan.monthlyPrice} from next billing cycle.`,
     newPlan: newPlan.name,
     effectiveDate: new Date(subscription.current_period_end * 1000),
   };
 };
+// const upgradeSubscription = async (userId: string, newPlanId: string) => {
+//   // Step 1 — Get user
+//   const user = await prisma.user.findUnique({ where: { id: userId } });
+//   if (!user) throw new ApiError(status.NOT_FOUND, "User not found");
+//   if (!user.stripeSubscriptionId) throw new ApiError(status.BAD_REQUEST, "No active subscription found");
+//   if (user.subscriptionStatus !== "ACTIVE") throw new ApiError(status.BAD_REQUEST, "Subscription is not active");
+
+//   // Step 2 — Get new plan
+//   const newPlan = await prisma.plan.findUnique({ where: { id: newPlanId } });
+//   if (!newPlan) throw new ApiError(status.NOT_FOUND, "Plan not found");
+//   if (!newPlan.isActive || newPlan.isDeleted) throw new ApiError(status.BAD_REQUEST, "Plan is not available");
+//   if (!newPlan.stripePriceId) throw new ApiError(status.BAD_REQUEST, "Plan has no price configured");
+
+//   // Step 3 — Prevent upgrading to same or lower plan
+//   const planHierarchy = { FREE: 0, PRO: 1, PREMIUM: 2 };
+//   const currentPlanLevel = planHierarchy[user.subscriptionType];
+//   const newPlanLevel = planHierarchy[newPlan.type];
+
+//   if (newPlanLevel <= currentPlanLevel) {
+//     throw new ApiError(status.BAD_REQUEST, "New plan must be higher than current plan");
+//   }
+
+//   // Step 4 — Get current subscription from Stripe
+//   const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+
+//   // Step 5 — Upgrade immediately with proration and charge immediately
+//   const updatedSubscription = await stripe.subscriptions.update(
+//     user.stripeSubscriptionId,
+//     {
+//       items: [
+//         {
+//           id: subscription.items.data[0].id,
+//           price: newPlan.stripePriceId,
+//         },
+//       ],
+//       proration_behavior: "always_invoice", // creates AND pays proration invoice immediately
+//     }
+//   );
+//   // Find the pending proration invoice and pay it immediately
+//   const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+//     customer: user.stripeCustomerId!,
+//     subscription: user.stripeSubscriptionId,
+//   });
+
+//   // Only charge if there's an amount due
+//   if (upcomingInvoice.amount_due > 0) {
+//     const invoice = await stripe.invoices.create({
+//       customer: user.stripeCustomerId!,
+//       subscription: user.stripeSubscriptionId,
+//     });
+
+//     const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+
+//     if (finalizedInvoice.amount_due > 0) {
+//       await stripe.invoices.pay(invoice.id);
+//     }
+//   }
+//   // Step 6 — Update DB immediately (webhook will also update but this is faster)
+//   await prisma.user.update({
+//     where: { id: userId },
+//     data: {
+//       subscriptionType: newPlan.type,
+//       currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
+//     },
+//   });
+
+//   return {
+//     message: "Subscription upgraded successfully",
+//     newPlan: newPlan.name,
+//     currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
+//   };
+// };
+// const downgradeSubscription = async (userId: string, newPlanId: string) => {
+//   // Step 1 — Get user
+//   const user = await prisma.user.findUnique({ where: { id: userId } });
+//   if (!user) throw new ApiError(status.NOT_FOUND, "User not found");
+//   if (!user.stripeSubscriptionId) throw new ApiError(status.BAD_REQUEST, "No active subscription found");
+//   if (user.subscriptionStatus !== "ACTIVE") throw new ApiError(status.BAD_REQUEST, "Subscription is not active");
+
+//   // Step 2 — Get new plan
+//   const newPlan = await prisma.plan.findUnique({ where: { id: newPlanId } });
+//   if (!newPlan) throw new ApiError(status.NOT_FOUND, "Plan not found");
+//   if (!newPlan.isActive || newPlan.isDeleted) throw new ApiError(status.BAD_REQUEST, "Plan is not available");
+//   if (!newPlan.stripePriceId) throw new ApiError(status.BAD_REQUEST, "Plan has no price configured");
+
+//   // Step 3 — Prevent downgrading to same or higher plan
+//   const planHierarchy = { FREE: 0, PRO: 1, PREMIUM: 2 };
+//   const currentPlanLevel = planHierarchy[user.subscriptionType];
+//   const newPlanLevel = planHierarchy[newPlan.type];
+
+//   if (newPlanLevel >= currentPlanLevel) {
+//     throw new ApiError(status.BAD_REQUEST, "New plan must be lower than current plan");
+//   }
+
+//   // Step 4 — Get current subscription from Stripe
+//   const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+
+//   // Step 5 — Downgrade at period end (no proration, no immediate charge)
+//   await stripe.subscriptions.update(
+//     user.stripeSubscriptionId,
+//     {
+//       items: [
+//         {
+//           id: subscription.items.data[0].id,
+//           price: newPlan.stripePriceId,
+//         },
+//       ],
+//       proration_behavior: "none", // no charge, no refund
+//       billing_cycle_anchor: "unchanged", // keep same billing date
+//     }
+//   );
+//   if (newPlan.type === SubscriptionType.FREE) {
+//     await prisma.user.update({
+//       where: { id: userId },
+//       data: {
+//         subscriptionStatus: SubscriptionStatus.PAST_DUE,
+//         subscriptionType: newPlan.type,
+//         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+//         stripeSubscriptionId: null,
+//       },
+//     });
+//   } else {
+//     // Step 6 — Update DB
+//     await prisma.user.update({
+//       where: { id: userId },
+//       data: {
+//         subscriptionType: newPlan.type,
+//         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+//       },
+//     });
+//   }
+
+
+//   return {
+//     message: `Subscription downgraded successfully. You will be charged $${newPlan.monthlyPrice} from next billing cycle.`,
+//     newPlan: newPlan.name,
+//     effectiveDate: new Date(subscription.current_period_end * 1000),
+//   };
+// };
 const getMySubscription = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {

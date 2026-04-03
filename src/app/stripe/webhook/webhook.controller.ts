@@ -208,7 +208,63 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
             //     });
             //     break;
             // }
+            case "customer.subscription.created":
+            case "customer.subscription.updated": {
+                const subscription = event.data.object as Stripe.Subscription;
+                const customerId = subscription.customer as string;
 
+                // Find user — fallback to email if stripeCustomerId not saved yet
+                let user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
+
+                if (!user) {
+                    const stripeCustomer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+                    if (stripeCustomer.email) {
+                        user = await prisma.user.findUnique({ where: { email: stripeCustomer.email } });
+                        if (user) {
+                            await prisma.user.update({
+                                where: { id: user.id },
+                                data: { stripeCustomerId: customerId }
+                            });
+                        }
+                    }
+                }
+
+                if (!user) {
+                    console.error("❌ No user found for customerId:", customerId);
+                    break;
+                }
+
+                const plan = await prisma.plan.findFirst({
+                    where: { stripePriceId: subscription.items.data[0].price.id },
+                });
+
+                // 🔍 Debug — remove after confirming works
+                console.log("Stripe priceId:", subscription.items.data[0].price.id);
+                console.log("Plan found:", plan);
+
+                // ✅ Don't update DB with missing plan — log and bail
+                if (!plan) {
+                    console.error("❌ Plan not found for priceId:", subscription.items.data[0].price.id);
+                    break;
+                }
+
+                const isCancelScheduled = subscription.cancel_at_period_end;
+
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: {
+                        subscriptionStatus: isCancelScheduled
+                            ? SubscriptionStatus.CANCELED
+                            : SubscriptionStatus.ACTIVE,
+                        subscriptionType: plan.type,  // ✅ upgrade/downgrade reflected correctly
+                        stripeSubscriptionId: subscription.id,
+                        currentPeriodEnd: new Date(subscription.current_period_end * 1000), // ✅ from Stripe, not manual
+                    },
+                });
+
+                console.log(`✅ ${event.type} | user: ${user.email} | plan: ${plan.type} | cancelScheduled: ${isCancelScheduled}`);
+                break;
+            }
 
             case "invoice.paid": {
                 const invoice = event.data.object as Stripe.Invoice;
