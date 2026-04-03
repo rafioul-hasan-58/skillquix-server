@@ -37,7 +37,6 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                 const customerId = invoice.customer as string;
 
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-                console.log("subscription",subscription)
                 const plan = await prisma.plan.findFirst({
                     where: { stripePriceId: subscription.items.data[0].price.id },
                 });
