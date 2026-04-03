@@ -1,4 +1,3 @@
-
 import status from "http-status";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
@@ -68,7 +67,7 @@ const cancelSubscription = async (userId: string) => {
     throw new ApiError(status.BAD_REQUEST, "No active subscription found");
   }
 
-  if (user.subscriptionStatus === "CANCELED") {
+  if (user.subscriptionStatus === SubscriptionStatus.CANCELED) {
     throw new ApiError(status.BAD_REQUEST, "Subscription is already canceled");
   }
 
@@ -80,7 +79,7 @@ const cancelSubscription = async (userId: string) => {
   // Update DB — mark as canceled but keep subscriptionType until webhook fires
   const updatedUser = await prisma.user.update({
     where: { id: userId },
-    data: { subscriptionStatus: "CANCELED" },
+    data: { subscriptionStatus: SubscriptionStatus.CANCELED },
   });
 
   return {
