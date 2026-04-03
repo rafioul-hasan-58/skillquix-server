@@ -211,8 +211,8 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                 await prisma.user.update({
                     where: { id: user.id },
                     data: {
-                        subscriptionStatus: SubscriptionStatus.ACTIVE,
-                        subscriptionType: plan?.type ?? SubscriptionType.PRO,
+                        // subscriptionStatus: SubscriptionStatus.ACTIVE,
+                        // subscriptionType: plan?.type ?? SubscriptionType.PRO,
                         stripeSubscriptionId: subscription.id,  //  save subscription ID here
                         currentPeriodEnd,
                     },
