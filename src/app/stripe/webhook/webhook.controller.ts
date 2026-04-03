@@ -149,26 +149,26 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
         //     }
 
         //     // Subscription updated(upgrade / downgrade)
-        //     case "customer.subscription.updated": {
-        //         const subscription = event.data.object as Stripe.Subscription;
-        //         const customerId = subscription.customer as string;
+        // case "customer.subscription.updated": {
+        //     const subscription = event.data.object as Stripe.Subscription;
+        //     const customerId = subscription.customer as string;
 
-        //         const plan = await prisma.plan.findFirst({
-        //             where: { stripePriceId: subscription.items.data[0].price.id },
-        //         });
-        //         //  Calculate currentPeriodEnd as one month from now
-        //         const currentDate = new Date();
-        //         const currentPeriodEnd = new Date(currentDate);
-        //         currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
-        //         await prisma.user.update({
-        //             where: { stripeCustomerId: customerId },
-        //             data: {
-        //                 subscriptionType: plan?.type ?? "PRO",
-        //                 currentPeriodEnd
-        //             },
-        //         });
-        //         break;
-        //     }
+        //     const plan = await prisma.plan.findFirst({
+        //         where: { stripePriceId: subscription.items.data[0].price.id },
+        //     });
+        //     //  Calculate currentPeriodEnd as one month from now
+        //     const currentDate = new Date();
+        //     const currentPeriodEnd = new Date(currentDate);
+        //     currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+        //     await prisma.user.update({
+        //         where: { stripeCustomerId: customerId },
+        //         data: {
+        //             subscriptionType: plan?.type ?? "PRO",
+        //             currentPeriodEnd
+        //         },
+        //     });
+        //     break;
+        // }
 
         //     default:
         //         console.log(`Unhandled event type: ${event.type}`);
@@ -181,6 +181,8 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
             case "customer.subscription.updated": {
                 const subscription = event.data.object as Stripe.Subscription;
                 const customerId = subscription.customer as string;
+                let currentPeriodEnd = new Date();
+                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1); // default: 1 month
 
                 let user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
 
@@ -212,13 +214,14 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                         subscriptionStatus: SubscriptionStatus.ACTIVE,
                         subscriptionType: plan?.type ?? SubscriptionType.PRO,
                         stripeSubscriptionId: subscription.id,  //  save subscription ID here
-                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        currentPeriodEnd,
                     },
                 });
 
                 console.log(` Subscription ${event.type} handled for user:`, user.email);
                 break;
             }
+
 
             case "invoice.paid": {
                 const invoice = event.data.object as Stripe.Invoice;
@@ -263,7 +266,6 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                     plan = await prisma.plan.findFirst({
                         where: { stripePriceId: subscription.items.data[0].price.id },
                     });
-                    currentPeriodEnd = new Date(subscription.current_period_end * 1000); //  use real date
                 } else {
                     // Fallback: get price from invoice line items
                     const priceId = invoice.lines?.data?.[0]?.price?.id;
