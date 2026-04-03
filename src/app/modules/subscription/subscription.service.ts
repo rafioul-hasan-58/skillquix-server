@@ -256,15 +256,27 @@ const downgradeSubscription = async (userId: string, newPlanId: string) => {
       billing_cycle_anchor: "unchanged", // keep same billing date
     }
   );
+  if (newPlan.type === SubscriptionType.FREE) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        subscriptionStatus: SubscriptionStatus.PAST_DUE,
+        subscriptionType: newPlan.type,
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        stripeSubscriptionId: null,
+      },
+    });
+  } else {
+    // Step 6 — Update DB
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        subscriptionType: newPlan.type,
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      },
+    });
+  }
 
-  // Step 6 — Update DB
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      // subscriptionType: newPlan.type,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-    },
-  });
 
   return {
     message: `Subscription downgraded successfully. You will be charged $${newPlan.monthlyPrice} from next billing cycle.`,
