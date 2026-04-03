@@ -31,50 +31,74 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
         switch (event.type) {
 
             // Payment succeeded — activate user
+            // case "invoice.paid": {
+            //     const invoice = event.data.object as Stripe.Invoice;
+            //     const subscriptionId = invoice.subscription as string;
+            //     const customerId = invoice.customer as string;
+
+            //     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            //     const plan = await prisma.plan.findFirst({
+            //         where: { stripePriceId: subscription.items.data[0].price.id },
+            //     });
+
+            //     //  Fetch user ONCE and reuse
+            //     const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
+            //     if (!user) break;
+            //     //  Calculate currentPeriodEnd as one month from now
+            //     const currentDate = new Date();
+            //     const currentPeriodEnd = new Date(currentDate);
+            //     currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+            //     await prisma.user.update({
+            //         where: { id: user.id },
+            //         data: {
+            //             subscriptionStatus: SubscriptionStatus.ACTIVE,
+            //             subscriptionType: plan?.type ?? SubscriptionType.PRO,
+            //             stripeSubscriptionId: subscriptionId,
+            //             currentPeriodEnd
+            //         },
+            //     });
+
+            //     await prisma.invoice.create({
+            //         data: {
+            //             stripeInvoiceId: invoice.id,
+            //             userId: user.id,
+            //             amount: invoice.amount_paid / 100,
+            //             currency: invoice.currency,
+            //             status: InvoiceStatus.PAID,
+            //             planName: plan?.name ?? "Unknown",
+            //             billingPeriodStart: new Date(invoice.period_start * 1000),
+            //             billingPeriodEnd: new Date(invoice.period_end * 1000),
+            //             invoiceUrl: invoice.hosted_invoice_url ?? null,
+            //         },
+            //     });
+            //     break;
+            // }
             case "invoice.paid": {
                 const invoice = event.data.object as Stripe.Invoice;
                 const subscriptionId = invoice.subscription as string;
                 const customerId = invoice.customer as string;
 
-                const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-                console.log("subscription", subscription)
-                const plan = await prisma.plan.findFirst({
-                    where: { stripePriceId: subscription.items.data[0].price.id },
-                });
+                // 🔍 DEBUG LOGS
+                console.log("customerId from Stripe:", customerId);
+                console.log("subscriptionId from Stripe:", subscriptionId);
 
-                //  Fetch user ONCE and reuse
-                const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
-                if (!user) break;
-                //  Calculate currentPeriodEnd as one month from now
-                const currentDate = new Date();
-                const currentPeriodEnd = new Date(currentDate);
-                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: {
-                        subscriptionStatus: SubscriptionStatus.ACTIVE,
-                        subscriptionType: plan?.type ?? SubscriptionType.PRO,
-                        stripeSubscriptionId: subscriptionId,
-                        currentPeriodEnd
-                    },
+                // Check what's actually in your DB
+                const allUsers = await prisma.user.findMany({
+                    select: { id: true, email: true, stripeCustomerId: true }
                 });
+                console.log("All users with stripeCustomerId:", allUsers);
 
-                await prisma.invoice.create({
-                    data: {
-                        stripeInvoiceId: invoice.id,
-                        userId: user.id,
-                        amount: invoice.amount_paid / 100,
-                        currency: invoice.currency,
-                        status: InvoiceStatus.PAID,
-                        planName: plan?.name ?? "Unknown",
-                        billingPeriodStart: new Date(invoice.period_start * 1000),
-                        billingPeriodEnd: new Date(invoice.period_end * 1000),
-                        invoiceUrl: invoice.hosted_invoice_url ?? null,
-                    },
+                const user = await prisma.user.findUnique({
+                    where: { stripeCustomerId: customerId }
                 });
-                break;
+                console.log("Found user:", user);
+
+                if (!user) {
+                    console.log("❌ No user found with stripeCustomerId:", customerId);
+                    break;
+                }
+                // ...
             }
-
             // Payment failed — restrict access
             case "invoice.payment_failed": {
                 const invoice = event.data.object as Stripe.Invoice;
