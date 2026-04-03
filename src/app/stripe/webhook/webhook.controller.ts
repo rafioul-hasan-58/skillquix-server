@@ -37,16 +37,17 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                 const customerId = invoice.customer as string;
 
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-                console.log("subscription", subscription)
-
-                // Get plan from DB using Stripe Price ID
+                console.log("subscription",subscription)
                 const plan = await prisma.plan.findFirst({
                     where: { stripePriceId: subscription.items.data[0].price.id },
                 });
 
-                // Update user
+                // ✅ Fetch user ONCE and reuse
+                const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
+                if (!user) break;
+
                 await prisma.user.update({
-                    where: { stripeCustomerId: customerId },
+                    where: { id: user.id },
                     data: {
                         subscriptionStatus: SubscriptionStatus.ACTIVE,
                         subscriptionType: plan?.type ?? SubscriptionType.PRO,
@@ -55,11 +56,10 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                     },
                 });
 
-                // Create Invoice record
                 await prisma.invoice.create({
                     data: {
                         stripeInvoiceId: invoice.id,
-                        userId: (await prisma.user.findUnique({ where: { stripeCustomerId: customerId } }))!.id,
+                        userId: user.id, // ✅ reuse
                         amount: invoice.amount_paid / 100,
                         currency: invoice.currency,
                         status: InvoiceStatus.PAID,
@@ -121,7 +121,7 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                 break;
             }
 
-            // Subscription updated (upgrade/downgrade)
+            // Subscription updated(upgrade / downgrade)
             case "customer.subscription.updated": {
                 const subscription = event.data.object as Stripe.Subscription;
                 const customerId = subscription.customer as string;
