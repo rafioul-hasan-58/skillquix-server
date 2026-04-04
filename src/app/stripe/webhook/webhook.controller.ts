@@ -20,14 +20,23 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
             config.stripe.webhook_secret as string
         );
     } catch (err) {
-        console.error("Webhook signature verification failed:", err);
+        console.error("❌ Webhook signature verification failed:", err);
         return res.status(400).send("Webhook signature verification failed");
     }
-
-    console.log("Webhook received!", event.type)
+    const stripeStatusMap: Record<string, SubscriptionStatus> = {
+        active: SubscriptionStatus.ACTIVE,
+        past_due: SubscriptionStatus.PAST_DUE,
+        canceled: SubscriptionStatus.CANCELED,
+        incomplete: SubscriptionStatus.INACTIVE,
+        incomplete_expired: SubscriptionStatus.INACTIVE,
+        trialing: SubscriptionStatus.ACTIVE,
+        unpaid: SubscriptionStatus.INACTIVE,
+    };
+    console.log("📩 Webhook received:", event.type);
 
     // Step 2 — Handle each event type
     try {
+
         // switch (event.type) {
 
         //     // Payment succeeded — activate user
@@ -177,49 +186,23 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
         // Always return 200 to Stripe so it knows you received the event
         switch (event.type) {
 
-            // case "customer.subscription.created":
-            // case "customer.subscription.updated": {
-            //     const subscription = event.data.object as Stripe.Subscription;
-            //     const customerId = subscription.customer as string;
-
-            //     const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
-            //     if (!user) break;
-
-            //     const plan = await prisma.plan.findFirst({
-            //         where: { stripePriceId: subscription.items.data[0].price.id },
-            //     });
-            //     const currentDate = new Date();
-            //     const currentPeriodEnd = new Date(currentDate);
-            //     currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
-
-            //     // ✅ Check if cancel is scheduled
-            //     const isCancelScheduled = subscription.cancel_at_period_end;
-
-            //     await prisma.user.update({
-            //         where: { id: user.id },
-            //         data: {
-            //             subscriptionStatus: isCancelScheduled
-            //                 ? SubscriptionStatus.CANCELED       // mark canceled immediately
-            //                 : SubscriptionStatus.ACTIVE,
-            //             subscriptionType: plan?.type ?? user.subscriptionType,
-            //             stripeSubscriptionId: subscription.id,
-            //             currentPeriodEnd,
-            //         },
-            //     });
-            //     break;
-            // }
             case "customer.subscription.created":
             case "customer.subscription.updated": {
                 const subscription = event.data.object as Stripe.Subscription;
                 const customerId = subscription.customer as string;
 
-                // Find user — fallback to email if stripeCustomerId not saved yet
-                let user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
+                // Find user by stripeCustomerId
+                let user = await prisma.user.findUnique({
+                    where: { stripeCustomerId: customerId }
+                });
 
+                // Fallback — look up by email if stripeCustomerId not saved yet
                 if (!user) {
                     const stripeCustomer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
                     if (stripeCustomer.email) {
-                        user = await prisma.user.findUnique({ where: { email: stripeCustomer.email } });
+                        user = await prisma.user.findUnique({
+                            where: { email: stripeCustomer.email }
+                        });
                         if (user) {
                             await prisma.user.update({
                                 where: { id: user.id },
@@ -234,104 +217,138 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                     break;
                 }
 
+                // Find plan by Stripe price ID
                 const plan = await prisma.plan.findFirst({
                     where: { stripePriceId: subscription.items.data[0].price.id },
                 });
 
-                // 🔍 Debug — remove after confirming works
-                console.log("Stripe priceId:", subscription.items.data[0].price.id);
-                console.log("Plan found:", plan);
-
-                // ✅ Don't update DB with missing plan — log and bail
                 if (!plan) {
-                    console.error("❌ Plan not found for priceId:", subscription.items.data[0].price.id);
+                    console.error("❌ No plan found for priceId:", subscription.items.data[0].price.id);
                     break;
                 }
 
-                const isCancelScheduled = subscription.cancel_at_period_end;
-                let currentPeriodEnd = new Date();
-                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1); // default: 1 month
+                // Map Stripe status — respect cancel_at_period_end
+                const newStatus = subscription.cancel_at_period_end
+                    ? SubscriptionStatus.CANCELED
+                    : (stripeStatusMap[subscription.status] ?? SubscriptionStatus.INACTIVE);
 
                 await prisma.user.update({
                     where: { id: user.id },
                     data: {
-                        subscriptionStatus: isCancelScheduled
-                            ? SubscriptionStatus.CANCELED
-                            : SubscriptionStatus.ACTIVE,
-                        subscriptionType: plan.type,  // ✅ upgrade/downgrade reflected correctly
+                        subscriptionStatus: newStatus,
+                        subscriptionType: plan.type,
                         stripeSubscriptionId: subscription.id,
-                        currentPeriodEnd, // ✅ from Stripe, not manual
+                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
                     },
                 });
 
-                console.log(`✅ ${event.type} | user: ${user.email} | plan: ${plan.type} | cancelScheduled: ${isCancelScheduled}`);
+                console.log(`✅ ${event.type} | user: ${user.email} | plan: ${plan.type} | status: ${newStatus}`);
                 break;
             }
 
+
+            // case "invoice.paid": {
+            //     const invoice = event.data.object as Stripe.Invoice;
+            //     const customerId = invoice.customer as string;
+
+            //     //  subscriptionId can be undefined on first invoice — get it safely
+            //     const subscriptionId = typeof invoice.subscription === "string"
+            //         ? invoice.subscription
+            //         : (invoice.subscription as any)?.id ?? null;
+
+            //     console.log("customerId from Stripe:", customerId);
+            //     console.log("subscriptionId from Stripe:", subscriptionId);
+
+            //     //  Find user
+            //     let user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
+
+            //     if (!user) {
+            //         const stripeCustomer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+            //         if (stripeCustomer.email) {
+            //             user = await prisma.user.findUnique({ where: { email: stripeCustomer.email } });
+            //             if (user) {
+            //                 await prisma.user.update({
+            //                     where: { id: user.id },
+            //                     data: { stripeCustomerId: customerId }
+            //                 });
+            //             }
+            //         }
+            //     }
+
+            //     if (!user) {
+            //         console.log("❌ No user found for customerId:", customerId);
+            //         break;
+            //     }
+
+            //     // Get plan — either from subscription or fallback
+            //     let plan = null;
+            //     let currentPeriodEnd = new Date();
+            //     currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1); // default: 1 month
+
+            //     if (subscriptionId) {
+            //         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            //         plan = await prisma.plan.findFirst({
+            //             where: { stripePriceId: subscription.items.data[0].price.id },
+            //         });
+            //     } else {
+            //         // Fallback: get price from invoice line items
+            //         const priceId = invoice.lines?.data?.[0]?.price?.id;
+            //         if (priceId) {
+            //             plan = await prisma.plan.findFirst({ where: { stripePriceId: priceId } });
+            //         }
+            //         console.log("⚠️ No subscriptionId on invoice, used fallback price lookup");
+            //     }
+
+            //     //  Update user subscription
+            //     await prisma.user.update({
+            //         where: { id: user.id },
+            //         data: {
+            //             subscriptionStatus: SubscriptionStatus.ACTIVE,
+            //             subscriptionType: plan?.type ?? SubscriptionType.PREMIUM,
+            //             ...(subscriptionId && { stripeSubscriptionId: subscriptionId }),
+            //             currentPeriodEnd,
+            //         },
+            //     });
+
+            //     //  Create invoice record
+            //     await prisma.invoice.create({
+            //         data: {
+            //             stripeInvoiceId: invoice.id,
+            //             userId: user.id,
+            //             amount: invoice.amount_paid / 100,
+            //             currency: invoice.currency,
+            //             status: InvoiceStatus.PAID,
+            //             planName: plan?.name ?? "Unknown",
+            //             billingPeriodStart: new Date(invoice.period_start * 1000),
+            //             billingPeriodEnd: new Date(invoice.period_end * 1000),
+            //             invoiceUrl: invoice.hosted_invoice_url ?? null,
+            //         },
+            //     });
+
+            //     console.log("✅ invoice.paid handled for user:", user.email);
+            //     break;
+            // }
             case "invoice.paid": {
                 const invoice = event.data.object as Stripe.Invoice;
                 const customerId = invoice.customer as string;
 
-                //  subscriptionId can be undefined on first invoice — get it safely
+                const user = await prisma.user.findUnique({
+                    where: { stripeCustomerId: customerId }
+                });
+                if (!user) break;
+
                 const subscriptionId = typeof invoice.subscription === "string"
-                    ? invoice.subscription
-                    : (invoice.subscription as any)?.id ?? null;
+                    ? invoice.subscription : null;
 
-                console.log("customerId from Stripe:", customerId);
-                console.log("subscriptionId from Stripe:", subscriptionId);
-
-                //  Find user
-                let user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } });
-
-                if (!user) {
-                    const stripeCustomer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
-                    if (stripeCustomer.email) {
-                        user = await prisma.user.findUnique({ where: { email: stripeCustomer.email } });
-                        if (user) {
-                            await prisma.user.update({
-                                where: { id: user.id },
-                                data: { stripeCustomerId: customerId }
-                            });
-                        }
-                    }
-                }
-
-                if (!user) {
-                    console.log("❌ No user found for customerId:", customerId);
-                    break;
-                }
-
-                // Get plan — either from subscription or fallback
                 let plan = null;
-                let currentPeriodEnd = new Date();
-                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1); // default: 1 month
-
                 if (subscriptionId) {
                     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
                     plan = await prisma.plan.findFirst({
                         where: { stripePriceId: subscription.items.data[0].price.id },
                     });
-                } else {
-                    // Fallback: get price from invoice line items
-                    const priceId = invoice.lines?.data?.[0]?.price?.id;
-                    if (priceId) {
-                        plan = await prisma.plan.findFirst({ where: { stripePriceId: priceId } });
-                    }
-                    console.log("⚠️ No subscriptionId on invoice, used fallback price lookup");
                 }
 
-                //  Update user subscription
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: {
-                        subscriptionStatus: SubscriptionStatus.ACTIVE,
-                        subscriptionType: plan?.type ?? SubscriptionType.PRO,
-                        ...(subscriptionId && { stripeSubscriptionId: subscriptionId }),
-                        currentPeriodEnd,
-                    },
-                });
-
-                //  Create invoice record
+                // ONLY create invoice record — no prisma.user.update here
                 await prisma.invoice.create({
                     data: {
                         stripeInvoiceId: invoice.id,
@@ -346,7 +363,7 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                     },
                 });
 
-                console.log("✅ invoice.paid handled for user:", user.email);
+                console.log("✅ invoice.paid — invoice record created for:", user.email);
                 break;
             }
 
