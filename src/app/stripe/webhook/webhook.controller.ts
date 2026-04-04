@@ -226,19 +226,21 @@ const handleStripeWebhook = async (req: Request, res: Response) => {
                     console.error("❌ No plan found for priceId:", subscription.items.data[0].price.id);
                     break;
                 }
+                const currentDate = new Date();
+                const currentPeriodEnd = new Date(currentDate);
+                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
 
                 // Map Stripe status — respect cancel_at_period_end
                 const newStatus = subscription.cancel_at_period_end
                     ? SubscriptionStatus.CANCELED
                     : (stripeStatusMap[subscription.status] ?? SubscriptionStatus.INACTIVE);
-
                 await prisma.user.update({
                     where: { id: user.id },
                     data: {
                         subscriptionStatus: newStatus,
                         subscriptionType: plan.type,
                         stripeSubscriptionId: subscription.id,
-                        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                        currentPeriodEnd,
                     },
                 });
 
