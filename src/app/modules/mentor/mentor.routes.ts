@@ -24,7 +24,7 @@ router.get(
 // admin
 router.get(
     "/get-mentor/:id",
-    auth(UserRole.ADMIN),
+    auth(),
     MentorController.getMentorById
 );
 
