@@ -353,13 +353,16 @@ export const MentorService = {
                 id: true,
                 status: true,
                 matchPercentage: true,
+                skills: true,
                 mentor: {
                     select: {
                         mentorProfile: {
                             select: {
                                 id: true,
                                 mentorName: true,
+                                profileImage: true,
                                 role: true,
+
                             }
                         }
                     }
