@@ -171,61 +171,93 @@ export const MentorService = {
         if (!user) {
             throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
         }
-        let result;
-        if (user.mentorProfile) {
-            // update last mentor action
-            await prisma.mentorProfile.update({
-                where: { userId },
-                data: { lastMentorAction: new Date() }
-            });
-
-            result = await prisma.mentorshipRequest.findUnique({
-                where: {
-                    id: requestId,
-                },
-                select: {
-                    id: true,
-                    learningGoals: true,
-                    actionItems: true,
-                    mentee: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            profession: true,
-                            profileImage: true,
-                        },
+        const result = await prisma.mentorshipRequest.findUnique({
+            where: {
+                id: requestId,
+            },
+            select: {
+                id: true,
+                learningGoals: true,
+                actionItems: true,
+                mentee: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        profession: true,
+                        profileImage: true,
                     },
-                    mentorshipCompletion: true
-
                 },
-            });
-
-        } else {
-            result = await prisma.mentorshipRequest.findUnique({
-                where: {
-                    id: requestId,
-                },
-                select: {
-                    id: true,
-                    learningGoals: true,
-                    actionItems: true,
-                    mentor: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            profession: true,
-                            profileImage: true,
-                            mentorProfile:{
-                                select:{
-                                    skills:true
-                                }
+                mentor: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        profession: true,
+                        profileImage: true,
+                        mentorProfile: {
+                            select: {
+                                skills: true
                             }
-                        },
-                    },
+                        }
+                    }
                 },
-            });
+                mentorshipCompletion: true
 
-        }
+            },
+        });
+        // if (user.mentorProfile) {
+        //     // update last mentor action
+        //     await prisma.mentorProfile.update({
+        //         where: { userId },
+        //         data: { lastMentorAction: new Date() }
+        //     });
+
+        //     result = await prisma.mentorshipRequest.findUnique({
+        //         where: {
+        //             id: requestId,
+        //         },
+        //         select: {
+        //             id: true,
+        //             learningGoals: true,
+        //             actionItems: true,
+        //             mentee: {
+        //                 select: {
+        //                     id: true,
+        //                     fullName: true,
+        //                     profession: true,
+        //                     profileImage: true,
+        //                 },
+        //             },
+        //             mentorshipCompletion: true
+
+        //         },
+        //     });
+
+        // } else {
+        //     result = await prisma.mentorshipRequest.findUnique({
+        //         where: {
+        //             id: requestId,
+        //         },
+        //         select: {
+        //             id: true,
+        //             learningGoals: true,
+        //             actionItems: true,
+        //             mentor: {
+        //                 select: {
+        // id: true,
+        // fullName: true,
+        // profession: true,
+        // profileImage: true,
+        // mentorProfile:{
+        //     select:{
+        //         skills:true
+        //     }
+        // }
+        //                 },
+        //             },
+        //         },
+        //     });
+
+        // }
 
         if (!result) {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentorship request not found!");
