@@ -56,10 +56,18 @@ export const MentorService = {
         }
     },
     // admin
-    getMentorById: async (mentorId: string) => {
+    getMentorById: async (userId: string) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        })
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
+        }
         const mentor = await prisma.mentorProfile.findUnique({
             where: {
-                id: mentorId
+                userId: user.id
             },
             select: {
                 id: true,
@@ -345,7 +353,7 @@ export const MentorService = {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentee not found!")
         };
         const userQuery = new QueryBuilder(prisma.mentorshipRequest, query)
-            // .search(["mentor.mentorProfile.mentorName", "mentor.mentorProfile.role"])
+            .search(["mentor.mentorProfile.mentorName", "mentor.mentorProfile.role"])
             .filter()
             .rawFilter({ menteeId })
             .paginate()
