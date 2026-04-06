@@ -345,7 +345,7 @@ export const MentorService = {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentee not found!")
         };
         const userQuery = new QueryBuilder(prisma.mentorshipRequest, query)
-            .search(["mentor.mentorProfile.mentorName", "mentor.mentorProfile.role"])
+            // .search(["mentor.mentorProfile.mentorName", "mentor.mentorProfile.role"])
             .filter()
             .rawFilter({ menteeId })
             .paginate()
@@ -353,16 +353,16 @@ export const MentorService = {
                 id: true,
                 status: true,
                 matchPercentage: true,
-                skills: true,
                 mentor: {
                     select: {
+                        id: true,
+                        profileImage: true,
                         mentorProfile: {
                             select: {
                                 id: true,
                                 mentorName: true,
-                                profileImage: true,
                                 role: true,
-
+                                skills: true,
                             }
                         }
                     }
