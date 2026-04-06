@@ -215,6 +215,11 @@ export const MentorService = {
                             fullName: true,
                             profession: true,
                             profileImage: true,
+                            mentorProfile:{
+                                select:{
+                                    skills:true
+                                }
+                            }
                         },
                     },
                 },
