@@ -533,22 +533,30 @@ export const MentorService = {
     // mentee
     sendMentorshipCompletion: async (payload: { requestId: string, actionItems: string[] }) => {
         const { requestId, actionItems } = payload;
+
         const request = await prisma.mentorshipRequest.findUnique({
-            where: {
-                id: requestId
-            }
+            where: { id: requestId }
         });
         if (!request) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Request not found!")
+            throw new ApiError(httpStatus.NOT_FOUND, "Request not found!");
         }
+
+        // Check if completion already exists
+        const existingCompletion = await prisma.mentorshipCompletion.findUnique({
+            where: { requestId }
+        });
+        if (existingCompletion) {
+            throw new ApiError(httpStatus.CONFLICT, "Mentorship completion already submitted for this request!");
+        }
+
         const result = await prisma.mentorshipCompletion.create({
             data: {
                 requestId,
-                actionItems: actionItems,
+                actionItems,
                 status: MentorshipCompletionStatus.PENDING
             }
         });
-        return result
+        return result;
     },
     // mentee
     acceptMentorshipCompletion: async (payload: { completionId: string, actionItems: string[] }) => {
