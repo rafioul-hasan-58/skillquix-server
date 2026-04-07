@@ -1,4 +1,4 @@
-import { MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, UserRole } from "@prisma/client";
+import { MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, SessionStatus, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -548,6 +548,17 @@ export const MentorService = {
         if (existingCompletion) {
             throw new ApiError(httpStatus.CONFLICT, "Mentorship completion already submitted for this request!");
         }
+        // at least one session should complete
+        const hasOneSessionCompleted = await prisma.mentorshipSession.count({
+            where: {
+                requestId,
+                status: SessionStatus.COMPLETED
+            }
+        }) > 0;
+
+        if (!hasOneSessionCompleted) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "At least one session should complete!");
+        }
 
         const result = await prisma.mentorshipCompletion.create({
             data: {
@@ -576,6 +587,15 @@ export const MentorService = {
             data: {
                 actionItems: actionItems,
                 status: MentorshipCompletionStatus.ACCEPTED
+            }
+        });
+        // update all sessions
+        await prisma.mentorshipSession.updateMany({
+            where: {
+                requestId: completion.requestId
+            },
+            data: {
+                status: SessionStatus.COMPLETED
             }
         });
 
