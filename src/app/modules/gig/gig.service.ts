@@ -143,8 +143,7 @@ export const GigService = {
             matchScore = null;
         }
 
-        const matchPercentage = matchScore === null ? 0 : matchScore
-
+        const matchPercentage = matchScore === null ? 0 : Math.ceil(matchScore)
 
         if (!gig) {
             throw new ApiError(status.NOT_FOUND, "Gig not found!");
