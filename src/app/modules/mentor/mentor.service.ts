@@ -296,6 +296,9 @@ export const MentorService = {
 
     // mentee
     sendMentorshipRequest: async (menteeId: string, payload: MentorshipRequest) => {
+        if (menteeId === payload.mentorId) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "You can't send mentorship request to yourself!")
+        }
         const mentee = await prisma.user.findUnique({
             where: {
                 id: menteeId

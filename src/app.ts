@@ -68,7 +68,7 @@ cron.schedule("* * * * *", async () => {
     });
 
     if (result.count > 0) {
-      console.log(`✅ Marked ${result.count} session(s) as COMPLETED`);
+      console.log(`🎯 Marked ${result.count} session(s) as COMPLETED`);
     }
   } catch (error) {
     console.error("❌ Cron job failed:", error);
