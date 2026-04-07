@@ -7,6 +7,7 @@ import { PrismaClient } from "@prisma/client";
 import path from "path";
 import morgan from "morgan";
 import { WebhookRoutes } from "./app/stripe/webhook/webhook.routes";
+import cron from "node-cron";
 
 const app: Application = express();
 const prisma = new PrismaClient();
@@ -47,6 +48,31 @@ app.set("views", path.join(__dirname, "../src/views"));
 
 app.get("/payment", (req: Request, res: Response) => {
   res.render("stripe");
+});
+
+// cron
+
+// runs every minute
+cron.schedule("* * * * *", async () => {
+  try {
+    const now = new Date();
+
+    const result = await prisma.mentorshipSession.updateMany({
+      where: {
+        endDateTime: { lt: now },
+        status: { not: "COMPLETED" },
+      },
+      data: {
+        status: "COMPLETED",
+      },
+    });
+
+    if (result.count > 0) {
+      console.log(`✅ Marked ${result.count} session(s) as COMPLETED`);
+    }
+  } catch (error) {
+    console.error("❌ Cron job failed:", error);
+  }
 });
 
 app.use("/api/v1", router);
