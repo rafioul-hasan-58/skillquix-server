@@ -138,12 +138,14 @@ export const GigService = {
         let matchScore
         try {
             matchScore = await getMatchScore(userId, gigId);
+            console.log("matchscore", matchScore)
         } catch (error) {
             console.error("Failed to get match score:", error);
             matchScore = null;
         }
 
-        const matchPercentage = matchScore === null ? 0 : Math.ceil(matchScore)
+
+        const matchPercentage = matchScore === null ? 0 : Math.ceil(matchScore?.score * 100)
 
         if (!gig) {
             throw new ApiError(status.NOT_FOUND, "Gig not found!");
