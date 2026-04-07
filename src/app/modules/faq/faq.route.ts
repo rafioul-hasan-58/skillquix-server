@@ -16,7 +16,7 @@ router.post(
 
 router.get(
   "/get-all",
-  auth(UserRole.ADMIN),
+  // auth(UserRole.ADMIN),
   FaqController.getAll
 );
 
