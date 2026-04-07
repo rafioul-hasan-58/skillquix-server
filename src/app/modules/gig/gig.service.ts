@@ -3,7 +3,7 @@ import ApiError from "../../errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { ActivityType, Gig, Source } from "@prisma/client";
-import { fetchSkillGap, generateGigEmbedding, upsertGigEmbedding } from "./gig.helper";
+import { fetchSkillGap, generateGigEmbedding, getMatchScore, upsertGigEmbedding } from "./gig.helper";
 import config from "../../../config";
 import { ActivityLogService } from "../activitylog/activitylog.service";
 import { mailService } from "../../mail/mail.service";
@@ -135,13 +135,24 @@ export const GigService = {
             },
         });
 
+        let matchScore
+        try {
+            matchScore = await getMatchScore(userId, gigId);
+        } catch (error) {
+            console.error("Failed to get match score:", error);
+            matchScore = null;
+        }
+
+        const matchPercentage = matchScore === null ? 0 : matchScore
+
+
         if (!gig) {
             throw new ApiError(status.NOT_FOUND, "Gig not found!");
         }
 
         const skillGap = await fetchSkillGap(userId, gigId);
 
-        return { ...gig, skillGap };
+        return { ...gig, skillGap, matchPercentage };
     },
 
     // Update gig

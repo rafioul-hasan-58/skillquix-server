@@ -99,10 +99,10 @@ export const upsertGigEmbedding = async (
     try {
         const response = await axios.post(
             `${config.ai_base_url}/v1/upsert_gig_embedding`,
-            { embedding },           
+            { embedding },
             {
                 params: {
-                    gig_id: gigId,   
+                    gig_id: gigId,
                 },
                 headers: {
                     "Content-Type": "application/json",
@@ -136,3 +136,19 @@ export const fetchSkillGap = async (userId: string, gigId: string) => {
         return null;
     }
 };
+
+export const getMatchScore = async (userId: string, gigId: string) => {
+    const url = `${config.ai_base_url}/v1/get_match_score/${userId}/${gigId}`;
+    const response = await fetch(url, {
+        method: "GET",
+        headers: {
+            "Accept": "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+}
