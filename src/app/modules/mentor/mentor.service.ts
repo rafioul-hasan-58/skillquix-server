@@ -1,4 +1,4 @@
-import { MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, SessionStatus, UserRole } from "@prisma/client";
+import { MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, SessionStatus, SubscriptionType, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -14,6 +14,9 @@ export const MentorService = {
             const user = await tx.user.findUnique({ where: { id: userId } });
             if (!user) {
                 throw new ApiError(httpStatus.NOT_FOUND, "User not found to setup mentor profile!");
+            }
+            if (user.subscriptionType !== SubscriptionType.PREMIUM) {
+                throw new ApiError(httpStatus.NOT_FOUND, "You need to have a premium subscription to setup a mentor profile!")
             }
 
             // Generate embedding outside the DB ops but inside transaction for atomicity

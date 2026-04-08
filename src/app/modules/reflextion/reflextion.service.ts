@@ -31,6 +31,27 @@ export const ReflextionService = {
                 throw new ApiError(httpStatus.FORBIDDEN, "Free users can create only 3 reflections")
             }
         }
+         if (user.subscriptionType === SubscriptionType.PRO) {
+            const reflextionCount = await prisma.reflextion.count({
+                where: {
+                    userId
+                }
+            });
+            if (reflextionCount >= 50) {
+                throw new ApiError(httpStatus.FORBIDDEN, "Pro users can create only 50 reflections")
+            }
+        }
+        if (user.subscriptionType === SubscriptionType.PREMIUM) {
+            const reflextionCount = await prisma.reflextion.count({
+                where: {
+                    userId
+                }
+            });
+            if (reflextionCount >= 100) {
+                throw new ApiError(httpStatus.FORBIDDEN, "Premium users can create only 100 reflections")
+            }
+        }
+
 
 
 
