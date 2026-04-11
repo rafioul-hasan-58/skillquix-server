@@ -122,7 +122,11 @@ export const MentorService = {
                 mentorProfile: true
             }
         });
-        console.log(mentor)
+        console.log("mentorId", mentorId)
+
+        if (!mentor) {
+            throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
+        }
         if (!mentor?.mentorProfile) {
             throw new ApiError(httpStatus.NOT_FOUND, "No mentor found!setup your mentor profile first!")
         };
