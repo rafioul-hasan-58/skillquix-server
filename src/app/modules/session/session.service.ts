@@ -168,7 +168,7 @@ export const SessionService = {
             data: {
                 status: MentorshipRequestStatus.ACTIVE
             }
-        })
+        });
         const update = await prisma.mentorshipSession.update({
             where: { id: sessionId },
             data: {

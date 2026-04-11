@@ -180,6 +180,7 @@ export const MentorService = {
             },
             select: {
                 id: true,
+                status: true,
                 learningGoals: true,
                 actionItems: true,
                 mentee: {
@@ -207,60 +208,6 @@ export const MentorService = {
 
             },
         });
-        // if (user.mentorProfile) {
-        //     // update last mentor action
-        //     await prisma.mentorProfile.update({
-        //         where: { userId },
-        //         data: { lastMentorAction: new Date() }
-        //     });
-
-        //     result = await prisma.mentorshipRequest.findUnique({
-        //         where: {
-        //             id: requestId,
-        //         },
-        //         select: {
-        //             id: true,
-        //             learningGoals: true,
-        //             actionItems: true,
-        //             mentee: {
-        //                 select: {
-        //                     id: true,
-        //                     fullName: true,
-        //                     profession: true,
-        //                     profileImage: true,
-        //                 },
-        //             },
-        //             mentorshipCompletion: true
-
-        //         },
-        //     });
-
-        // } else {
-        //     result = await prisma.mentorshipRequest.findUnique({
-        //         where: {
-        //             id: requestId,
-        //         },
-        //         select: {
-        //             id: true,
-        //             learningGoals: true,
-        //             actionItems: true,
-        //             mentor: {
-        //                 select: {
-        // id: true,
-        // fullName: true,
-        // profession: true,
-        // profileImage: true,
-        // mentorProfile:{
-        //     select:{
-        //         skills:true
-        //     }
-        // }
-        //                 },
-        //             },
-        //         },
-        //     });
-
-        // }
 
         if (!result) {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentorship request not found!");
@@ -576,47 +523,101 @@ export const MentorService = {
         return result;
     },
     // mentee
-    acceptMentorshipCompletion: async (payload: { completionId: string, actionItems: string[] }) => {
+    // acceptMentorshipCompletion: async (payload: { completionId: string, actionItems: string[] }) => {
+    //     const { completionId, actionItems } = payload;
+    //     const completion = await prisma.mentorshipCompletion.findUnique({
+    //         where: {
+    //             id: completionId
+    //         }
+    //     });
+    //     if (!completion) {
+    //         throw new ApiError(httpStatus.NOT_FOUND, "Completion request not found!")
+    //     }
+    //     const result = await prisma.mentorshipCompletion.update({
+    //         where: {
+    //             id: completionId
+    //         },
+    //         data: {
+    //             actionItems: actionItems,
+    //             status: MentorshipCompletionStatus.ACCEPTED
+    //         }
+    //     });
+    //     // update request status
+    //     await prisma.mentorshipRequest.update({
+    //         where: {
+    //             id: completion.requestId
+    //         },
+    //         data: {
+    //             status: MentorshipRequestStatus.COMPLETED
+    //         }
+    //     });
+    //     // update all sessions
+    //     await prisma.mentorshipSession.updateMany({
+    //         where: {
+    //             requestId: completion.requestId
+    //         },
+    //         data: {
+    //             status: SessionStatus.COMPLETED
+    //         }
+    //     });
+
+    //     // update last response to request (mentor action)
+    //     const request = await prisma.mentorshipRequest.findUnique({
+    //         where: { id: completion.requestId }
+    //     });
+    //     if (request) {
+    // await prisma.mentorProfile.update({
+    //     where: { userId: request.mentorId },
+    //     data: { lastResponseToRequest: new Date() }
+    // });
+    //     }
+
+    //     return result
+    // },
+    // mentor
+    acceptMentorshipCompletion: async (userId: string, payload: {
+        completionId: string;
+        actionItems: string[];
+    }) => {
         const { completionId, actionItems } = payload;
+
+        // Single upfront read — also validates existence
         const completion = await prisma.mentorshipCompletion.findUnique({
-            where: {
-                id: completionId
-            }
+            where: { id: completionId },
+            select: { requestId: true }, // only pull what we need
         });
         if (!completion) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Completion request not found!")
+            throw new ApiError(httpStatus.NOT_FOUND, "Completion request not found!");
         }
-        const result = await prisma.mentorshipCompletion.update({
-            where: {
-                id: completionId
-            },
-            data: {
-                actionItems: actionItems,
-                status: MentorshipCompletionStatus.ACCEPTED
-            }
-        });
-        // update all sessions
-        await prisma.mentorshipSession.updateMany({
-            where: {
-                requestId: completion.requestId
-            },
-            data: {
-                status: SessionStatus.COMPLETED
-            }
-        });
 
-        // update last response to request (mentor action)
-        const request = await prisma.mentorshipRequest.findUnique({
-            where: { id: completion.requestId }
-        });
-        if (request) {
-            await prisma.mentorProfile.update({
-                where: { userId: request.mentorId },
+        // One transaction — atomic, and mentorId comes from the nested read
+        // so we never hit the DB twice for the same request row.
+        const [result] = await prisma.$transaction([
+            // 1 & 2 — run completion update + request update in parallel
+            prisma.mentorshipCompletion.update({
+                where: { id: completionId },
+                data: {
+                    actionItems,
+                    status: MentorshipCompletionStatus.ACCEPTED,
+                },
+            }),
+            prisma.mentorshipRequest.update({
+                where: { id: completion.requestId },
+                data: { status: MentorshipRequestStatus.COMPLETED },
+            }),
+            // 3 — sessions
+            prisma.mentorshipSession.updateMany({
+                where: { requestId: completion.requestId },
+                data: { status: SessionStatus.COMPLETED },
+            }),
+            // 4 — mentor profile timestamp, fetching mentorId inline via nested where
+            prisma.mentorProfile.update({
+                where: { userId },
                 data: { lastResponseToRequest: new Date() }
-            });
-        }
+            })
+        ]);
 
-        return result
+        return result;
     },
     // mentor
     rejectMentorshipCompletion: async (completionId: string, feedback: string) => {
