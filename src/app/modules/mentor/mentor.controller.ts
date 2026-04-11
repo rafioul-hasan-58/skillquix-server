@@ -177,7 +177,8 @@ export const MentorController = {
         });
     }),
     accpeptMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
-        const result = await MentorService.acceptMentorshipCompletion(req.body);
+        const { id: userId } = req.user;
+        const result = await MentorService.acceptMentorshipCompletion(userId, req.body);
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
