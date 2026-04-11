@@ -129,7 +129,7 @@ export const AuthController = {
     if (!payload) {
       throw new ApiError(status.NOT_FOUND, "Google token payload not found");
     }
-    const { accessToken, refreshToken } = await AuthService.googleLogin(payload);
+    const { accessToken, refreshToken, isOnboarded } = await AuthService.googleLogin(payload);
 
     res.cookie("refreshToken", refreshToken, {
       secure: false,
@@ -140,7 +140,8 @@ export const AuthController = {
       statusCode: status.OK,
       message: "Google login successful!",
       data: {
-        accessToken
+        accessToken,
+        isOnboarded
       },
     });
   }),

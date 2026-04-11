@@ -392,6 +392,6 @@ export const AuthService = {
     const accessToken = createToken(jwtPayload, config.jwt.access_secret as string, config.jwt.access_expires_in as string);
     const refreshToken = createToken(jwtPayload, config.jwt.refresh_token_secret as string, config.jwt.refresh_token_expires_in as string);
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, isOnboarded: user.isOnboarded };
   },
 };
