@@ -117,6 +117,17 @@ export const MentorController = {
             data: result,
         });
     }),
+    // admin
+    rejectMentor: catchAsync(async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const result = await MentorService.rejectMentor(id);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Mentor rejected successfully!",
+            data: result,
+        });
+    }),
 
     // mentee
     sendMentorshipRequest: catchAsync(async (req: Request, res: Response) => {
