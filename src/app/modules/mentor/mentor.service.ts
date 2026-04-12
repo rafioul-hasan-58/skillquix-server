@@ -1,4 +1,4 @@
-import { MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, SessionStatus, SubscriptionType, UserRole } from "@prisma/client";
+import { AdminApprovalStatus, MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, SessionStatus, SubscriptionType, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -80,6 +80,7 @@ export const MentorService = {
                 availability: true,
                 isActive: true,
                 isApproved: true,
+                adminApprovalStatus: true,
                 lastMentorAction: true,
                 user: {
                     select: {
@@ -401,6 +402,7 @@ export const MentorService = {
                 company: true,
                 experienceYears: true,
                 isApproved: true,
+                adminApprovalStatus: true,
                 createdAt: true,
                 user: {
                     select: {
@@ -444,12 +446,38 @@ export const MentorService = {
                 id: mentorId
             },
             data: {
-                isApproved: true
+                isApproved: true,
+                adminApprovalStatus: AdminApprovalStatus.APPROVED
             }
         });
 
         return {
             message: "Mentor approved successfully!"
+        }
+    },
+    // admin
+    rejectMentor: async (mentorId: string) => {
+        const mentor = await prisma.mentorProfile.findUnique({
+            where: {
+                id: mentorId
+            },
+        });
+        if (!mentor) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Mentor profile is not setted up yet!");
+        };
+
+        await prisma.mentorProfile.update({
+            where: {
+                id: mentorId
+            },
+            data: {
+                isApproved: false,
+                adminApprovalStatus: AdminApprovalStatus.REJECTED
+            }
+        });
+
+        return {
+            message: "Mentor rejected successfully!"
         }
     },
     // mentor

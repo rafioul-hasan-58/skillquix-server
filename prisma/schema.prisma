@@ -47,6 +47,7 @@ model Certificate {
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   resumeId String @db.ObjectId
 }
+
 model ContactMessage {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   name            String
@@ -59,6 +60,7 @@ model ContactMessage {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
 // Models in alphabetical order
 model Education {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -135,9 +137,9 @@ model Invoice {
 }
 
 model MentorProfile {
-  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId                String    @unique @db.ObjectId
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String              @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String              @unique @db.ObjectId
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   // Professional Info
   mentorName            String
   role                  String
@@ -149,13 +151,14 @@ model MentorProfile {
   embedding             Json?
   skills                String[]
   // Status & Visibility
-  isApproved            Boolean   @default(false) // Admin approves mentors
-  isActive              Boolean   @default(true)
+  isApproved            Boolean             @default(false) // Admin approves mentors
+  isActive              Boolean             @default(true)
+  adminApprovalStatus   AdminApprovalStatus @default(PENDING)
   lastLogin             DateTime?
   lastMentorAction      DateTime?
   lastResponseToRequest DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 }
 
 model MentorshipSession {
@@ -525,6 +528,12 @@ enum ProficiencyLevel {
   Intermediate
   Advanced
   Expert
+}
+
+enum AdminApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum MentorshipCompletionStatus {

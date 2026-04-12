@@ -67,6 +67,11 @@ router.post(
     auth(UserRole.ADMIN),
     MentorController.approveMentor
 );
+router.post(
+    "/reject/:id",
+    auth(UserRole.ADMIN),
+    MentorController.rejectMentor
+);
 // mentee
 router.post(
     "/send-request",
