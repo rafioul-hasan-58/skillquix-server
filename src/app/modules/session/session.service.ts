@@ -155,8 +155,18 @@ export const SessionService = {
 
         const session = await prisma.mentorshipSession.findUnique({
             where: { id: sessionId },
-            include: { request: true },
+            include: {
+                request: {
+                    include: {
+                        mentorshipCompletion: true
+                    }
+                }
+            },
         });
+
+        if (session?.request?.mentorshipCompletion) {
+            throw new ApiError(httpStatus.CONFLICT, `You cannot accept the request now! completion state is${session.request.mentorshipCompletion.status}`)
+        }
 
         if (!session) {
             throw new ApiError(httpStatus.NOT_FOUND, "Mentorship session not found!");
