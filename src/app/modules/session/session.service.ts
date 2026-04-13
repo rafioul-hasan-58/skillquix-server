@@ -149,7 +149,7 @@ export const SessionService = {
     },
     // mentor
     acceptSessionRequest: async (
-        payload: { sessionId: string, startDateTime: string; endDateTime: string; meetLink: string }
+        payload: { sessionId: string, startDateTime: string; endDateTime: string; meetLink: string, topic?: string }
     ) => {
         const { startDateTime, endDateTime, meetLink, sessionId } = payload;
 
@@ -183,6 +183,7 @@ export const SessionService = {
             where: { id: sessionId },
             data: {
                 status: SessionStatus.UPCOMING,
+                topic: payload.topic ?? "",
                 startDateTime,
                 endDateTime,
                 meetLink, // use directly from payload
