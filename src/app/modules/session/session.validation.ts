@@ -11,7 +11,8 @@ const acceptSessionRequestSchema = z.object({
     sessionId: z.string(), // you can add .uuid() if it's always a UUID
     startDateTime: z.string().datetime({ message: "Start date/time must be ISO format" }),
     endDateTime: z.string().datetime({ message: "End date/time must be ISO format" }),
-    meetLink: z.string().url("Meet link must be a valid URL")
+    meetLink: z.string().url("Meet link must be a valid URL"),
+    topic: z.string().optional()
 });
 const declineSessionRequestSchema = z.object({
     sessionId: z.string(), // you can add .uuid() if it's always a UUID
