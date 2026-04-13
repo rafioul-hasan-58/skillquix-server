@@ -1,5 +1,5 @@
 import status from "http-status";
-import { getClarityPercentageChange, getClearityScore, hashPassword, parseResumeFromS3 } from "./user.utils";
+import { getClarityPercentageChange, getClearityScore, hashPassword, parseResume } from "./user.helper";
 import ApiError from "../../errors/ApiError";
 import { SubscriptionType, User, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
@@ -12,6 +12,8 @@ import { monthlyRevenue } from "../subscription/subscription.helper";
 import { SkillService } from "../skill/skill.service";
 import httpStatus from "http-status";
 import axios from "axios";
+import { CreateResumeProfilePayload } from "../resumeProfile/resumeProfile.interface";
+import { ResumeProfileService } from "../resumeProfile/resumeProfile.service";
 
 
 export const UserService = {
@@ -25,17 +27,45 @@ export const UserService = {
     }
 
     const hashedPassword = await hashPassword(payload.password ?? "");
-
-
     const user = await prisma.user.create({
       data: {
         ...payload,
         password: hashedPassword,
+        resumeLink: payload.resumeLink ?? null
       },
     });
-
     // if (payload.resumeLink) {
-    //   await parseResumeFromS3(payload.resumeLink, user.id)
+    //   const parsedResume = await parseResume(payload.resumeLink);
+
+    //   const resumePayload: CreateResumeProfilePayload = {
+    //     domain: parsedResume.domain,
+    //     subdomain: parsedResume.subdomain,
+    //     name: parsedResume.name,
+    //     email: parsedResume.email,
+    //     phone: parsedResume.phone,
+    //     location: parsedResume.location,
+    //     summary: parsedResume.summary,
+    //     totalExp: parsedResume.totalExp,
+    //     skills: parsedResume.skills,
+    //     sections: parsedResume.sections.map((section: any) => ({
+    //       sectionType: section.sectionType,
+    //       title: section.title,
+    //       orderIndex: section.orderIndex,
+    //       items: section.items.map((item: any) => ({
+    //         orderIndex: item.orderIndex,
+    //         data: item.data,
+    //       })),
+    //     })),
+    //   };
+
+    //   await ResumeProfileService.create(user.id, resumePayload);
+
+    //   return {
+    //     accessToken: "test",
+    //     refreshToken: "test",
+    //     resumeLink: payload.resumeLink,
+    //     parsedResume,
+    //   };
     // }
 
     // Create Stripe customer and update user in one go

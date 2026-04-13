@@ -59,7 +59,21 @@ const uploadToS3 = async (
     throw error;
   }
 };
+export const downloadFileFromS3 = async (s3Url: string): Promise<{ blob: Blob; fileName: string; mimeType: string }> => {
+  const s3Response = await fetch(s3Url);
 
+  if (!s3Response.ok) {
+    throw new Error(`S3 download failed: ${s3Response.status} ${s3Response.statusText}`);
+  }
+
+  const fileName = (s3Url.split("/").pop() ?? "upload").split("?")[0];
+  const mimeType = s3Response.headers.get("content-type") || "application/octet-stream";
+  const blob = await s3Response.blob();
+
+  console.log(`⬇️ Downloaded from S3: ${fileName} (${(blob.size / 1024).toFixed(2)} KB)`);
+
+  return { blob, fileName, mimeType };
+};
 // **Abort Multipart Upload (Optional)**
 const abortMultipartUpload = async (
   Bucket: string,

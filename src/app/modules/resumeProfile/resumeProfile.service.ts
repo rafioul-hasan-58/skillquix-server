@@ -3,14 +3,12 @@ import prisma from "../../lib/prisma";
 import { CreateResumeProfilePayload, ResumeSkill } from "./resumeProfile.interface";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
-import { generateResumeEmbedding, upsertResumeEmbedding } from "../resume/resume.helper";
+import { upsertResumeEmbedding } from "../resume/resume.helper";
 import { generateResumeProfileEmbedding } from "./resumeProfile.utils";
 
 export const ResumeProfileService = {
     create: async (userId: string, payload: CreateResumeProfilePayload) => {
         const embedding = await generateResumeProfileEmbedding(payload);
-        
-
         // upsert the profile
         const result = await prisma.resumeProfile.upsert({
             where: { userId },
