@@ -1,6 +1,6 @@
 import status from "http-status";
 import ApiError from "../../errors/ApiError";
-import { hashPassword } from "../user/user.utils";
+import { hashPassword } from "../user/user.helper";
 import { createToken } from "./auth.utils";
 import prisma from "../../lib/prisma";
 import config from "../../../config";
