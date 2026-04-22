@@ -50,10 +50,12 @@ export const GigService = {
 
     // Get all gigs with QueryBuilder
     getAllGigsFromDB: async (query: Record<string, unknown>) => {
+        // const queryWithDefault = { sort: "createdAt", ...query };
         const gigQuery = new QueryBuilder(prisma.gig, query)
             .search(["gigTitle", "industryName", "location", "category"])
             .filter()
             .paginate()
+            .sort()
             .select({
                 id: true,
                 gigTitle: true,

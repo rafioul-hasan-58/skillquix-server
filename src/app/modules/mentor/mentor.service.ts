@@ -1,4 +1,4 @@
-import { AdminApprovalStatus, MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, SessionStatus, SubscriptionType, UserRole } from "@prisma/client";
+import { AdminApprovalStatus, MentorProfile, MentorshipCompletionStatus, MentorshipRequest, MentorshipRequestStatus, SessionStatus, SubscriptionType } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
@@ -230,7 +230,8 @@ export const MentorService = {
                 endDateTime: true,
                 status: true,
                 declineReason: true,
-                menteeRequestNote: true
+                menteeRequestNote: true,
+
             })
 
         const [mentorshipSessions] = await Promise.all([
