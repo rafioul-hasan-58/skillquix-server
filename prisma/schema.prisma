@@ -39,15 +39,6 @@ model Accomplishment {
   updatedAt   DateTime @updatedAt
 }
 
-model Certificate {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  issueDate String?
-
-  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  resumeId String @db.ObjectId
-}
-
 model ContactMessage {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   name            String
@@ -62,30 +53,6 @@ model ContactMessage {
 }
 
 // Models in alphabetical order
-model Education {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  resumeId      String   @db.ObjectId
-  resume        Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  degreeName    String
-  instituteName String?
-  startDate     String?
-  endDate       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Experience {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  resumeId    String   @db.ObjectId
-  resume      Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  workingRole String?
-  companyName String?
-  description String?
-  startDate   String?
-  endDate     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
 
 model Faq {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -208,21 +175,6 @@ model MentorshipCompletion {
   updatedAt   DateTime                   @updatedAt
 }
 
-model MentorGoogleAuth {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @unique @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Google OAuth tokens — used to generate Meet links
-  googleId     String?
-  accessToken  String
-  refreshToken String?
-  tokenExpiry  DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model OTP {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   otpCode      String
@@ -251,36 +203,6 @@ model Plan {
   updatedAt       DateTime         @updatedAt
 }
 
-model Project {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  link        String?
-  techStack   String[] // ["Python", "FastAPI"]
-  description String[] // multiple bullet points
-  startDate   String?
-  endDate     String?
-
-  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  resumeId String @db.ObjectId
-}
-
-model OtherLink {
-  id   String  @id @default(auto()) @map("_id") @db.ObjectId
-  type String?
-  link String?
-
-  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  resumeId String @db.ObjectId
-}
-
-model Language {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  name String // "English (Native)"
-
-  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  resumeId String @db.ObjectId
-}
-
 model Reflextion {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
@@ -289,29 +211,6 @@ model Reflextion {
   shortSummary    String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  extractedSkills Skill[]
-}
-
-model Resume {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String        @unique @db.ObjectId
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String?
-  title        String?
-  email        String?
-  location     String?
-  phone        String?
-  summary      String?
-  embedding    Json?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  experiences  Experience[]
-  education    Education[]
-  skills       Skill[]
-  projects     Project[]
-  otherLinks   OtherLink[]
-  languages    Language[]
-  certificates Certificate[]
 }
 
 model ResumeProfile {
@@ -330,7 +229,6 @@ model ResumeProfile {
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
   resumeSections      ResumeSection[]
-  skills              Skill[]
 }
 
 model ResumeSection {
@@ -358,12 +256,9 @@ model ResumeSectionItem {
 
 model Skill {
   id               String           @id @default(auto()) @map("_id") @db.ObjectId
-  resumeProfileId  String?          @db.ObjectId
-  resumeProfile    ResumeProfile?   @relation(fields: [resumeProfileId], references: [id], onDelete: Cascade)
-  userId           String?          @db.ObjectId
-  user             User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reflextionId     String?          @db.ObjectId
-  reflextion       Reflextion?      @relation(fields: [reflextionId], references: [id], onDelete: Cascade)
+  userId           String           @db.ObjectId
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reflextionId     String?          @db.ObjectId // tracking field, no relation
   skillName        String
   skillCategory    String
   proficiencyLevel ProficiencyLevel @default(Beginner)
@@ -371,8 +266,6 @@ model Skill {
   source           SkillSource      @default(MANUAL)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  resume           Resume?          @relation(fields: [resumeId], references: [id])
-  resumeId         String?          @db.ObjectId
 }
 
 model SavedGig {
@@ -420,7 +313,6 @@ model User {
   careerStage          String?
   isOnboarded          Boolean             @default(false)
   OTP                  OTP?
-  resumes              Resume?
   reflextions          Reflextion[]
   gigs                 Gig[]
   invoices             Invoice[]
@@ -430,7 +322,6 @@ model User {
   savedGigs            SavedGig[]
   appliedGigs          AppliedGig[]
   mentorProfile        MentorProfile?
-  mentorGoogleAuth     MentorGoogleAuth?
   menteesRequests      MentorshipRequest[] @relation("MenteeRequestRelation")
   mentorShipRequests   MentorshipRequest[] @relation("MentorResuestRelation")
   resumeProfile        ResumeProfile?
@@ -492,6 +383,8 @@ enum SubscriptionStatus {
 enum SkillSource {
   RESUME
   MANUAL
+  REFLEXTION
+  MENTORSHIP
   RECOMMENDATION
 }
 

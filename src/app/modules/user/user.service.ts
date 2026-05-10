@@ -422,10 +422,7 @@ export const UserService = {
   },
   userDashboardOverview: async (userId: string) => {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        resumeProfile: true
-      }
+      where: { id: userId }
     });
 
     if (!user) {
@@ -455,12 +452,7 @@ export const UserService = {
 
     const [skills, skillAddedThisMonth, opportunityMatches] = await Promise.all([
       prisma.skill.findMany({
-        where: {
-          OR: [
-            { userId },
-            ...(user.resumeProfile ? [{ resumeProfileId: user.resumeProfile.id }] : [])
-          ]
-        },
+        where: { userId },
         select: { skillName: true },
       }),
 
@@ -498,10 +490,7 @@ export const UserService = {
   },
   monthlyInsight: async (userId: string) => {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        resumeProfile: true
-      }
+      where: { id: userId }
     });
 
     if (!user) {
@@ -536,17 +525,7 @@ export const UserService = {
       take: 3
     });
 
-
-    const topThreeSkills = userSkills.length > 0
-      ? userSkills
-      : await prisma.skill.findMany({
-        where: {
-          resumeProfileId: user.resumeProfile?.id,
-          createdAt: { gte: startOfMonth, lt: endOfMonth }
-        },
-        select: { skillName: true },
-        take: 3
-      });
+    const topThreeSkills = userSkills;
 
     const skillImpactDetails = await Promise.all(
       topThreeSkills.map(async (skill) => {

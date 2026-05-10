@@ -14,15 +14,6 @@ router.post(
     validateRequest(SessionValidation.sendSessionRequestSchema),
     SessionController.sendSessionRequest
 );
-router.get(
-    "/auth/url",
-    auth(UserRole.USER),
-    SessionController.getAuthUrl
-);
-router.post(
-    "/auth/save-token",
-    SessionController.handleCallback
-);
 // mentor
 router.get(
     "/details/:id",
