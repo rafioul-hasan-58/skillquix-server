@@ -130,13 +130,7 @@ export const SkillService = {
         });
     },
     topSkills: async () => {
-        const skills = await prisma.skill.findRaw({
-            filter: {
-                userId: {
-                    $regex: "^[a-fA-F0-9]{24}$" // Only valid 24-char hex ObjectIds
-                }
-            }
-        }) as unknown as any[];
+        const skills = await prisma.skill.findMany();
 
         // Count how many skills per category
         const categoryCounts: Record<string, number> = {};
