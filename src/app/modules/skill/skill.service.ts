@@ -28,10 +28,7 @@ export const SkillService = {
     getMy: async (userId: string, query: Record<string, unknown>) => {
 
         const user = await prisma.user.findUnique({
-            where: { id: userId },
-            include: {
-                resumeProfile: true
-            }
+            where: { id: userId }
         });
 
         if (!user) {
@@ -41,12 +38,7 @@ export const SkillService = {
         const skillQuery = new QueryBuilder(prisma.skill, query)
             .search(["skillName", "skillCategory"])
             .filter()
-            .rawFilter({
-                OR: [
-                    { userId },
-                    ...(user.resumeProfile ? [{ resumeProfileId: user.resumeProfile.id }] : [])
-                ]
-            })
+            .rawFilter({ userId })
             .paginate()
             .sort()
             .select({

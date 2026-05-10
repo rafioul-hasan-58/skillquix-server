@@ -3,8 +3,7 @@ import prisma from "../../lib/prisma";
 import { CreateResumeProfilePayload, ResumeSkill } from "./resumeProfile.interface";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
-import { upsertResumeEmbedding } from "../resume/resume.helper";
-import { generateResumeProfileEmbedding } from "./resumeProfile.utils";
+import { generateResumeProfileEmbedding, upsertResumeEmbedding } from "./resumeProfile.utils";
 
 export const ResumeProfileService = {
     create: async (userId: string, payload: CreateResumeProfilePayload) => {
@@ -70,10 +69,10 @@ export const ResumeProfileService = {
             }
         });
 
-        // delete old skills and recreate
+        // delete old resume-sourced skills and recreate
         if (payload.skills && payload.skills.length > 0) {
             await prisma.skill.deleteMany({
-                where: { resumeProfileId: result.id }
+                where: { userId, source: SkillSource.RESUME }
             });
 
             await prisma.skill.createMany({
@@ -81,7 +80,7 @@ export const ResumeProfileService = {
                     skill.Skills.map((s: string) => ({
                         skillCategory: skill.category,
                         skillName: s,
-                        resumeProfileId: result.id,
+                        userId,
                         source: SkillSource.RESUME
                     }))
                 ),
@@ -119,18 +118,6 @@ export const ResumeProfileService = {
                 // embedding: true,
                 createdAt: true,
                 updatedAt: true,
-                skills: {
-                    select: {
-                        id: true,
-                        skillCategory: true,
-                        skillName: true,
-                        proficiencyLevel: true,
-                        yearOfExperience: true,
-                        source: true,
-                        createdAt: true,
-                        updatedAt: true
-                    }
-                },
                 resumeSections: {
                     select: {
                         id: true,
@@ -152,7 +139,23 @@ export const ResumeProfileService = {
                 }
             }
         });
-        return result
+
+        // Fetch resume-sourced skills separately via userId
+        const skills = await prisma.skill.findMany({
+            where: { userId, source: SkillSource.RESUME },
+            select: {
+                id: true,
+                skillCategory: true,
+                skillName: true,
+                proficiencyLevel: true,
+                yearOfExperience: true,
+                source: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        });
+
+        return result ? { ...result, skills } : null
     },
     // Update section meta
     updateSection: async (sectionId: string, payload: { title?: string, orderIndex?: number, sectionType?: string }) => {
