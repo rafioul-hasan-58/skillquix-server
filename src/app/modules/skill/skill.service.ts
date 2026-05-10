@@ -130,14 +130,22 @@ export const SkillService = {
         });
     },
     topSkills: async () => {
-        const skills = await prisma.skill.findMany();
+        const skills = await prisma.skill.findRaw({
+            filter: {
+                userId: {
+                    $regex: "^[a-fA-F0-9]{24}$" // Only valid 24-char hex ObjectIds
+                }
+            }
+        }) as unknown as any[];
 
         // Count how many skills per category
         const categoryCounts: Record<string, number> = {};
 
         for (const skill of skills) {
             const category = skill.skillCategory;
-            categoryCounts[category] = (categoryCounts[category] || 0) + 1; // +1 per skill
+            if (category) {
+                categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+            }
         }
 
         // Sort categories by count descending
@@ -149,10 +157,11 @@ export const SkillService = {
         // Total skills count
         const totalCount = sortedCategories.reduce((sum, [, count]) => sum + count, 0);
 
+        if (totalCount === 0) return {};
+
         // Prepare result
         const result: Record<string, number> = {};
 
-        // Top 3 categories with percentage
         for (const [category, count] of top3) {
             result[category] = Math.round((count / totalCount) * 100);
         }
@@ -163,7 +172,6 @@ export const SkillService = {
             result["Others"] = Math.round((othersCount / totalCount) * 100);
         }
 
-        return result
-
+        return result;
     }
 }
