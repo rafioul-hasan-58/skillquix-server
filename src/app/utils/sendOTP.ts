@@ -36,7 +36,6 @@ export const sendOTP = async (userId: string) => {
 
   // Step 4️⃣: Send OTP via email
   await mailService.sendEmail(user.email, otpCode, "Verify Your OTP within 10 Minutes");
-
   return {
     message: "OTP sent successfully",
     expiresAt: otp.otpExpiresAt,
