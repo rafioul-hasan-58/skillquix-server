@@ -156,7 +156,6 @@ export const AuthService = {
     if (!user) {
       throw new ApiError(status.NOT_FOUND, "User not found!");
     }
-    console.log("here")
     // Step 1: send otp
     const res = await sendOTP(user.id);
     return {

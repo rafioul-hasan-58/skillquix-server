@@ -145,7 +145,7 @@ export const SkillService = {
         // Sort categories by count descending
         const sortedCategories = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]);
 
-        // Take top 3 categories
+        // Take top 3 
         const top3 = sortedCategories.slice(0, 3);
 
         // Total skills count
