@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import ApiError from "../errors/ApiError";
 import status from 'http-status'
-import { jwtHelpers } from "../helpers/jwtHelpers";
+import { jwtHelpers } from "../../shared/helpers/jwtHelpers";
 import { JwtPayload } from "jsonwebtoken";
 import config from "../../config";
 const auth = (...roles: string[]) => {
@@ -18,12 +18,12 @@ const auth = (...roles: string[]) => {
         throw new ApiError(status.UNAUTHORIZED, "You are not authorized!");
       }
 
-        const accessToken = token.split(" ")[1];
+      const accessToken = token.split(" ")[1];
       if (!accessToken) {
         throw new ApiError(status.UNAUTHORIZED, "Invalid token format");
       }
 
-      const verifiedUser = jwtHelpers.verifyToken(accessToken, config.jwt.access_secret as string) as JwtPayload;
+      const verifiedUser = jwtHelpers.verifyToken(accessToken, config.jwt.access_token_secret as string) as JwtPayload;
 
       req.user = verifiedUser;
       // console.log(req.user);
