@@ -1,6 +1,6 @@
 import { ZodError, ZodIssue } from "zod";
-import { IGenericErrorMessage, TErrorDetails, TGenericErrorResponse } from "../interfaces/error";
-import { IGenericErrorResponse } from "../interfaces/common";
+import { IGenericErrorMessage, TErrorDetails, TGenericErrorResponse } from "../../shared/interfaces/error";
+import { IGenericErrorResponse } from "../../shared/interfaces/common";
 
 const handleZodError2 = (err: ZodError): TGenericErrorResponse => {
   let message = "";

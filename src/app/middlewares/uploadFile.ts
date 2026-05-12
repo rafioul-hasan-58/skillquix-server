@@ -1,11 +1,11 @@
 import multer from "multer";
 import multerS3 from "multer-s3";
 import config from "../../config";
-import { s3Client } from "../utils/s3";
+import { s3Client } from "../../lib/S3Client";
 
 const s3Storage = multerS3({
     s3: s3Client,
-    bucket: config.S3.bucketName || "", // Replace with your bucket name
+    bucket: config.s3.bucket_name || "", // Replace with your bucket name
     acl: "public-read", // Ensure files are publicly accessible
     contentType: multerS3.AUTO_CONTENT_TYPE, // Automatically detect content type
     key: (req, file, cb) => {

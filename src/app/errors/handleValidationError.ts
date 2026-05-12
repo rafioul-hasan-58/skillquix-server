@@ -1,9 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { IGenericErrorResponse } from "../interfaces/common";
-// import { IGenericErrorResponse } from "../interface/common";
-
-
-
+import { IGenericErrorResponse } from "../../shared/interfaces/common";
 const handleValidationError = (
   error: Prisma.PrismaClientValidationError
 ): IGenericErrorResponse => {

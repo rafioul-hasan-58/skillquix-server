@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { ZodError } from "zod";
 import config from "../../config";
-import { IGenericErrorMessage } from "../interfaces/error";
+import { IGenericErrorMessage } from "../../shared/interfaces/error";
 import handleZodError from "./handleZodError";
 import handleClientError from "./handleClientError";
 import ApiError from "./ApiError";

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { IGenericErrorMessage } from "../interfaces/error";
+import { IGenericErrorMessage } from "../../shared/interfaces/error";
 // import { IGenericErrorMessage } from "../interface/error";
 
 
