@@ -1,5 +1,6 @@
-import axios from "axios";
-import config from "../../config";
+
+import { aiClient } from "../../infrastructure/ai/aiClient";
+import { AI_ENDPOINTS } from "../../infrastructure/ai/aiEndpoints";
 
 interface GigPayload {
     industryName: string;
@@ -19,136 +20,85 @@ interface GigPayload {
     validUntil: string;
 }
 
-export const generateGigEmbedding = async (payload: GigPayload) => {
-    const {
-        industryName,
-        industryEmail,
-        gigTitle,
-        category,
-        source,
-        description,
-        gigType,
-        experienceLevel,
-        duration,
-        location,
-        jobDescription,
-        responsibilities,
-        benefits,
-        gigStatus,
-        validUntil,
-    } = payload;
+// Build structured text for embedding
+const buildGigText = (payload: GigPayload): string => {
+    const list = (items: string[]) =>
+        items?.map((item, i) => `${i + 1}. ${item}`).join("\n") ?? "";
 
-    // 🧠 Build structured text for embedding
-    const gigText = `
-Industry: ${industryName}
-Email: ${industryEmail}
-Title: ${gigTitle}
-Category: ${category}
-Source: ${source}
-Type: ${gigType}
-Experience Level: ${experienceLevel}
-Duration: ${duration}
-Location: ${location}
-Status: ${gigStatus}
-Valid Until: ${validUntil}
+    return `
+Industry: ${payload.industryName}
+Email: ${payload.industryEmail}
+Title: ${payload.gigTitle}
+Category: ${payload.category}
+Source: ${payload.source}
+Type: ${payload.gigType}
+Experience Level: ${payload.experienceLevel}
+Duration: ${payload.duration}
+Location: ${payload.location}
+Status: ${payload.gigStatus}
+Valid Until: ${payload.validUntil}
 
 Short Description:
-${description}
+${payload.description}
 
 Job Description:
-${jobDescription?.map((res, i) => `${i + 1}. ${res}`).join("\n")}
+${list(payload.jobDescription)}
 
 Responsibilities:
-${responsibilities?.map((res, i) => `${i + 1}. ${res}`).join("\n")}
+${list(payload.responsibilities)}
 
 Benefits:
-${benefits?.map((ben, i) => `${i + 1}. ${ben}`).join("\n")}
+${list(payload.benefits)}
   `.trim();
-    // 📡 Call embedding API
-    try {
-        // 🔹 Call Embedding API
-        const response = await axios.post(
-            `${config.ai_base_url}/v1/get-embedding`,
-            {},
-            {
-                params: {
-                    text: gigText,
-                },
-                headers: {
-                    accept: "application/json",
-                },
-            }
-        );
-
-        return response.data
-
-    } catch (error: any) {
-        return {
-            success: false,
-            message: "Failed to generate embedding",
-            error: error?.response?.data || error.message,
-        };
-    }
 };
 
+export const generateGigEmbedding = async (
+    payload: GigPayload
+): Promise<number[]> => {
+    const text = buildGigText(payload);
 
-export const upsertGigEmbedding = async (
-    gigId: string,
-    embedding: number[]
-) => {
-    try {
-        const response = await axios.post(
-            `${config.ai_base_url}/v1/upsert_gig_embedding`,
-            { embedding },
-            {
-                params: {
-                    gig_id: gigId,
-                },
-                headers: {
-                    "Content-Type": "application/json",
-                    accept: "application/json",
-                },
-                timeout: 10000,
+    const { data } = await aiClient.post<number[]>(
+        AI_ENDPOINTS.GIG.GET_EMBEDDING,
+        {},
+        { params: { text } }
+    );
+
+    return data
+};
+
+export const upsertGigEmbedding = async (gigId: string, embedding: number[]) => {
+    const { data } = await aiClient.post<string>(
+        AI_ENDPOINTS.GIG.UPSERT_EMBEDDING,
+        { embedding },
+        {
+            params: {
+                gig_id: gigId
             }
-        );
-
-        return response.data;
-    } catch (error: any) {
-        console.error("Upsert Gig Embedding Error:", error?.response?.data || error.message);
-        throw new Error("Failed to upsert gig embedding");
-    }
+        }
+    )
+    return data
 };
 
 export const fetchSkillGap = async (userId: string, gigId: string) => {
-    try {
-        const response = await axios.get(`${config.ai_base_url}/v1/user_skillgap`, {
+    const { data } = await aiClient.get(
+        AI_ENDPOINTS.SKILL.USER_SKILLGAP,
+        {
             params: {
                 user_id: userId,
-                gig_id: gigId,
-            },
-            headers: {
-                accept: "application/json",
-            },
-        });
-        return response.data ?? null;
-    } catch (err: any) {
-        console.warn("Failed to fetch skill gap:", err?.response?.status, err?.message);
-        return null;
-    }
-};
+                gig_id: gigId
+            }
+        })
+    return data
+}
 
 export const getMatchScore = async (userId: string, gigId: string) => {
-    const url = `${config.ai_base_url}/v1/get_match_score/${userId}/${gigId}`;
-    const response = await fetch(url, {
-        method: "GET",
-        headers: {
-            "Accept": "application/json",
-        },
-    });
-
-    if (!response.ok) {
-        throw new Error(`Request failed: ${response.status} ${response.statusText}`);
-    }
-
-    return response.json();
+    const { data } = await aiClient.get(
+        AI_ENDPOINTS.SKILL.GET_MATCH_SCORE,
+        {
+            params: {
+                user_id: userId,
+                gig_id: gigId
+            }
+        })
+    return data
 }

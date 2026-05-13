@@ -5,7 +5,7 @@ import { Request, Response } from "express";
 import sendResponse from "../../shared/helpers/sendResponse";
 import ApiError from "../../app/errors/ApiError";
 import config from "../../config";
-import { verifyGoogleToken } from "./auth.utils";
+import { verifyGoogleToken } from "./auth.halper";
 
 
 

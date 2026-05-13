@@ -1,7 +1,7 @@
 import status from "http-status";
 import ApiError from "../../app/errors/ApiError";
 import { hashPassword } from "../user/user.helper";
-import { createToken } from "./auth.utils";
+import { createToken } from "./auth.halper";
 import prisma from "../../lib/prisma";
 import config from "../../config";
 import { comparePassword } from "../../shared/utils/comparePassword";

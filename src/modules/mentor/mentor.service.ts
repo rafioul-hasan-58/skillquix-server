@@ -4,7 +4,7 @@ import ApiError from "../../app/errors/ApiError";
 import httpStatus from "http-status";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
-import { generateMentorshipEmbedding, upsertMentorEmbedding } from "./mentor.utils";
+import { generateMentorshipEmbedding, upsertMentorEmbedding } from "./mentor.helper";
 
 export const MentorService = {
     // mentor
@@ -24,10 +24,7 @@ export const MentorService = {
                 payload.mentorshipDetails,
                 payload.skills
             );
-            if (!embedding || embedding.success === false) {
-                throw new ApiError(httpStatus.BAD_REQUEST, "Failed to generate mentorship embedding");
-            }
-
+            
             // Create profile with embedding in a single DB write instead of create + update
             const mentor = await tx.mentorProfile.create({
                 data: { ...payload, userId, embedding },

@@ -15,7 +15,7 @@ const auth = (...roles: string[]) => {
       // console.log("Authorization Header:", token);
 
       if (!token || !token.startsWith("Bearer ")) {
-        throw new ApiError(status.UNAUTHORIZED, "You are not authorized!");
+        throw new ApiError(status.UNAUTHORIZED, "Bearer token missing or invalid!");
       }
 
       const accessToken = token.split(" ")[1];

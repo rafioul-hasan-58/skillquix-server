@@ -2,7 +2,7 @@ import status from "http-status";
 import { getClarityPercentageChange, getClearityScore, hashPassword, parseResume } from "./user.helper";
 import { SubscriptionType, User, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
-import { createToken } from "../auth/auth.utils";
+import { createToken } from "../auth/auth.halper";
 import { addManagerInput } from "./user.validation";
 import { monthlyRevenue } from "../subscription/subscription.helper";
 import { SkillService } from "../skill/skill.service";

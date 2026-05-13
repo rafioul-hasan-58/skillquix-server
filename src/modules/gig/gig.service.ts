@@ -19,10 +19,12 @@ export const GigService = {
         if (!user) {
             throw new ApiError(status.NOT_FOUND, "User not found to create gig!")
         }
+        // get embedding from AI
         const embedding = await generateGigEmbedding({
             ...payload,
             validUntil: payload.validUntil instanceof Date ? payload.validUntil.toISOString() : payload.validUntil
         });
+        // create gig in DB
         const result = await prisma.gig.create({
             data: {
                 industryName: payload.industryName,
@@ -44,6 +46,7 @@ export const GigService = {
                 userId
             },
         });
+        // upsert embedding in AI
         const res = await upsertGigEmbedding(result.id, embedding);
         return res
     },

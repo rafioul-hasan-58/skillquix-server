@@ -3,7 +3,7 @@ import prisma from "../../lib/prisma";
 import { CreateResumeProfilePayload, ResumeSkill } from "./resumeProfile.interface";
 import ApiError from "../../app/errors/ApiError";
 import httpStatus from "http-status";
-import { generateResumeProfileEmbedding, upsertResumeEmbedding } from "./resumeProfile.utils";
+import { generateResumeProfileEmbedding, upsertResumeEmbedding } from "./resumeProfile.halper";
 
 export const ResumeProfileService = {
     create: async (userId: string, payload: CreateResumeProfilePayload) => {
