@@ -12,6 +12,7 @@ import ApiError from "../../app/errors/ApiError";
 import config from "../../config";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
 import stripe from "../../infrastructure/stripe/stripe";
+import { fetchSimilarGigs } from "../gig/gig.helper";
 
 
 export const UserService = {
@@ -432,21 +433,7 @@ export const UserService = {
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     // Fetch similar gigs safely — don't crash dashboard if AI service fails
-    const fetchSimilarGigs = async () => {
-      try {
-        const response = await axios.get(
-          `${config.ai_base_url}/v1/gigs/similar`,
-          {
-            params: { user_id: userId, page: 1, page_size: 3 },
-            headers: { accept: "application/json" },
-          }
-        );
-        return response.data.gigs ?? [];
-      } catch (err: any) {
-        console.warn("Failed to fetch similar gigs:", err?.response?.status, err?.message);
-        return [];
-      }
-    };
+    const fetchGigs = await fetchSimilarGigs(userId)
 
     const [skills, skillAddedThisMonth, opportunityMatches] = await Promise.all([
       prisma.skill.findMany({
@@ -464,7 +451,7 @@ export const UserService = {
         },
       }),
 
-      fetchSimilarGigs(),
+      fetchGigs,
     ]);
 
     const [activityLog, clarity] = await Promise.all([

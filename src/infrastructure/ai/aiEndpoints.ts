@@ -5,6 +5,8 @@ export const AI_ENDPOINTS = {
     GIG: {
         GET_EMBEDDING: "/v1/get-embedding",
         UPSERT_EMBEDDING: "/v1/upsert_gig_embedding",
+        DELETE_GIG_FROM_AI: (gigId: string) => `/v1/admin/qdrant-delete/${gigId}`,
+        FETCH_SIMILAR_GIGS: `/v1/gigs/similar`
     },
     SKILL: {
         USER_SKILLGAP: "/v1/user_skillgap",

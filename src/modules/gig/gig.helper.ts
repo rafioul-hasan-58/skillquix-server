@@ -90,6 +90,18 @@ export const fetchSkillGap = async (userId: string, gigId: string) => {
         })
     return data
 }
+export const fetchSimilarGigs = async (userId: string) => {
+    const { data } = await aiClient.get(
+        AI_ENDPOINTS.GIG.FETCH_SIMILAR_GIGS,
+        {
+            params: {
+                user_id: userId,
+                page: 1,
+                page_size: 3
+            }
+        })
+    return data
+}
 
 export const getMatchScore = async (userId: string, gigId: string) => {
     const { data } = await aiClient.get(
@@ -100,5 +112,11 @@ export const getMatchScore = async (userId: string, gigId: string) => {
                 gig_id: gigId
             }
         })
+    return data
+}
+export const deleteGigFromAi = async (gigId: string) => {
+    const { data } = await aiClient.delete(
+        AI_ENDPOINTS.GIG.DELETE_GIG_FROM_AI(gigId)
+    );
     return data
 }

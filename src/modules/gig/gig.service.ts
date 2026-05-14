@@ -3,7 +3,7 @@ import ApiError from "../../app/errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
 import { ActivityType, Gig, Source } from "@prisma/client";
-import { fetchSkillGap, generateGigEmbedding, getMatchScore, upsertGigEmbedding } from "./gig.helper";
+import { deleteGigFromAi, fetchSkillGap, generateGigEmbedding, getMatchScore, upsertGigEmbedding } from "./gig.helper";
 import config from "../../config";
 import { ActivityLogService } from "../activitylog/activitylog.service";
 import { mailService } from "../../infrastructure/mail/mail.service";
@@ -232,21 +232,13 @@ export const GigService = {
             throw new ApiError(status.NOT_FOUND, "Gig not found!");
         }
 
+
         await prisma.gig.delete({
             where: { id: gigId },
         });
-        const response = await fetch(
-            `${config.ai_base_url}/v1/admin/qdrant-delete/${gigId}`,
-            {
-                method: "DELETE",
-                headers: {
-                    "accept": "application/json",
-                },
-            }
-        );
 
-        const data = await response.json();
-        return data;
+        const res = await deleteGigFromAi(gigId)
+        return res
     },
     saveGig: async (gigId: string, userId: string) => {
         const [user, gig] = await Promise.all([
