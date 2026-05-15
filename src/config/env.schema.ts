@@ -46,6 +46,9 @@ export const envSchema = z.object({
   S3_REGION: z.string().default("nyc3"),
   S3_BUCKET_NAME: z.string(),
   S3_ENDPOINT: z.string().url(),
+
+  REDIS_HOST: z.string().default("127.0.0.1"),
+  REDIS_PORT: z.string().default("6379"),
 });
 
 export type Env = z.infer<typeof envSchema>;

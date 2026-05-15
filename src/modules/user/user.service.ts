@@ -13,6 +13,10 @@ import config from "../../config";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
 import stripe from "../../infrastructure/stripe/stripe";
 import { fetchSimilarGigs } from "../gig/gig.helper";
+import { ResumeProfileService } from "../resumeProfile/resumeProfile.service";
+import { CreateResumeProfilePayload } from "../resumeProfile/resumeProfile.interface";
+import { resumeQueue } from "../../infrastructure/queue/queues/resume.queue";
+import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
 
 
 export const UserService = {
@@ -33,40 +37,13 @@ export const UserService = {
         resumeLink: payload.resumeLink ?? null
       },
     });
-    // if (payload.resumeLink) {
-    //   const parsedResume = await parseResume(payload.resumeLink);
-
-    //   const resumePayload: CreateResumeProfilePayload = {
-    //     domain: parsedResume.domain,
-    //     subdomain: parsedResume.subdomain,
-    //     name: parsedResume.name,
-    //     email: parsedResume.email,
-    //     phone: parsedResume.phone,
-    //     location: parsedResume.location,
-    //     summary: parsedResume.summary,
-    //     totalExp: parsedResume.totalExp,
-    //     skills: parsedResume.skills,
-    //     sections: parsedResume.sections.map((section: any) => ({
-    //       sectionType: section.sectionType,
-    //       title: section.title,
-    //       orderIndex: section.orderIndex,
-    //       items: section.items.map((item: any) => ({
-    //         orderIndex: item.orderIndex,
-    //         data: item.data,
-    //       })),
-    //     })),
-    //   };
-
-    //   await ResumeProfileService.create(user.id, resumePayload);
-
-    //   return {
-    //     accessToken: "test",
-    //     refreshToken: "test",
-    //     resumeLink: payload.resumeLink,
-    //     parsedResume,
-    //   };
-    // }
-
+    if (payload.resumeLink) {
+      await resumeQueue.add(
+        JOB_NAMES.RESUME.EXTRACT_AND_SAVE,
+        { userId: user.id, resumeUrl: payload.resumeLink },
+        { attempts: 3, backoff: { type: "exponential", delay: 2000 } }
+      );
+    }
     // Create Stripe customer and update user in one go
     try {
       const stripeCustomer = await stripe.customers.create({

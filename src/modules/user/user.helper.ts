@@ -22,7 +22,12 @@ export const parseResume = async (fileUrl: string) => {
 
 	const { data } = await aiClient.post(
 		AI_ENDPOINTS.USER.RESUME_PARSE,
-		formData
+		formData,
+		{
+			headers: {
+				...formData.getHeaders(),
+			}
+		}
 	);
 	return data
 };

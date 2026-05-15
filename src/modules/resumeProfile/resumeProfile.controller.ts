@@ -3,6 +3,7 @@ import catchAsync from "../../shared/helpers/catchAsync";
 import { ResumeProfileService } from "./resumeProfile.service";
 import sendResponse from "../../shared/helpers/sendResponse";
 import httpStatus from "http-status";
+import { resumeQueue } from "../../infrastructure/queue/queues/resume.queue";
 
 export const ResumeProfileController = {
     create: catchAsync(async (req: Request, res: Response) => {
@@ -65,4 +66,27 @@ export const ResumeProfileController = {
             data: result,
         });
     }),
+
 }
+export const getResumeQueue = catchAsync(async (req: Request, res: Response) => {
+    const waiting = await resumeQueue.getWaiting();
+    const active = await resumeQueue.getActive();
+    const completed = await resumeQueue.getCompleted();
+    const failed = await resumeQueue.getFailed();
+
+    const status = {
+        waiting: waiting.map(j => ({ id: j.id, data: j.data })),
+        active: active.map(j => ({ id: j.id, data: j.data })),
+        completed: completed.map(j => ({ id: j.id, data: j.data })),
+        failed: failed.map(j => ({ id: j.id, data: j.data, reason: j.failedReason })),
+    };
+
+    console.log("📊 Queue Status:", JSON.stringify(status, null, 2));
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        message: "Queue retrieved successfully!",
+        data: status,
+    });
+
+});

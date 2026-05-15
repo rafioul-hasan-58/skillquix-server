@@ -71,4 +71,8 @@ export default {
     bucket_name: env.S3_BUCKET_NAME,
     endpoint: env.S3_ENDPOINT,
   },
+  redis: {
+    host: env.REDIS_HOST,
+    port: Number(env.REDIS_PORT),
+  }
 };
