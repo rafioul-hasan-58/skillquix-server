@@ -181,8 +181,8 @@ model MasterCv {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // ─── Basic Info (snapshot from User) ───────────────────────────
-  fullName       String
-  email          String
+  fullName       String?
+  email          String?
   profileImage   String?
   profession     String?
   location       String?

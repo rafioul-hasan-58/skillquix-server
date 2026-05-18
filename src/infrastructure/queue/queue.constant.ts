@@ -7,6 +7,7 @@ export const QUEUE_NAMES = {
 export const JOB_NAMES = {
     RESUME: {
         EXTRACT_AND_SAVE: "extract-and-save",
+        EXTRACT_AND_EMBED: "extract-and-embed",
     },
     EMAIL: {
         WELCOME: "welcome",
