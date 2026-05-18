@@ -5,144 +5,156 @@ import { Request, Response } from "express";
 import sendResponse from "../../shared/helpers/sendResponse";
 import ApiError from "../../app/errors/ApiError";
 import config from "../../config";
-import { verifyGoogleToken } from "./auth.utils";
+import { verifyGoogleToken } from "./auth.halper";
 
 
+
+const verifyOTP = catchAsync(async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+  const result = await AuthService.verifyOTP(email, otp);
+  sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "OTP verified successfully!",
+    data: result,
+  });
+});
+
+const login = catchAsync(async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  const { accessToken, refreshToken, isOnboarded } = await AuthService.loginUser(email, password);
+  res.cookie("refreshToken", refreshToken, {
+    secure: false,
+    httpOnly: true,
+  });
+  sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "User Logged In successfully!",
+    data: {
+      accessToken,
+      isOnboarded
+    },
+
+  });
+});
+
+const changePassword = catchAsync(async (req, res) => {
+  const email = req.user?.email as string;
+  const { currentPassword, newPassword } = req.body;
+  await AuthService.changePassword(email, currentPassword, newPassword);
+  sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "User password changed successfully!",
+  });
+});
+
+const forgotPassword = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  const result = await AuthService.forgotPassword(email);
+  sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: result.message,
+    data: result,
+  });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+  const { newPassword, confirmPassword } = req.body;
+  const { email } = req.user;
+  const result = await AuthService.resetPassword(
+    email,
+    newPassword,
+    confirmPassword
+  );
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: result.message,
+  });
+});
+
+const resendOTP = catchAsync(async (req, res) => {
+  const { email } = req.body;
+
+  const result = await AuthService.resendOtp(email);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: result.message,
+  });
+});
+
+// Initiate LinkedIn OAuth
+const linkedInLogin = catchAsync(async (req: Request, res: Response) => {
+  const authUrl = AuthService.getLinkedInAuthUrl();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "LinkedIn authorization URL generated",
+    data: {
+      authUrl
+    },
+  });
+});
+
+// Handle LinkedIn callback
+const linkedInCallback = catchAsync(async (req: Request, res: Response) => {
+  const { code } = req.query;
+
+  if (!code || typeof code !== 'string') {
+    throw new ApiError(status.BAD_REQUEST, "Authorization code is required");
+  }
+
+  const { accessToken, refreshToken } = await AuthService.linkedInCallback(code);
+
+  // Set refresh token in cookie
+  res.cookie("refreshToken", refreshToken, {
+    secure: config.env === 'production', // true in production
+    httpOnly: true,
+    sameSite: 'lax',
+  });
+  // const frontend_url = "http://72.62.87.243:3001"
+  const frontend_url = "https://www.skillquix.tech"
+  // Option 1: Redirect with token in URL (less secure but simpler)
+  console.log("here comes in")
+  res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
+});
+
+const googleLogin = catchAsync(async (req: Request, res: Response) => {
+  const { token } = req.body;
+  const payload = await verifyGoogleToken(token);
+  if (!payload) {
+    throw new ApiError(status.NOT_FOUND, "Google token payload not found");
+  }
+  const { accessToken, refreshToken, isOnboarded } = await AuthService.googleLogin(payload);
+
+  res.cookie("refreshToken", refreshToken, {
+    secure: false,
+    httpOnly: true,
+  });
+  sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Google login successful!",
+    data: {
+      accessToken,
+      isOnboarded
+    },
+  });
+});
 
 export const AuthController = {
-
-  verifyOTP: catchAsync(async (req: Request, res: Response) => {
-    const { email, otp } = req.body;
-    const result = await AuthService.verifyOTP(email, otp);
-    sendResponse(res, {
-      success: true,
-      statusCode: status.OK,
-      message: "OTP verified successfully!",
-      data: result,
-    });
-  }),
-
-  login: catchAsync(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-    const { accessToken, refreshToken, isOnboarded } = await AuthService.loginUser(email, password);
-    res.cookie("refreshToken", refreshToken, {
-      secure: false,
-      httpOnly: true,
-    });
-    sendResponse(res, {
-      success: true,
-      statusCode: status.OK,
-      message: "User Logged In successfully!",
-      data: {
-        accessToken,
-        isOnboarded
-      },
-
-    });
-  }),
-
-  changePassword: catchAsync(async (req, res) => {
-    const email = req.user?.email as string;
-    const { currentPassword, newPassword } = req.body;
-    await AuthService.changePassword(email, currentPassword, newPassword);
-    sendResponse(res, {
-      success: true,
-      statusCode: status.OK,
-      message: "User password changed successfully!",
-    });
-  }),
-
-  forgotPassword: catchAsync(async (req, res) => {
-    const { email } = req.body;
-    const result = await AuthService.forgotPassword(email);
-    sendResponse(res, {
-      success: true,
-      statusCode: status.OK,
-      message: result.message,
-      data: result,
-    });
-  }),
-  resetPassword: catchAsync(async (req, res) => {
-    const { newPassword, confirmPassword } = req.body;
-    const { email } = req.user;
-    const result = await AuthService.resetPassword(
-      email,
-      newPassword,
-      confirmPassword
-    );
-
-    sendResponse(res, {
-      statusCode: status.OK,
-      message: result.message,
-    });
-  }),
-
-  resendOTP: catchAsync(async (req, res) => {
-    const { email } = req.body;
-
-    const result = await AuthService.resendOtp(email);
-
-    sendResponse(res, {
-      statusCode: status.OK,
-      message: result.message,
-    });
-  }),
-  // Initiate LinkedIn OAuth
-  linkedInLogin: catchAsync(async (req: Request, res: Response) => {
-    const authUrl = AuthService.getLinkedInAuthUrl();
-
-    sendResponse(res, {
-      success: true,
-      statusCode: status.OK,
-      message: "LinkedIn authorization URL generated",
-      data: {
-        authUrl
-      },
-    });
-  }),
-
-  // Handle LinkedIn callback
-  linkedInCallback: catchAsync(async (req: Request, res: Response) => {
-    const { code } = req.query;
-
-    if (!code || typeof code !== 'string') {
-      throw new ApiError(status.BAD_REQUEST, "Authorization code is required");
-    }
-
-    const { accessToken, refreshToken } = await AuthService.linkedInCallback(code);
-
-    // Set refresh token in cookie
-    res.cookie("refreshToken", refreshToken, {
-      secure: config.env === 'production', // true in production
-      httpOnly: true,
-      sameSite: 'lax',
-    });
-    // const frontend_url = "http://72.62.87.243:3001"
-    const frontend_url = "https://www.skillquix.tech"
-    // Option 1: Redirect with token in URL (less secure but simpler)
-    console.log("here comes in")
-    res.redirect(`${frontend_url}/auth/callback?token=${accessToken}`);
-  }),
-  googleLogin: catchAsync(async (req: Request, res: Response) => {
-    const { token } = req.body;
-    const payload = await verifyGoogleToken(token);
-    if (!payload) {
-      throw new ApiError(status.NOT_FOUND, "Google token payload not found");
-    }
-    const { accessToken, refreshToken, isOnboarded } = await AuthService.googleLogin(payload);
-
-    res.cookie("refreshToken", refreshToken, {
-      secure: false,
-      httpOnly: true,
-    });
-    sendResponse(res, {
-      success: true,
-      statusCode: status.OK,
-      message: "Google login successful!",
-      data: {
-        accessToken,
-        isOnboarded
-      },
-    });
-  }),
+  verifyOTP,
+  login,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  resendOTP,
+  linkedInLogin,
+  linkedInCallback,
+  googleLogin,
 };

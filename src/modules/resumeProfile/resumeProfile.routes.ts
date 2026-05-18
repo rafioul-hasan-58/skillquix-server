@@ -1,7 +1,7 @@
 import { Router } from "express";
 import auth from "../../app/middlewares/auth";
 import { UserRole } from "@prisma/client";
-import { ResumeProfileController } from "./resumeProfile.controller";
+import { getResumeQueue, ResumeProfileController } from "./resumeProfile.controller";
 import validateRequest from "../../app/middlewares/validateRequest";
 import { ResumeProfileValidation } from "./resumeProfile.validation";
 
@@ -40,5 +40,9 @@ router.delete(
     auth(UserRole.USER),
     ResumeProfileController.deleteSectionItem
 );
-
+// get queue
+router.get(
+    "/queue",
+    getResumeQueue
+);
 export const ResumeProfileRoutes = router;

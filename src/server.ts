@@ -4,6 +4,7 @@ import config from "./config";
 import { seedAdmin } from "./shared/utils/seedAdmin";
 import prisma from "./lib/prisma";
 import { startCompleteExpiredSessionsJob } from "./infrastructure/jobs/completeExpiredSessions";
+import { startWorkers } from "./infrastructure/queue/workers";
 
 let server: Server;
 
@@ -15,12 +16,14 @@ async function bootstrap() {
   // 2. Seed admin
   await seedAdmin();
   // console.log("☑️  Admin seeded!");
+  startWorkers()
+  console.log("☑️  Workers started!");
 
-  // 3. Start cron jobs
+  // 4. Start cron jobs
   startCompleteExpiredSessionsJob();
   console.log("☑️  Cron jobs started!");
 
-  // 4. Start HTTP server last
+  // 5. Start HTTP server last
   server = app.listen(config.port, () => {
     console.log(`☑️  Server running on port ${config.port}`);
   });
