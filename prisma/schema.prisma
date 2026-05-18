@@ -175,6 +175,70 @@ model MentorshipCompletion {
   updatedAt   DateTime                   @updatedAt
 }
 
+model MasterCv {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ─── Basic Info (snapshot from User) ───────────────────────────
+  fullName       String
+  email          String
+  profileImage   String?
+  profession     String?
+  location       String?
+  bio            String?
+  experienceYear String?
+  careerStage    String?
+  resumeLink     String?
+
+  // ─── Resume Profile (from ResumeProfile) ───────────────────────
+  domain              String?
+  subDomain           String?
+  resumeSummary       String?
+  totalExperienceYear Int?
+  resumePhone         String?
+  resumeEmail         String?
+  resumeLocation      String?
+
+  // ─── Resume Sections (denormalized snapshot) ───────────────────
+  // Stored as JSON array for flexibility across section types
+  // Structure: [{ sectionType, title, orderIndex, items: [{ data, orderIndex }] }]
+  resumeSections Json? // Full ResumeSection + ResumeSectionItem tree
+
+  // ─── Skills ────────────────────────────────────────────────────
+  // Structure: [{ skillName, skillCategory, proficiencyLevel, yearOfExperience, source }]
+  skills Json?
+
+  // ─── Accomplishments ───────────────────────────────────────────
+  // Structure: [{ title, description, date }]
+  accomplishments Json?
+
+  // ─── Reflections ───────────────────────────────────────────────
+  // Structure: [{ shortSummary, impectBullects, createdAt }]
+  refletions Json?
+
+  // ─── Mentor Profile ────────────────────────────────────────────
+  // Structure: { mentorName, role, company, experienceYears, skills, mentorshipDetails, availability }
+  mentorProfile Json?
+
+  // ─── Mentorship History ────────────────────────────────────────
+  // Structure: [{ learningGoals, matchPercentage, status, actionItems, sessions: [...] }]
+  mentorshipHistory Json?
+
+  // ─── Gig Activity ──────────────────────────────────────────────
+  // Structure: [{ gigTitle, category, gigType, location, status, appliedAt }]
+  appliedGigs Json?
+  savedGigs   Json?
+
+  // ─── AI / Generation Metadata ──────────────────────────────────
+  generatedCvJson Json? // Final assembled CV payload for AI/template rendering
+  lastGeneratedAt DateTime?
+  version         Int       @default(1) // Increment on each regeneration
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model OTP {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   otpCode      String
@@ -204,13 +268,13 @@ model Plan {
 }
 
 model Reflextion {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  impectBullects  String[]
-  shortSummary    String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impectBullects String[]
+  shortSummary   String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model ResumeProfile {
@@ -325,6 +389,7 @@ model User {
   menteesRequests      MentorshipRequest[] @relation("MenteeRequestRelation")
   mentorShipRequests   MentorshipRequest[] @relation("MentorResuestRelation")
   resumeProfile        ResumeProfile?
+  masterCv             MasterCv?
 }
 
 // Enums in alphabetical order

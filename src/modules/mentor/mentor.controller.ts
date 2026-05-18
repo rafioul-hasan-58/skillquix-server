@@ -4,207 +4,253 @@ import httpStatus from "http-status";
 import { MentorService } from "./mentor.service";
 import sendResponse from "../../shared/helpers/sendResponse";
 
+// mentor
+const setupMentorProfile = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.user;
+    const result = await MentorService.setupMentorProfile(id, req.body);
+    sendResponse(res, {
+        statusCode: httpStatus.CREATED,
+        success: true,
+        message: "Mentor profile setup successfully!",
+        data: result,
+    });
+});
+
+const getMentorProfile = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.user;
+    const result = await MentorService.getMentorProfile(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentor profile fetched successfully!",
+        data: result,
+    });
+});
+
+const getMentorById = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await MentorService.getMentorById(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentor profile fetched successfully!",
+        data: result,
+    });
+});
+
+// mentor
+const updateMentorProfile = async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+    const payload = req.body;
+    const result = await MentorService.updateMentorProfile(userId, payload);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentor profile updated successfully!",
+        data: result,
+    });
+};
+
+// mentor
+const getMyRequests = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.user;
+    const result = await MentorService.getMyRequests(id, req.query);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "My request fetched!",
+        meta: result.meta,
+        data: result.data,
+    });
+});
+
+// mentor
+const requestDetails = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { id: userId } = req.user;
+    const result = await MentorService.requestDetails(id, userId, req.query);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentorship request details retrieved successfully!",
+        data: result,
+    });
+});
+
+// mentor
+const acceptMentorshipRequest = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await MentorService.acceptMentorshipRequest(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentorship request accepted!",
+        data: result,
+    });
+});
+
+// mentor
+const rejectMentorshipRequest = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await MentorService.rejectMentorshipRequest(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentorship request rejected!",
+        data: result,
+    });
+});
+
+// admin
+const allMentor = catchAsync(async (req: Request, res: Response) => {
+    const result = await MentorService.getMentors(req.query);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Pending mentors retrieved successfully!",
+        meta: result.meta,
+        data: result.data,
+    });
+});
+
+// admin
+const approveMentor = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await MentorService.approveMentor(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentor approved successfully!",
+        data: result,
+    });
+});
+
+// admin
+const rejectMentor = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await MentorService.rejectMentor(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentor rejected successfully!",
+        data: result,
+    });
+});
+
+// mentee
+const sendMentorshipRequest = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.user;
+    const result = await MentorService.sendMentorshipRequest(id, req.body);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentorship request sent!",
+        data: result,
+    });
+});
+
+// mentee
+const myMentors = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.user;
+    const result = await MentorService.myMentors(id, req.query);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "My mentors fetched!",
+        meta: result.meta,
+        data: result.data,
+    });
+});
+
+// mentor
+const activateMentorProfile = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+
+    const result = await MentorService.activateMentorProfile(userId);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentor profile activated successfully!",
+        data: result,
+    });
+});
+
+const deactivateMentorProfile = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+
+    const result = await MentorService.deactivateMentorProfile(userId);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Mentor profile deactivated successfully!",
+        data: result,
+    });
+});
+
+const sendMentorshipCompletion = catchAsync(async (req: Request, res: Response) => {
+    const result = await MentorService.sendMentorshipCompletion(req.body);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Completion sent!",
+        data: result,
+    });
+});
+
+const accpeptMentorshipCompletion = catchAsync(async (req: Request, res: Response) => {
+    const { id: userId } = req.user;
+    const result = await MentorService.acceptMentorshipCompletion(userId, req.body);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Completion accepted!",
+        data: result,
+    });
+});
+
+const rejectMentorshipCompletion = catchAsync(async (req: Request, res: Response) => {
+    const completionId = req.params?.id;
+    const result = await MentorService.rejectMentorshipCompletion(completionId, req.body.feedback);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Completion rejected!",
+        data: result,
+    });
+});
+
 export const MentorController = {
     // mentor
-    setupMentorProfile: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.user;
-        const result = await MentorService.setupMentorProfile(id, req.body);
-        sendResponse(res, {
-            statusCode: httpStatus.CREATED,
-            success: true,
-            message: "Mentor profile setup successfully!",
-            data: result,
-        });
-    }),
-    getMentorProfile: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.user;
-        const result = await MentorService.getMentorProfile(id);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentor profile fetched successfully!",
-            data: result,
-        });
-    }),
-    getMentorById: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.params;
-        const result = await MentorService.getMentorById(id);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentor profile fetched successfully!",
-            data: result,
-        });
-    }),
+    setupMentorProfile,
+    getMentorProfile,
+    getMentorById,
     // mentor
-    updateMentorProfile: async (req: Request, res: Response) => {
-        const userId = req.user?.id;
-        const payload = req.body;
-        const result = await MentorService.updateMentorProfile(userId, payload);
-
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentor profile updated successfully!",
-            data: result,
-        });
-    },
+    updateMentorProfile,
     // mentor
-    getMyRequests: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.user;
-        const result = await MentorService.getMyRequests(id, req.query);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "My request fetched!",
-            meta: result.meta,
-            data: result.data,
-        });
-    }),
+    getMyRequests,
     // mentor
-    requestDetails: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.params;
-        const { id: userId } = req.user;
-        const result = await MentorService.requestDetails(id, userId, req.query);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentorship request details retrieved successfully!",
-            data: result,
-        });
-    }),
+    requestDetails,
     // mentor
-    acceptMentorshipRequest: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.params;
-        const result = await MentorService.acceptMentorshipRequest(id);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentorship request accepted!",
-            data: result,
-        });
-    }),
+    acceptMentorshipRequest,
     // mentor
-    rejectMentorshipRequest: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.params;
-        const result = await MentorService.rejectMentorshipRequest(id);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentorship request rejected!",
-            data: result,
-        });
-    }),
+    rejectMentorshipRequest,
     // admin
-    allMentor: catchAsync(async (req: Request, res: Response) => {
-        const result = await MentorService.getMentors(req.query);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Pending mentors retrieved successfully!",
-            meta: result.meta,
-            data: result.data,
-        });
-    }),
+    allMentor,
     // admin
-    approveMentor: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.params;
-        const result = await MentorService.approveMentor(id);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentor approved successfully!",
-            data: result,
-        });
-    }),
+    approveMentor,
     // admin
-    rejectMentor: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.params;
-        const result = await MentorService.rejectMentor(id);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentor rejected successfully!",
-            data: result,
-        });
-    }),
-
+    rejectMentor,
     // mentee
-    sendMentorshipRequest: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.user;
-        const result = await MentorService.sendMentorshipRequest(id, req.body);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentorship request sent!",
-            data: result,
-        });
-    }),
+    sendMentorshipRequest,
     // mentee
-    myMentors: catchAsync(async (req: Request, res: Response) => {
-        const { id } = req.user;
-        const result = await MentorService.myMentors(id, req.query);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "My mentors fetched!",
-            meta: result.meta,
-            data: result.data,
-        });
-    }),
+    myMentors,
     // mentor
-    activateMentorProfile: catchAsync(async (req: Request, res: Response) => {
-        const userId = req.user?.id;
-
-        const result = await MentorService.activateMentorProfile(userId);
-
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentor profile activated successfully!",
-            data: result,
-        });
-    }),
-
-    deactivateMentorProfile: catchAsync(async (req: Request, res: Response) => {
-        const userId = req.user?.id;
-
-        const result = await MentorService.deactivateMentorProfile(userId);
-
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Mentor profile deactivated successfully!",
-            data: result,
-        });
-    }),
-    sendMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
-        const result = await MentorService.sendMentorshipCompletion(req.body);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Completion sent!",
-            data: result,
-        });
-    }),
-    accpeptMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
-        const { id: userId } = req.user;
-        const result = await MentorService.acceptMentorshipCompletion(userId, req.body);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Completion accepted!",
-            data: result,
-        });
-    }),
-    rejectMentorshipCompletion: catchAsync(async (req: Request, res: Response) => {
-        const completionId = req.params?.id;
-        const result = await MentorService.rejectMentorshipCompletion(completionId, req.body.feedback);
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Completion rejected!",
-            data: result,
-        });
-    }),
+    activateMentorProfile,
+    deactivateMentorProfile,
+    sendMentorshipCompletion,
+    accpeptMentorshipCompletion,
+    rejectMentorshipCompletion,
 }
