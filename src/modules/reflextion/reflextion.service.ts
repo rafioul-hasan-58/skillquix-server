@@ -105,6 +105,7 @@ const createReflextion = async (userId: string, payload: CreateReflextionInput) 
                 ...(existMasterCv?.refletions as any[] ?? []),
                 reflextion
             ],
+            version: { increment: 1 }
         }
     });
     return { ...reflextion, extractedSkills };

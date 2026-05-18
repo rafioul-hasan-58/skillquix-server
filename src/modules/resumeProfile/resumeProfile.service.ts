@@ -7,141 +7,7 @@ import { generateResumeProfileEmbedding } from "./resumeProfile.halper";
 import { resumeEmbeddingQueue } from "../../infrastructure/queue/queues/resume.queue";
 import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
 
-// const create = async (userId: string, payload: CreateResumeProfilePayload) => {
-//     const embedding = await generateResumeProfileEmbedding(payload);
-//     // upsert the profile
-//     const result = await prisma.resumeProfile.upsert({
-//         where: { userId },
-//         create: {
-//             name: payload.name,
-//             email: payload.email,
-//             phone: payload.phone,
-//             domain: payload.domain,
-//             subDomain: payload.subdomain,
-//             userId,
-//             location: payload.location,
-//             summary: payload.summary,
-//             totalExperienceYear: payload.totalExp,
-//             embedding,
-//             resumeSections: {
-//                 create: payload.sections.map(section => ({
-//                     sectionType: section.sectionType,
-//                     title: section.title,
-//                     orderIndex: section.orderIndex,
-//                     items: {
-//                         create: section.items.map(item => ({
-//                             orderIndex: item.orderIndex,
-//                             data: item.data
-//                         }))
-//                     }
-//                 }))
-//             }
-//         },
-//         update: {
-//             name: payload.name,
-//             email: payload.email,
-//             phone: payload.phone,
-//             domain: payload.domain,
-//             subDomain: payload.subdomain,
-//             location: payload.location,
-//             summary: payload.summary,
-//             totalExperienceYear: payload.totalExp,
-//             embedding,
-//             // delete old sections and recreate
-//             resumeSections: {
-//                 deleteMany: {},
-//                 create: payload.sections.map(section => ({
-//                     sectionType: section.sectionType,
-//                     title: section.title,
-//                     orderIndex: section.orderIndex,
-//                     items: {
-//                         create: section.items.map(item => ({
-//                             orderIndex: item.orderIndex,
-//                             data: item.data
-//                         }))
-//                     }
-//                 }))
-//             }
-//         },
-//         include: {
-//             resumeSections: {
-//                 include: { items: true }
-//             }
-//         }
-//     });
-
-//     let masterCvSkills: any = [];
-
-//     // delete old resume-sourced skills and recreate
-//     if (payload.skills && payload.skills.length > 0) {
-//         await prisma.skill.deleteMany({
-//             where: { userId, source: SkillSource.RESUME }
-//         });
-
-//         await prisma.skill.createMany({
-//             data: payload.skills.flatMap((skill: ResumeSkill) =>
-//                 skill.Skills.map((s: string) => ({
-//                     skillCategory: skill.category,
-//                     skillName: s,
-//                     userId,
-//                     source: SkillSource.RESUME
-//                 }))
-//             ),
-//         });
-//         // fetch the newly created skills
-//         masterCvSkills = await prisma.skill.findMany({
-//             where: { userId, source: SkillSource.RESUME }
-//         });
-//     }
-//     // upsert MasterCv with resume-related fields
-//     await prisma.masterCv.upsert({
-//         where: { userId },
-//         create: {
-//             userId,
-//             fullName: payload.name,
-//             email: payload.email,
-//             resumePhone: payload.phone,
-//             resumeEmail: payload.email,
-//             resumeLocation: payload.location,
-//             domain: payload.domain,
-//             subDomain: payload.subdomain,
-//             resumeSummary: payload.summary,
-//             totalExperienceYear: payload.totalExp,
-//             resumeSections: result.resumeSections,
-//             skills: masterCvSkills ?? [],
-//         },
-//         update: {
-//             fullName: payload.name,
-//             email: payload.email,
-//             resumePhone: payload.phone,
-//             resumeEmail: payload.email,
-//             resumeLocation: payload.location,
-//             domain: payload.domain,
-//             subDomain: payload.subdomain,
-//             resumeSummary: payload.summary,
-//             totalExperienceYear: payload.totalExp,
-//             resumeSections: result.resumeSections,
-//             skills: masterCvSkills ?? [],
-//         },
-//     });
-//     // pass it to resume embedding queue
-//     await resumeEmbeddingQueue.add(
-//         JOB_NAMES.RESUME.EXTRACT_AND_EMBED,
-//         {
-//             resumeProfileId: result.id,
-//             embedding
-//         },
-//         {
-//             attempts: 3,
-//             backoff: { type: "exponential", delay: 2000 }
-//         }
-//     )
-//     return {
-//         message: "Resume parsed and skills extracted successfully!"
-//     }
-// };
 const create = async (userId: string, payload: CreateResumeProfilePayload) => {
-    
     const embedding = await generateResumeProfileEmbedding(payload);
     // Run resume upsert and skill operations in parallel
     const [result, masterCvSkills] = await Promise.all([
@@ -197,7 +63,8 @@ const create = async (userId: string, payload: CreateResumeProfilePayload) => {
                             }))
                         }
                     }))
-                }
+                },
+
             },
             include: {
                 resumeSections: {
@@ -232,9 +99,8 @@ const create = async (userId: string, payload: CreateResumeProfilePayload) => {
                 userId,
                 fullName: payload.name,
                 email: payload.email,
-                resumePhone: payload.phone,
-                resumeEmail: payload.email,
-                resumeLocation: payload.location,
+                phoneNumber: payload.phone,
+                location: payload.location,
                 domain: payload.domain,
                 subDomain: payload.subdomain,
                 resumeSummary: payload.summary,
@@ -245,15 +111,16 @@ const create = async (userId: string, payload: CreateResumeProfilePayload) => {
             update: {
                 fullName: payload.name,
                 email: payload.email,
-                resumePhone: payload.phone,
-                resumeEmail: payload.email,
-                resumeLocation: payload.location,
+                phoneNumber: payload.phone,
+                location: payload.location,
                 domain: payload.domain,
                 subDomain: payload.subdomain,
                 resumeSummary: payload.summary,
                 totalExperienceYear: payload.totalExp,
                 resumeSections: result.resumeSections,
                 skills: masterCvSkills,
+                version: { increment: 1 }
+
             },
         }),
 

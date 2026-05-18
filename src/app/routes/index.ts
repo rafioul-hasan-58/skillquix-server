@@ -12,6 +12,7 @@ import { SessionRoutes } from "../../modules/session/session.routes";
 import { ResumeProfileRoutes } from "../../modules/resumeProfile/resumeProfile.routes";
 import { FaqRoutes } from "../../modules/faq/faq.route";
 import { ContactMessageRoutes } from "../../modules/contactMessage/contactMessage.route";
+import { MasterCvRouter } from "../../modules/masterCv/masterCv.route";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -66,6 +67,10 @@ const moduleRoutes = [
   {
     path: "/contactMessage",
     route: ContactMessageRoutes,
+  },
+  {
+    path: "/masterCv",
+    route: MasterCvRouter,
   },
 ];
 

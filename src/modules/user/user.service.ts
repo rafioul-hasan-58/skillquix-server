@@ -58,6 +58,14 @@ const register = async (payload: User) => {
     console.error("Stripe customer creation failed:", err);
   }
 
+  await prisma.masterCv.create({
+    data: {
+      userId: user.id,
+      email: payload.email,
+      fullName: payload.fullName
+    }
+  })
+
   const jwtPayload = {
     id: user.id,
     fullName: user.fullName ?? undefined,
