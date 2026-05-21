@@ -48,3 +48,10 @@ export const MasterCvSchema = z.object({
 }).strict();
 
 export type MasterCvInput = z.infer<typeof MasterCvSchema>;
+
+export const downloadMasterCv = z.object({
+  templateId: z.enum(["temp-01", "temp-02", "temp-03", "temp-04", "temp-05", "temp-06", "temp-07", "temp-08", "temp-09", "temp-10"]),
+  data: z.any({required_error:"Data is required", invalid_type_error:"Data must be an object"})
+}).strict();
+
+export type DownloadMasterCvInput = z.infer<typeof downloadMasterCv>;

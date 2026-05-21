@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { MasterCvController } from "./masterCv.controller";
 import auth from "../../app/middlewares/auth";
+import { validateTemplate } from "../../app/middlewares/validateTemplate";
 
 
 const router = Router();
@@ -11,8 +12,17 @@ router.post(
     auth(),
     MasterCvController.createMasterCv
 );
+
+router.post(
+    "/download-pdf/:templateId",
+    auth(),
+    validateTemplate,
+    MasterCvController.downloadCvPdf
+);
+
+
 router.get(
-    "/get/:userId",
+    "/get",
     auth(),
     MasterCvController.getMasterCv
 );

@@ -15,8 +15,9 @@ const createMasterCv = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 const getMasterCv = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.params;
+  const { id: userId } = req.user;
   const result = await MasterCvService.getMasterCv(userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -35,8 +36,27 @@ const deleteMasterCv = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const downloadCvPdf = catchAsync(async (req: Request, res: Response) => {
+  const { id: userId } = req.user;
+  const { templateId } = req.params;
+  const data = req.body;
+  const name = data?.name || "cv";
+  const pdfBuffer = await MasterCvService.generateCvPdf(userId, templateId, data);
+
+  const safeName = name.replace(/\s+/g, "_").toLowerCase();
+
+  res.set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename="${safeName}_cv.pdf"`,
+    "Content-Length": pdfBuffer.length,
+  });
+
+  res.status(httpStatus.OK).end(pdfBuffer);
+});
+
 export const MasterCvController = {
   createMasterCv,
   getMasterCv,
-  deleteMasterCv
+  deleteMasterCv,
+  downloadCvPdf
 };

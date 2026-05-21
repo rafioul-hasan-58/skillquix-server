@@ -205,6 +205,7 @@ model MasterCv {
   resumeLink                  String?
   savedGigs                   Json?
   skills                      Json?
+  languages                   String[]  @default([])
   strength                    String[]  @default([])
   subDomain                   String?
   totalExperienceYear         Int?
@@ -427,6 +428,7 @@ enum SkillSource {
   REFLEXTION
   MENTORSHIP
   RECOMMENDATION
+  MASTER_CV
 }
 
 enum SessionStatus {

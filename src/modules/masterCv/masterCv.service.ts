@@ -3,6 +3,106 @@ import httpStatus from "http-status";
 import ApiError from "../../app/errors/ApiError";
 import prisma from "../../lib/prisma";
 import { MasterCvInput } from "./masterCv.validation";
+import puppeteer from "puppeteer";
+import { generateTemp1Html } from "./templates/template1";
+import { generateTemp2Html } from "./templates/template2";
+import { generateTemp3Html } from "./templates/template3";
+import { generateTemp4Html } from "./templates/template4";
+
+const generateCvPdf = async (userId: string, templateId: string, payload: any): Promise<Buffer> => {
+
+  const masterCv = await prisma.masterCv.findUnique(
+    {
+      where: { userId },
+    }
+  );
+
+  if (!masterCv) {
+    throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
+  }
+
+  let browser = null;
+
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",   // important for VPS/Docker
+        "--disable-gpu",
+        "--no-zygote",
+      ],
+      // If you installed chromium manually on VPS via SSH, point to it:
+      // executablePath: "/usr/bin/chromium-browser",
+    });
+
+    const page = await browser.newPage();
+    let html;
+
+    // Inject the HTML template with user data
+    switch (templateId) {
+      case "temp-01":
+        html = generateTemp1Html(payload);
+        break;
+      case "temp-02":
+        html = generateTemp2Html(payload);
+        break;
+      case "temp-03":
+        html = generateTemp3Html(payload);
+        break;
+      case "temp-04":
+        html = generateTemp4Html(payload);
+        break;
+      case "temp-05":
+      // html=generateTemp5Html(payload);
+      // break;
+      // case "temp-06":
+      // html=generateTemp6Html(payload);
+      // break;
+      // case "temp-07":
+      // html=generateTemp7Html(payload);
+      // break;
+      // case "temp-08":
+      // html=generateTemp8Html(payload);
+      // break;
+      // case "temp-09":
+      // html=generateTemp9Html(payload);
+      // break;
+      // case "temp-10":
+      // html=generateTemp10Html(payload);
+      // break;
+      default:
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
+    }
+    await page.setContent(html, { waitUntil: "load" });
+
+    // Set A4 page size
+    await page.emulateMediaType("screen");
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: {
+        top: "0px",
+        right: "0px",
+        bottom: "0px",
+        left: "0px",
+      },
+    });
+
+    return Buffer.from(pdfBuffer);
+  } catch (error) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to generate PDF. Please try again."
+    );
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+};
 
 const createMasterCv = async (userId: string, payload: MasterCvInput) => {
   const existing = await prisma.masterCv.findUnique({ where: { userId } });
@@ -76,8 +176,10 @@ const deleteMasterCv = async (userId: string) => {
   return prisma.masterCv.delete({ where: { userId } });
 };
 
+
 export const MasterCvService = {
   getMasterCv,
   deleteMasterCv,
-  createMasterCv
+  createMasterCv,
+  generateCvPdf
 };
