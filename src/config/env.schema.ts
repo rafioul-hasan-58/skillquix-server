@@ -49,6 +49,8 @@ export const envSchema = z.object({
 
   REDIS_HOST: z.string().default("127.0.0.1"),
   REDIS_PORT: z.string().default("6379"),
+  PUPPETEER_SKIP_DOWNLOAD: z.string().default("true"),
+  PUPPETEER_EXECUTABLE_PATH: z.string().default("/usr/bin/chromium"),
 });
 
 export type Env = z.infer<typeof envSchema>;

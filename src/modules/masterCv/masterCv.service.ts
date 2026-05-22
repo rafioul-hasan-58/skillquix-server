@@ -33,8 +33,7 @@ const generateCvPdf = async (userId: string, templateId: string, payload: any): 
         "--disable-gpu",
         "--no-zygote",
       ],
-      // If you installed chromium manually on VPS via SSH, point to it:
-      // executablePath: "/usr/bin/chromium-browser",
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
     });
 
     const page = await browser.newPage();
@@ -59,6 +58,8 @@ const generateCvPdf = async (userId: string, templateId: string, payload: any): 
         throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
     }
     await page.setContent(html, { waitUntil: "load" });
+    // Wait for fonts and images to finish rendering
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Set A4 page size
     await page.emulateMediaType("screen");
