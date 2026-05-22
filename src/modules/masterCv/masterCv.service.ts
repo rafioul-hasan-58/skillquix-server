@@ -55,23 +55,6 @@ const generateCvPdf = async (userId: string, templateId: string, payload: any): 
         html = generateTemp4Html(payload);
         break;
       case "temp-05":
-      // html=generateTemp5Html(payload);
-      // break;
-      // case "temp-06":
-      // html=generateTemp6Html(payload);
-      // break;
-      // case "temp-07":
-      // html=generateTemp7Html(payload);
-      // break;
-      // case "temp-08":
-      // html=generateTemp8Html(payload);
-      // break;
-      // case "temp-09":
-      // html=generateTemp9Html(payload);
-      // break;
-      // case "temp-10":
-      // html=generateTemp10Html(payload);
-      // break;
       default:
         throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
     }
