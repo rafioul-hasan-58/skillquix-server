@@ -176,12 +176,40 @@ model MentorshipCompletion {
 }
 
 model MasterCv {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @unique @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                      String   @unique @db.ObjectId
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                         String?
+  careerStage                 String?
+  carrierGoal                 String?
+  challenges                  Json?
+  currentRole                 String?
+  educationsAndCertifications Json?
+  email                       String?
+  fullName                    String?
+  generatedCvJson             Json?
+  industry                    String?
+  linkedinUrl                 String?
+  location                    String?
+  phoneNumber                 String?
+  portfolioUrl                String?
+  refletions                  Json?
+  resumeSummary               String?
+  resumeLink                  String?
+  skills                      Json?
+  languages                   String[] @default([])
+  strength                    String[] @default([])
+  totalExperienceYear         Int?
+  version                     Int      @default(1)
+  workExperiences             Json?
 
-  accomplishments             Json?
-  appliedGigs                 Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EnhancedMasterCv {
+  id                          String   @id @default(auto()) @map("_id") @db.ObjectId
+  aiScore                     Json?
   bio                         String?
   careerStage                 String?
   carrierGoal                 String?
@@ -193,27 +221,29 @@ model MasterCv {
   fullName                    String?
   generatedCvJson             Json?
   industry                    String?
-  lastGeneratedAt             DateTime?
   linkedinUrl                 String?
   location                    String?
-  mentorProfile               Json?
+  languages                   String[] @default([])
   phoneNumber                 String?
   portfolioUrl                String?
   refletions                  Json?
-  resumeSections              Json?
   resumeSummary               String?
   resumeLink                  String?
-  savedGigs                   Json?
   skills                      Json?
-  languages                   String[]  @default([])
-  strength                    String[]  @default([])
+  skillGaps                   Json?
+  strength                    String[] @default([])
   subDomain                   String?
   totalExperienceYear         Int?
-  version                     Int       @default(1)
-  workExpariences             Json?
+  version                     Int      @default(1)
+  workExperiences             Json?
+  // relations
+  userId                      String   @unique @db.ObjectId
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("enhancedMasterCv")
 }
 
 model OTP {
@@ -307,6 +337,8 @@ model Skill {
   source           SkillSource      @default(MANUAL)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+
+  @@unique([userId, skillName])
 }
 
 model SavedGig {
@@ -367,6 +399,7 @@ model User {
   mentorShipRequests   MentorshipRequest[] @relation("MentorResuestRelation")
   resumeProfile        ResumeProfile?
   masterCv             MasterCv?
+  enhancedMasterCv     EnhancedMasterCv?
 }
 
 // Enums in alphabetical order

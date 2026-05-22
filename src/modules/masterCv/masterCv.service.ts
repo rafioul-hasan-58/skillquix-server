@@ -118,7 +118,6 @@ const createMasterCv = async (userId: string, payload: MasterCvInput) => {
       carrierGoal: payload.carrierGoal,
       challenges: [...(existing?.challenges as any[] ?? []), ...(payload.challenges ?? [])],
       currentRole: payload.currentRole,
-      domain: payload.domain,
       educationsAndCertifications: [...(existing?.educationsAndCertifications as any[] ?? []), ...(payload.educationsAndCertifications ?? [])],
       industry: payload.industry,
       linkedinUrl: payload.linkedinUrl,
@@ -126,8 +125,7 @@ const createMasterCv = async (userId: string, payload: MasterCvInput) => {
       portfolioUrl: payload.portfolioUrl,
       resumeSummary: payload.resumeSummary,
       strength: payload.strength,
-      subDomain: payload.subDomain,
-      workExpariences: [...(existing?.workExpariences as any[] ?? []), ...(payload.workExpariences ?? [])],
+      workExperiences: [...(existing?.workExperiences as any[] ?? []), ...(payload.workExperiences ?? [])],
     },
     create: {
       userId,
@@ -139,7 +137,6 @@ const createMasterCv = async (userId: string, payload: MasterCvInput) => {
       carrierGoal: payload.carrierGoal,
       challenges: payload.challenges ?? [],
       currentRole: payload.currentRole,
-      domain: payload.domain,
       educationsAndCertifications: payload.educationsAndCertifications ?? [],
       industry: payload.industry,
       linkedinUrl: payload.linkedinUrl,
@@ -147,8 +144,7 @@ const createMasterCv = async (userId: string, payload: MasterCvInput) => {
       portfolioUrl: payload.portfolioUrl,
       resumeSummary: payload.resumeSummary,
       strength: payload.strength,
-      subDomain: payload.subDomain,
-      workExpariences: payload.workExpariences ?? [],
+      workExperiences: payload.workExperiences ?? [],
     }
   });
 };

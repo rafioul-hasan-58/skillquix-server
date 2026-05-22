@@ -101,11 +101,8 @@ const create = async (userId: string, payload: CreateResumeProfilePayload) => {
                 email: payload.email,
                 phoneNumber: payload.phone,
                 location: payload.location,
-                domain: payload.domain,
-                subDomain: payload.subdomain,
                 resumeSummary: payload.summary,
                 totalExperienceYear: payload.totalExp,
-                resumeSections: result.resumeSections,
                 skills: masterCvSkills,
             },
             update: {
@@ -113,11 +110,8 @@ const create = async (userId: string, payload: CreateResumeProfilePayload) => {
                 email: payload.email,
                 phoneNumber: payload.phone,
                 location: payload.location,
-                domain: payload.domain,
-                subDomain: payload.subdomain,
                 resumeSummary: payload.summary,
                 totalExperienceYear: payload.totalExp,
-                resumeSections: result.resumeSections,
                 skills: masterCvSkills,
                 version: { increment: 1 }
 

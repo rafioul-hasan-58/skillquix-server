@@ -13,6 +13,7 @@ import { ResumeProfileRoutes } from "../../modules/resumeProfile/resumeProfile.r
 import { FaqRoutes } from "../../modules/faq/faq.route";
 import { ContactMessageRoutes } from "../../modules/contactMessage/contactMessage.route";
 import { MasterCvRouter } from "../../modules/masterCv/masterCv.route";
+import { EnhancedMasterCvRoutes } from "../../modules/enhancedMasterCv/enhancedMasterCv.routes";
 const router = express.Router();
 
 const moduleRoutes = [
@@ -71,6 +72,10 @@ const moduleRoutes = [
   {
     path: "/masterCv",
     route: MasterCvRouter,
+  },
+  {
+    path: "/enhanced-master-cv",
+    route: EnhancedMasterCvRoutes,
   },
 ];
 

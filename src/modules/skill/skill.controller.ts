@@ -16,6 +16,17 @@ const create = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const createMany = catchAsync(async (req: Request, res: Response) => {
+    const { id: userId } = req.user;
+    const result = await SkillService.createMany(userId, req.body);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Skills created successfully!",
+        data: result
+    });
+});
+
 const getMy = catchAsync(async (req: Request, res: Response) => {
     const { id: userId } = req.user;
     const result = await SkillService.getMy(userId, req.query);
@@ -58,11 +69,23 @@ const deleteSkill = catchAsync(async (req: Request, res: Response) => {
         message: "Skill deleted successfully!",
     });
 });
+const findDuplicateSkills = catchAsync(async (req: Request, res: Response) => {
+    const { id: userId } = req.user;
+    const result = await SkillService.findDuplicateSkills(userId);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        data: result,
+        message: "Skill found successfully!",
+    });
+});
 
 export const SkillController = {
     create,
+    createMany,
     getMy,
     details,
     updateSkill,
     deleteSkill,
+    findDuplicateSkills
 }

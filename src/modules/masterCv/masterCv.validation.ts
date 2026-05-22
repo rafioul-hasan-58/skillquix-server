@@ -15,7 +15,7 @@ const educationsAndCertifications = z.object({
   passingYear: z.string({ required_error: "Passing Year is required", invalid_type_error: "Passing Year must be a string" }),
   issueDate: z.string({ required_error: "Issue Date is required", invalid_type_error: "Issue Date must be a string" }),
 })
-const workExpariences = z.object({
+const workExperiences = z.object({
   company: z.string({ required_error: "Organization Name is required", invalid_type_error: "Organization Name must be a string" }),
   position: z.string({ required_error: "Position is required", invalid_type_error: "Position must be a string" }),
   duration: z.string({ required_error: "Start Date is required", invalid_type_error: "Start Date must be a string" }),
@@ -43,7 +43,7 @@ export const MasterCvSchema = z.object({
   // ─── Add Json fields manually below ───────────────────────────
   challenges: z.array(challengeSchema),
   educationsAndCertifications: z.array(educationsAndCertifications),
-  workExpariences: z.array(workExpariences),
+  workExperiences: z.array(workExperiences),
 
 }).strict();
 
