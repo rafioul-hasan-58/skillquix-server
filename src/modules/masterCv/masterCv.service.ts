@@ -9,13 +9,34 @@ import { generateTemp2Html } from "./templates/template2";
 import { generateTemp3Html } from "./templates/template3";
 import { generateTemp4Html } from "./templates/template4";
 
-const generateCvPdf = async (userId: string, templateId: string, payload: any): Promise<Buffer> => {
+import os from "os";
+import fs from "fs";
+import { generateTemp5Html } from "./templates/template5";
+import { generateTemp6Html } from "./templates/template6";
+import { generateTemp7Html } from "./templates/template7";
+import { generateTemp8Html } from "./templates/template8";
 
-  const masterCv = await prisma.masterCv.findUnique(
-    {
-      where: { userId },
+const getExecutablePath = (): string => {
+  if (os.platform() === "win32") {
+    const paths = [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    ];
+    for (const p of paths) {
+      if (fs.existsSync(p)) return p;
     }
-  );
+  }
+  return process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium";
+};
+
+const generateCvPdf = async (
+  userId: string,
+  templateId: string,
+  payload: any
+): Promise<Buffer> => {
+  const masterCv = await prisma.masterCv.findUnique({
+    where: { userId },
+  });
 
   if (!masterCv) {
     throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
@@ -23,23 +44,25 @@ const generateCvPdf = async (userId: string, templateId: string, payload: any): 
 
   let browser = null;
 
+  const execPath = getExecutablePath();
+  console.log("Using executable:", execPath);
+
   try {
     browser = await puppeteer.launch({
       headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",   // important for VPS/Docker
+        "--disable-dev-shm-usage",
         "--disable-gpu",
         "--no-zygote",
       ],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
+      executablePath: execPath,
     });
 
     const page = await browser.newPage();
     let html;
 
-    // Inject the HTML template with user data
     switch (templateId) {
       case "temp-01":
         html = generateTemp1Html(payload);
@@ -54,14 +77,26 @@ const generateCvPdf = async (userId: string, templateId: string, payload: any): 
         html = generateTemp4Html(payload);
         break;
       case "temp-05":
+        html = generateTemp5Html(payload);
+        break;
+      case "temp-06":
+        html = generateTemp6Html(payload);
+        break;
+      case "temp-07":
+        html = generateTemp7Html(payload);
+        break;
+      case "temp-08":
+        html = generateTemp8Html(payload);
+        break;
       default:
         throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
     }
+
     await page.setContent(html, { waitUntil: "load" });
+
     // Wait for fonts and images to finish rendering
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Set A4 page size
     await page.emulateMediaType("screen");
 
     const pdfBuffer = await page.pdf({
@@ -77,6 +112,7 @@ const generateCvPdf = async (userId: string, templateId: string, payload: any): 
 
     return Buffer.from(pdfBuffer);
   } catch (error) {
+    console.error("Puppeteer error:", error);
     throw new ApiError(
       httpStatus.INTERNAL_SERVER_ERROR,
       "Failed to generate PDF. Please try again."
@@ -87,6 +123,86 @@ const generateCvPdf = async (userId: string, templateId: string, payload: any): 
     }
   }
 };
+// const generateCvPdf = async (userId: string, templateId: string, payload: any): Promise<Buffer> => {
+
+//   const masterCv = await prisma.masterCv.findUnique(
+//     {
+//       where: { userId },
+//     }
+//   );
+
+//   if (!masterCv) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
+//   }
+
+//   let browser = null;
+//   console.log("Executable path:", process.env.PUPPETEER_EXECUTABLE_PATH);
+//   console.log("Skip download:", process.env.PUPPETEER_SKIP_DOWNLOAD);
+//   try {
+//     browser = await puppeteer.launch({
+//       headless: true,
+//       args: [
+//         "--no-sandbox",
+//         "--disable-setuid-sandbox",
+//         "--disable-dev-shm-usage",   // important for VPS/Docker
+//         "--disable-gpu",
+//         "--no-zygote",
+//       ],
+//       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
+//     });
+
+//     const page = await browser.newPage();
+//     let html;
+
+//     // Inject the HTML template with user data
+//     switch (templateId) {
+//       case "temp-01":
+//         html = generateTemp1Html(payload);
+//         break;
+//       case "temp-02":
+//         html = generateTemp2Html(payload);
+//         break;
+//       case "temp-03":
+//         html = generateTemp3Html(payload);
+//         break;
+//       case "temp-04":
+//         html = generateTemp4Html(payload);
+//         break;
+//       case "temp-05":
+//       default:
+//         throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
+//     }
+//     await page.setContent(html, { waitUntil: "load" });
+//     // Wait for fonts and images to finish rendering
+//     await new Promise((resolve) => setTimeout(resolve, 500));
+
+//     // Set A4 page size
+//     await page.emulateMediaType("screen");
+
+//     const pdfBuffer = await page.pdf({
+//       format: "A4",
+//       printBackground: true,
+//       margin: {
+//         top: "0px",
+//         right: "0px",
+//         bottom: "0px",
+//         left: "0px",
+//       },
+//     });
+
+//     return Buffer.from(pdfBuffer);
+//   } catch (error) {
+//     // console.log("error", error)
+//     throw new ApiError(
+//       httpStatus.INTERNAL_SERVER_ERROR,
+//       "Failed to generate PDF. Please try again."
+//     );
+//   } finally {
+//     if (browser) {
+//       await browser.close();
+//     }
+//   }
+// };
 
 const createMasterCv = async (userId: string, payload: MasterCvInput) => {
   const existing = await prisma.masterCv.findUnique({ where: { userId } });

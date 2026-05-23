@@ -76,3 +76,46 @@ export const temp02Schema = baseSchema.extend({
 export type ITemp2ResumeData = z.infer<typeof temp02Schema>;
 export type ITemp2Education = z.infer<typeof temp02EducationSchema>;
 export type ITemp2Experience = z.infer<typeof temp02ExperienceSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// temp-03: header photo top-right, left col (contact/languages/skills/hobbies),
+//          right col (education with honors + experience with location/period)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const temp03EducationSchema = z.object({
+  degree: z.string().min(1, "degree is required"),
+  institution: z.string().min(1, "institution is required"),
+  honors: z.array(z.string()).optional().default([]),
+});
+
+const temp03ExperienceSchema = z.object({
+  title: z.string().min(1, "title is required"),
+  company: z.string().min(1, "company is required"),
+  location: z.string().min(1, "location is required"),
+  period: z.string().min(1, "period is required"),
+  points: z.array(z.string().min(1)).min(1, "At least one point is required"),
+});
+
+export const temp03Schema = z.object({
+  name: z.string().min(1, "name is required"),
+  title: z.string().min(1, "title is required"),
+  profileImage: z.string().url("profileImage must be a valid URL").optional(),
+  profile: z.string().min(1, "profile summary is required"),
+  phone: z.string().min(1, "phone is required"),
+  email: z.string().email("Must be a valid email address"),
+  website: z.string().optional(),
+  address: z.string().min(1, "address is required"),
+  languages: z.array(z.string().min(1)).optional().default([]),
+  skills: z.array(z.string().min(1)).optional().default([]),
+  hobbies: z.array(z.string().min(1)).optional().default([]),
+  education: z
+    .array(temp03EducationSchema)
+    .min(1, "At least one education entry is required"),
+  experience: z
+    .array(temp03ExperienceSchema)
+    .min(1, "At least one experience entry is required"),
+});
+
+export type ITemp3ResumeData = z.infer<typeof temp03Schema>;
+export type ITemp3Education = z.infer<typeof temp03EducationSchema>;
+export type ITemp3Experience = z.infer<typeof temp03ExperienceSchema>;
