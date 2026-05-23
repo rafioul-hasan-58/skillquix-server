@@ -2,10 +2,10 @@ import { z } from "zod";
 
 
 const challengeSchema = z.object({
-  challangeName: z.string({ required_error: "Challenge Name is required", invalid_type_error: "Challenge Name must be a string" }),
-  impact: z.string({ required_error: "Impact is required", invalid_type_error: "Impact must be a string" }),
-  achievement: z.string({ required_error: "Achievement is required", invalid_type_error: "Achievement must be a string" }),
-  leadershipMoment: z.string({ required_error: "Leadership Moment is required", invalid_type_error: "Leadership Moment must be a string" }),
+  situation: z.string({ required_error: "Situation is required", invalid_type_error: "Situation must be a string" }),
+  task: z.string({ required_error: "Task is required", invalid_type_error: "Task must be a string" }),
+  action: z.string({ required_error: "Action is required", invalid_type_error: "Action must be a string" }),
+  result: z.string({ required_error: "Result is required", invalid_type_error: "Result must be a string" }),
 })
 const educationsAndCertifications = z.object({
   degree: z.string({ required_error: "Degree is required", invalid_type_error: "Degree must be a string" }),
@@ -51,7 +51,7 @@ export type MasterCvInput = z.infer<typeof MasterCvSchema>;
 
 export const downloadMasterCv = z.object({
   templateId: z.enum(["temp-01", "temp-02", "temp-03", "temp-04", "temp-05", "temp-06", "temp-07", "temp-08", "temp-09", "temp-10"]),
-  data: z.any({required_error:"Data is required", invalid_type_error:"Data must be an object"})
+  data: z.any({ required_error: "Data is required", invalid_type_error: "Data must be an object" })
 }).strict();
 
 export type DownloadMasterCvInput = z.infer<typeof downloadMasterCv>;
