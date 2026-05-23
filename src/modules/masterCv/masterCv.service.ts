@@ -297,13 +297,33 @@ const addChallange = async (userId: string, payload: ChallengeInput) => {
     { attempts: 3, backoff: { type: "exponential", delay: 2000 } }
 
   )
-  return result
+  return {
+    message: "Challenge is added,We will notify you once it is enhanced"
+  }
 };
+const getChallengeStory = async (userId: string) => {
+  const result = await prisma.enhancedMasterCv.findUnique({
+    where: {
+      userId
+    },
+    select: {
+      id: true,
+      challenges: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No enhance master cv is available!");
+  }
+  return result
+}
 
 export const MasterCvService = {
   getMasterCv,
   deleteMasterCv,
   createMasterCv,
   generateCvPdf,
-  addChallange
+  addChallange,
+  getChallengeStory
 };

@@ -63,11 +63,21 @@ const addChallange = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const getChallengeStory = catchAsync(async (req: Request, res: Response) => {
+  const { id: userId } = req.user;
+  const result = await MasterCvService.getChallengeStory(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Challenge Story fetched successfully!",
+    data: result,
+  });
+});
 
 export const MasterCvController = {
   createMasterCv,
   getMasterCv,
   deleteMasterCv,
   downloadCvPdf,
-  addChallange
+  addChallange,
+  getChallengeStory
 };

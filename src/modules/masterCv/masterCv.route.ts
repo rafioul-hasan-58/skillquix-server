@@ -41,5 +41,10 @@ router.post(
     validateRequest(challengeSchema),
     MasterCvController.addChallange
 );
+router.get(
+    "/get-challenge-story",
+    auth(),
+    MasterCvController.getChallengeStory
+);
 
 export const MasterCvRouter = router;
