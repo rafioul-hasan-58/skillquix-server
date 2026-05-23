@@ -54,9 +54,20 @@ const downloadCvPdf = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).end(pdfBuffer);
 });
 
+const addChallange = catchAsync(async (req: Request, res: Response) => {
+  const { id: userId } = req.user;
+  const result = await MasterCvService.addChallange(userId, req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    message: "Challange added successfully!",
+    data: result,
+  });
+});
+
 export const MasterCvController = {
   createMasterCv,
   getMasterCv,
   deleteMasterCv,
-  downloadCvPdf
+  downloadCvPdf,
+  addChallange
 };

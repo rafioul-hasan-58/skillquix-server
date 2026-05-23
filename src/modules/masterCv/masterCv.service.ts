@@ -2,7 +2,7 @@
 import httpStatus from "http-status";
 import ApiError from "../../app/errors/ApiError";
 import prisma from "../../lib/prisma";
-import { MasterCvInput } from "./masterCv.validation";
+import { ChallengeInput, MasterCvInput } from "./masterCv.validation";
 import puppeteer from "puppeteer";
 import { generateTemp1Html } from "./templates/template1";
 import { generateTemp2Html } from "./templates/template2";
@@ -156,10 +156,21 @@ const deleteMasterCv = async (userId: string) => {
   return prisma.masterCv.delete({ where: { userId } });
 };
 
+const addChallange = async (userId: string, payload: ChallengeInput) => {
+  const existing = await prisma.masterCv.findUnique({ where: { userId } });
+
+  return prisma.masterCv.update({
+    where: { userId },
+    data: {
+      challenges: [...(existing?.challenges as ChallengeInput[] ?? []), payload],
+    }
+  });
+};
 
 export const MasterCvService = {
   getMasterCv,
   deleteMasterCv,
   createMasterCv,
-  generateCvPdf
+  generateCvPdf,
+  addChallange
 };

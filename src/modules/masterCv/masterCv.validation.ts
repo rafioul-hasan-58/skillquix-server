@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 
-const challengeSchema = z.object({
+export const challengeSchema = z.object({
   situation: z.string({ required_error: "Situation is required", invalid_type_error: "Situation must be a string" }),
   task: z.string({ required_error: "Task is required", invalid_type_error: "Task must be a string" }),
   action: z.string({ required_error: "Action is required", invalid_type_error: "Action must be a string" }),
@@ -47,8 +47,9 @@ export const MasterCvSchema = z.object({
 
 }).strict();
 
-export type MasterCvInput = z.infer<typeof MasterCvSchema>;
 
+export type MasterCvInput = z.infer<typeof MasterCvSchema>;
+export type ChallengeInput = z.infer<typeof challengeSchema>;
 export const downloadMasterCv = z.object({
   templateId: z.enum(["temp-01", "temp-02", "temp-03", "temp-04", "temp-05", "temp-06", "temp-07", "temp-08", "temp-09", "temp-10"]),
   data: z.any({ required_error: "Data is required", invalid_type_error: "Data must be an object" })

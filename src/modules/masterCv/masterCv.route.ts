@@ -3,6 +3,8 @@ import { Router } from "express";
 import { MasterCvController } from "./masterCv.controller";
 import auth from "../../app/middlewares/auth";
 import { validateTemplate } from "../../app/middlewares/validateTemplate";
+import validateRequest from "../../app/middlewares/validateRequest";
+import { challengeSchema } from "./masterCv.validation";
 
 
 const router = Router();
@@ -31,6 +33,13 @@ router.delete(
     "/delete/:userId",
     auth(),
     MasterCvController.deleteMasterCv
+);
+
+router.post(
+    "/add-challenge",
+    auth(),
+    validateRequest(challengeSchema),
+    MasterCvController.addChallange
 );
 
 export const MasterCvRouter = router;
