@@ -25,6 +25,7 @@ export const AI_ENDPOINTS = {
         CLEARITY_SCORE: (userId: string) => `/v1/clearity-score/${userId}`,
     },
     MASTER_CV: {
-        GENERATE_COVER_LETTER: "/v1/generate_cover_letter"
+        GENERATE_COVER_LETTER: "/v1/generate_cover_letter",
+        ENHANCE_CHALLANGE: "/v1/master-cv/enhance-challenge"
     }
 }

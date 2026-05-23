@@ -1,7 +1,9 @@
+import { createMasterCvWorker } from "./masterCv.worker";
 import { createResumeWorker } from "./resume.worker";
 
 const WORKER_CONFIG = [
-  { name: "Resume", create: createResumeWorker }, // ← one entry now
+  { name: "Resume", create: createResumeWorker },
+  { name: "MasterCv", create: createMasterCvWorker },
 ];
 
 export const startWorkers = () => {

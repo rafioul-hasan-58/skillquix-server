@@ -15,6 +15,9 @@ import { generateTemp5Html } from "./templates/template5";
 import { generateTemp6Html } from "./templates/template6";
 import { generateTemp7Html } from "./templates/template7";
 import { generateTemp8Html } from "./templates/template8";
+import { enhanceChallenge } from "./masterCv.helper";
+import { enhanceChallengeQueue } from "../../infrastructure/queue/queues/masterCv.queue";
+import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
 
 const getExecutablePath = (): string => {
   if (os.platform() === "win32") {
@@ -275,12 +278,26 @@ const deleteMasterCv = async (userId: string) => {
 const addChallange = async (userId: string, payload: ChallengeInput) => {
   const existing = await prisma.masterCv.findUnique({ where: { userId } });
 
-  return prisma.masterCv.update({
+  const result = await prisma.masterCv.update({
     where: { userId },
     data: {
       challenges: [...(existing?.challenges as ChallengeInput[] ?? []), payload],
     }
   });
+  enhanceChallengeQueue.add(
+    JOB_NAMES.MASTER_CV.ENHANCE_CHALLENGE,
+    {
+      userId: userId, data: {
+        situation: payload.situation,
+        task: payload.task,
+        action: payload.action,
+        result: payload.result,
+      }
+    },
+    { attempts: 3, backoff: { type: "exponential", delay: 2000 } }
+
+  )
+  return result
 };
 
 export const MasterCvService = {

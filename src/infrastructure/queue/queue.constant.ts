@@ -2,6 +2,7 @@ export const QUEUE_NAMES = {
     RESUME: "resume",
     EMAIL: "email",
     EMBEDDING: "embedding",
+    MASTER_CV: "master-cv",
 };
 
 export const JOB_NAMES = {
@@ -19,4 +20,7 @@ export const JOB_NAMES = {
         MENTOR: "mentor-embedding",
         USER: "user-embedding",
     },
+    MASTER_CV: {
+        ENHANCE_CHALLENGE: "enhance-challenge",
+    }
 };
