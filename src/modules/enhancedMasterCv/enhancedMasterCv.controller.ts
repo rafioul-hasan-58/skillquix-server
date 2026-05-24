@@ -53,6 +53,17 @@ const remove = catchAsync(async (req: Request, res: Response) => {
         message: "EnhancedMasterCv deleted successfully!",
     });
 });
+const getTemplateData = catchAsync(async (req: Request, res: Response) => {
+    const { templateId } = req.params;
+    const { id: userId } = req.user;
+    const result = await EnhancedMasterCvService.getTemplateData(userId, templateId);
+    sendResponse(res, {
+        success: true,
+        statusCode: status.OK,
+        message: "EnhancedMasterCv template data retrieved successfully!",
+        data: result
+    });
+});
 
 export const EnhancedMasterCvController = {
     create,
@@ -60,4 +71,5 @@ export const EnhancedMasterCvController = {
     getSingle,
     getMyCV,
     remove,
+    getTemplateData
 };

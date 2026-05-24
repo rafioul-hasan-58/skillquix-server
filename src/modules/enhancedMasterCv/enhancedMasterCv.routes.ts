@@ -46,5 +46,10 @@ router.delete(
   auth(UserRole.ADMIN),
   EnhancedMasterCvController.remove
 );
+router.get(
+  "/template/:templateId",
+  auth(),
+  EnhancedMasterCvController.getTemplateData
+);
 
 export const EnhancedMasterCvRoutes = router;
