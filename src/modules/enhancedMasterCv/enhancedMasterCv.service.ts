@@ -2,7 +2,6 @@ import status from "http-status";
 import ApiError from "../../app/errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
-import { Prisma } from "@prisma/client";
 
 const create = async (userId: string, payload: any) => {
   const result = await prisma.enhancedMasterCv.upsert({
@@ -29,18 +28,9 @@ const update = async (userId: string, payload: any) => {
     where: { userId },
     data: {
       ...scalarFields,
-
-      ...(skills && {
-        skills: [...(existing?.skills as any[] || []), ...skills],
-      }),
-
-      ...(workExperiences && {
-        workExperiences: [...(existing?.workExperiences as any[] || []), ...workExperiences],
-      }),
-
-      ...(educationsAndCertifications && {
-        educationsAndCertifications: [...(existing?.educationsAndCertifications as any[] || []), ...educationsAndCertifications],
-      }),
+      ...skills,
+      ...workExperiences,
+      ...educationsAndCertifications,
     },
   });
 
@@ -73,7 +63,7 @@ const getSingle = async (id: string) => {
   if (!result) {
     throw new ApiError(status.NOT_FOUND, "EnhancedMasterCv not found!");
   }
-
+  
   return result;
 };
 
