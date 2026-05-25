@@ -24,13 +24,17 @@ const update = async (userId: string, payload: any) => {
 
   const existing = await prisma.enhancedMasterCv.findUnique({ where: { userId } });
 
+  if (!existing) {
+    throw new Error(`No EnhancedMasterCv found for userId: ${userId}`);
+  }
+
   const result = await prisma.enhancedMasterCv.update({
     where: { userId },
     data: {
       ...scalarFields,
-      ...skills,
-      ...workExperiences,
-      ...educationsAndCertifications,
+      ...(skills !== undefined && { skills }),
+      ...(workExperiences !== undefined && { workExperiences }),
+      ...(educationsAndCertifications !== undefined && { educationsAndCertifications }),
     },
   });
 
@@ -63,7 +67,7 @@ const getSingle = async (id: string) => {
   if (!result) {
     throw new ApiError(status.NOT_FOUND, "EnhancedMasterCv not found!");
   }
-  
+
   return result;
 };
 
