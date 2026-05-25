@@ -43,6 +43,9 @@ export const generateTemp1Html = (data: IResumeData): string => {
     experience = [],
   } = data;
 
+  console.log("education",education)
+  console.log("education",experience)
+
   const educationHtml = education
     .map(
       (edu: IEducation) => `

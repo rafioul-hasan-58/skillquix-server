@@ -39,9 +39,9 @@ const deleteMasterCv = catchAsync(async (req: Request, res: Response) => {
 const downloadCvPdf = catchAsync(async (req: Request, res: Response) => {
   const { id: userId } = req.user;
   const { templateId } = req.params;
-  const data = req.body;
-  const name = data?.name || "cv";
-  const pdfBuffer = await MasterCvService.generateCvPdf(userId, templateId, data);
+  const name ="Your resume";
+  const payload = req.body;
+  const pdfBuffer = await MasterCvService.generateCvPdf(userId, templateId,req.body);
 
   const safeName = name.replace(/\s+/g, "_").toLowerCase();
 

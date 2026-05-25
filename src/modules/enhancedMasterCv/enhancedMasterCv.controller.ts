@@ -13,6 +13,15 @@ const create = catchAsync(async (req: Request, res: Response) => {
         data: result,
     });
 });
+const update = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user?.id; // assumes auth middleware attaches user
+    const result = await EnhancedMasterCvService.update(userId, req.body);
+    sendResponse(res, {
+        statusCode: status.CREATED,
+        message: "EnhancedMasterCv updated successfully!",
+        data: result,
+    });
+});
 
 const getAll = catchAsync(async (req: Request, res: Response) => {
     const result = await EnhancedMasterCvService.getAll(req.query);
@@ -67,6 +76,7 @@ const getTemplateData = catchAsync(async (req: Request, res: Response) => {
 
 export const EnhancedMasterCvController = {
     create,
+    update,
     getAll,
     getSingle,
     getMyCV,

@@ -18,7 +18,7 @@ router.post(
 router.post(
     "/download-pdf/:templateId",
     auth(),
-    validateTemplate,
+    // validateTemplate,
     MasterCvController.downloadCvPdf
 );
 
