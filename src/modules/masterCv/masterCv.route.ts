@@ -14,12 +14,12 @@ router.post(
     MasterCvController.createMasterCv
 );
 
-// router.post(
-//     "/download-pdf/:templateId",
-//     auth(),
-//     // validateTemplate,
-//     MasterCvController.downloadCvPdf
-// );
+router.post(
+    "/download-pdf/:templateId",
+    auth(),
+    // validateTemplate,
+    MasterCvController.downloadCvPdf
+);
 
 
 router.get(

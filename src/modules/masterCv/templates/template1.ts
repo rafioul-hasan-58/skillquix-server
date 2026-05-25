@@ -1,84 +1,90 @@
+// ── Types matching DB fields exactly ──────────────────────────
+
 type IEducation = {
-  startYear: string;
-  endYear: string;
-  institution: string;
   degree: string;
-  points: string[];
+  certificateName?: string;
+  institution: string;
+  organizationName?: string;
+  passingYear?: string;
+  issueDate?: string;
 };
 
 type IExperience = {
-  role: string;
-  startYear: string;
-  endYear: string;
   company: string;
-  points: string[];
+  position: string;      // DB field (not title/role)
+  duration: string;      // DB field (not period)
+  responsibilities?: string;
+  projects?: string[];   // DB field — used as bullet list
 };
 
 type IResumeData = {
-  name: string;
-  title: string;
-  profileImage: string;
-  about: string;
+  fullName: string;
+  currentRole: string;
+  resumeSummary: string;  // DB field (not about)
   email: string;
-  address: string;
-  phone: string;
-  linkedin: string;
-  portfolio: string;
-  education: IEducation[];
-  experience: IExperience[];
+  location: string;
+  phoneNumber: string;
+  linkedinUrl: string;
+  portfolioUrl?: string;
+  educationsAndCertifications: IEducation[];
+  workExperiences: IExperience[];
+  user?: { profileImage?: string };
 };
 
+// ── Template generator ─────────────────────────────────────────
 export const generateTemp1Html = (data: IResumeData): string => {
   const {
-    name = "",
-    title = "",
-    profileImage = "",
-    about = "",
+    fullName = "",
+    currentRole = "",
+    resumeSummary = "",
     email = "",
-    address = "",
-    phone = "",
-    linkedin = "",
-    portfolio = "",
-    education = [],
-    experience = [],
+    location = "",
+    phoneNumber = "",
+    linkedinUrl = "",
+    portfolioUrl = "",
+    educationsAndCertifications = [],
+    workExperiences = [],
+    user,
   } = data;
 
-  console.log("education",education)
-  console.log("education",experience)
+  const profileImage = user?.profileImage ?? "";
 
-  const educationHtml = education
+  const educationHtml = educationsAndCertifications
     .map(
       (edu: IEducation) => `
     <div class="section-item">
       ${edu.degree ? `<p class="item-degree">${edu.degree}</p>` : ""}
       <p class="item-meta">
-        ${edu.startYear && edu.endYear ? `<span>${edu.startYear} - ${edu.endYear} | </span>` : ""}
+        ${edu.passingYear ? `<span>${edu.passingYear} | </span>` : ""}
         <span class="item-institution">${edu.institution}</span>
       </p>
-      ${
-        edu.points && edu.points.length > 0
-          ? `<ul>${edu.points.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
+      ${edu.certificateName
+          ? `<p class="item-cert">${edu.certificateName}${edu.organizationName ? ` — ${edu.organizationName}` : ""}</p>`
           : ""
-      }
+        }
+      ${edu.issueDate
+          ? `<p class="item-issue">Issued: ${edu.issueDate}</p>`
+          : ""
+        }
     </div>
   `
     )
     .join("");
 
-  const experienceHtml = experience
+  const experienceHtml = workExperiences
     .map(
       (exp: IExperience) => `
     <div class="section-item section-item--experience">
-      ${exp.role ? `<p class="item-role">${exp.role}</p>` : ""}
+      ${exp.position ? `<p class="item-role">${exp.position}</p>` : ""}
       <p class="item-meta">
-        ${exp.startYear && exp.endYear ? `<span>${exp.startYear} - ${exp.endYear} | </span>` : ""}
+        ${exp.duration ? `<span>${exp.duration} | </span>` : ""}
         <span class="item-institution">${exp.company}</span>
       </p>
-      ${
-        exp.points && exp.points.length > 0
-          ? `<ul>${exp.points.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
+      ${exp.responsibilities ? `<p class="item-responsibilities">${exp.responsibilities}</p>` : ""}
+      ${exp.projects && exp.projects.length > 0
+          ? `<ul>${exp.projects.map((p: string) => `<li>${p}</li>`).join("")}</ul>`
           : ""
-      }
+        }
     </div>
   `
     )
@@ -90,7 +96,7 @@ export const generateTemp1Html = (data: IResumeData): string => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${name} - CV</title>
+  <title>${fullName} - CV</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -103,7 +109,6 @@ export const generateTemp1Html = (data: IResumeData): string => {
       padding: 0;
     }
 
-    /* ── CV Card ── */
     .cv-card {
       width: 100%;
       min-height: 100vh;
@@ -223,7 +228,6 @@ export const generateTemp1Html = (data: IResumeData): string => {
       margin-top: 4px;
     }
 
-    /* ── Section Divider ── */
     .section {
       margin-bottom: 4px;
     }
@@ -253,7 +257,6 @@ export const generateTemp1Html = (data: IResumeData): string => {
       background: linear-gradient(to right, #c8970a, rgba(232,200,71,0.25));
     }
 
-    /* ── Education / Experience Items ── */
     .section-item {
       margin-bottom: 14px;
     }
@@ -270,6 +273,18 @@ export const generateTemp1Html = (data: IResumeData): string => {
       font-size: 11px;
       color: #6b7280;
       margin-bottom: 2px;
+    }
+
+    .item-cert {
+      font-size: 11px;
+      color: #4a7eab;
+      margin-top: 3px;
+    }
+
+    .item-issue {
+      font-size: 10px;
+      color: #9ca3af;
+      margin-top: 2px;
     }
 
     .item-role {
@@ -292,6 +307,13 @@ export const generateTemp1Html = (data: IResumeData): string => {
       color: #3d6ea8;
     }
 
+    .item-responsibilities {
+      font-size: 12px;
+      color: #4b5563;
+      line-height: 1.55;
+      margin-bottom: 5px;
+    }
+
     ul {
       padding-left: 16px;
       display: flex;
@@ -310,139 +332,104 @@ export const generateTemp1Html = (data: IResumeData): string => {
 <body>
   <div class="cv-card">
 
-    <!-- LEFT SIDEBAR -->
     <aside class="sidebar">
-
-      <!-- Profile Photo -->
       <div class="sidebar-photo-wrap">
-        ${
-          profileImage
-            ? `<img class="sidebar-photo" src="${profileImage}" alt="${name}" />`
-            : `<svg class="sidebar-photo-placeholder" fill="currentColor" viewBox="0 0 24 24">
+        ${profileImage
+      ? `<img class="sidebar-photo" src="${profileImage}" alt="${fullName}" />`
+      : `<svg class="sidebar-photo-placeholder" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
               </svg>`
-        }
+    }
       </div>
 
       <div class="sidebar-content">
 
-        <!-- About -->
-        ${
-          about
-            ? `<div>
+        ${resumeSummary
+      ? `<div>
                 <h3 class="sidebar-section-title">About Me</h3>
-                <p class="about-text">${about}</p>
+                <p class="about-text">${resumeSummary}</p>
                </div>`
-            : ""
-        }
+      : ""
+    }
 
-        <!-- Contact -->
         <div>
           <h3 class="sidebar-section-title">Contact</h3>
           <div class="contact-list">
+            ${email ? `
+            <div class="contact-item">
+              <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <span class="contact-text">${email}</span>
+            </div>` : ""}
 
-            ${
-              email
-                ? `<div class="contact-item">
-                    <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="contact-text">${email}</span>
-                   </div>`
-                : ""
-            }
+            ${location ? `
+            <div class="contact-item">
+              <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span class="contact-text">${location}</span>
+            </div>` : ""}
 
-            ${
-              address
-                ? `<div class="contact-item">
-                    <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="contact-text">${address}</span>
-                   </div>`
-                : ""
-            }
+            ${phoneNumber ? `
+            <div class="contact-item">
+              <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              <span class="contact-text">${phoneNumber}</span>
+            </div>` : ""}
 
-            ${
-              phone
-                ? `<div class="contact-item">
-                    <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                    <span class="contact-text">${phone}</span>
-                   </div>`
-                : ""
-            }
+            ${linkedinUrl ? `
+            <div class="contact-item">
+              <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/>
+                <circle cx="4" cy="4" r="2"/>
+              </svg>
+              <span class="contact-text">${linkedinUrl}</span>
+            </div>` : ""}
 
-            ${
-              linkedin
-                ? `<div class="contact-item">
-                    <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/>
-                      <circle cx="4" cy="4" r="2"/>
-                    </svg>
-                    <span class="contact-text">${linkedin}</span>
-                   </div>`
-                : ""
-            }
-
-            ${
-              portfolio
-                ? `<div class="contact-item">
-                    <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
-                    </svg>
-                    <span class="contact-text">${portfolio}</span>
-                   </div>`
-                : ""
-            }
-
+            ${portfolioUrl ? `
+            <div class="contact-item">
+              <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+              </svg>
+              <span class="contact-text">${portfolioUrl}</span>
+            </div>` : ""}
           </div>
         </div>
 
       </div>
     </aside>
 
-    <!-- RIGHT MAIN CONTENT -->
     <main class="main">
-
-      <!-- Name & Title -->
       <div class="main-header">
-        <h1>${name}</h1>
-        ${title ? `<p class="job-title">${title}</p>` : ""}
+        <h1>${fullName}</h1>
+        ${currentRole ? `<p class="job-title">${currentRole}</p>` : ""}
       </div>
 
-      <!-- Education -->
-      ${
-        education.length > 0
-          ? `<div class="section">
-              <div class="section-header">
-                <span class="section-title">Education</span>
-                <div class="section-line"></div>
-              </div>
-              ${educationHtml}
-             </div>`
-          : ""
-      }
+      ${educationsAndCertifications.length > 0 ? `
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Education</span>
+          <div class="section-line"></div>
+        </div>
+        ${educationHtml}
+      </div>` : ""}
 
-      <!-- Experience -->
-      ${
-        experience.length > 0
-          ? `<div class="section">
-              <div class="section-header">
-                <span class="section-title">Experience</span>
-                <div class="section-line"></div>
-              </div>
-              ${experienceHtml}
-             </div>`
-          : ""
-      }
+      ${workExperiences.length > 0 ? `
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Experience</span>
+          <div class="section-line"></div>
+        </div>
+        ${experienceHtml}
+      </div>` : ""}
 
     </main>
   </div>
