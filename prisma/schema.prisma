@@ -224,6 +224,7 @@ model EnhancedMasterCv {
   linkedinUrl                 String?
   location                    String?
   languages                   String[] @default([])
+  hobbies                     String[]  @default([])
   phoneNumber                 String?
   portfolioUrl                String?
   refletions                  Json?
