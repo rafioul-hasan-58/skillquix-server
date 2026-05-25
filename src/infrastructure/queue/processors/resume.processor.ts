@@ -1,10 +1,12 @@
 import { Job } from "bullmq";
-import { ResumeExtractJobPayload } from "../types/queue.types";
+import { ResumeEmbedJobPayload, ResumeExtractJobPayload } from "../types/queue.types";
 import { parseResume } from "../../../modules/user/user.helper";
 import { ResumeProfileService } from "../../../modules/resumeProfile/resumeProfile.service";
 import { CreateResumeProfilePayload } from "../../../modules/resumeProfile/resumeProfile.interface";
+import { upsertResumeEmbedding } from "../../../modules/resumeProfile/resumeProfile.halper";
+import { JOB_NAMES } from "../queue.constant";
 
-export const resumeProcessor = async (job: Job<ResumeExtractJobPayload>) => {
+const resumeExtractionProcessor = async (job: Job<ResumeExtractJobPayload>) => {
   const { userId, resumeUrl } = job.data;
 
   const parsedResume = await parseResume(resumeUrl);
@@ -32,3 +34,22 @@ export const resumeProcessor = async (job: Job<ResumeExtractJobPayload>) => {
 
   await ResumeProfileService.create(userId, resumePayload);
 };
+
+const resumeEmbeddingProcessor = async (job: Job<ResumeEmbedJobPayload>) => {
+  const { resumeProfileId, embedding } = job.data;
+
+  await upsertResumeEmbedding(resumeProfileId, embedding);
+};
+
+export const resumeProcessor = async (job: Job) => {
+  switch (job.name) {
+    case JOB_NAMES.RESUME.EXTRACT_AND_SAVE:
+      await resumeExtractionProcessor(job);
+      break;
+    case JOB_NAMES.RESUME.EXTRACT_AND_EMBED:
+      await resumeEmbeddingProcessor(job);
+      break;
+    default:
+      break;
+  }
+}

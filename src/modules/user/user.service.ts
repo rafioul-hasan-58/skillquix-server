@@ -13,10 +13,8 @@ import config from "../../config";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
 import stripe from "../../infrastructure/stripe/stripe";
 import { fetchSimilarGigs } from "../gig/gig.helper";
-import { ResumeProfileService } from "../resumeProfile/resumeProfile.service";
-import { CreateResumeProfilePayload } from "../resumeProfile/resumeProfile.interface";
-import { resumeQueue } from "../../infrastructure/queue/queues/resume.queue";
 import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
+import { resumeExtractionQueue } from "../../infrastructure/queue/queues/resume.queue";
 
 
 const register = async (payload: User) => {
@@ -37,7 +35,7 @@ const register = async (payload: User) => {
     },
   });
   if (payload.resumeLink) {
-    await resumeQueue.add(
+    await resumeExtractionQueue.add(
       JOB_NAMES.RESUME.EXTRACT_AND_SAVE,
       { userId: user.id, resumeUrl: payload.resumeLink },
       { attempts: 3, backoff: { type: "exponential", delay: 2000 } }
@@ -59,6 +57,14 @@ const register = async (payload: User) => {
     // User is created but Stripe failed — log it, don't break registration
     console.error("Stripe customer creation failed:", err);
   }
+
+  await prisma.masterCv.create({
+    data: {
+      userId: user.id,
+      email: payload.email,
+      fullName: payload.fullName
+    }
+  })
 
   const jwtPayload = {
     id: user.id,

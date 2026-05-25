@@ -176,67 +176,75 @@ model MentorshipCompletion {
 }
 
 model MasterCv {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @unique @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // ─── Basic Info (snapshot from User) ───────────────────────────
-  fullName       String
-  email          String
-  profileImage   String?
-  profession     String?
-  location       String?
-  bio            String?
-  experienceYear String?
-  careerStage    String?
-  resumeLink     String?
-
-  // ─── Resume Profile (from ResumeProfile) ───────────────────────
-  domain              String?
-  subDomain           String?
-  resumeSummary       String?
-  totalExperienceYear Int?
-  resumePhone         String?
-  resumeEmail         String?
-  resumeLocation      String?
-
-  // ─── Resume Sections (denormalized snapshot) ───────────────────
-  // Stored as JSON array for flexibility across section types
-  // Structure: [{ sectionType, title, orderIndex, items: [{ data, orderIndex }] }]
-  resumeSections Json? // Full ResumeSection + ResumeSectionItem tree
-
-  // ─── Skills ────────────────────────────────────────────────────
-  // Structure: [{ skillName, skillCategory, proficiencyLevel, yearOfExperience, source }]
-  skills Json?
-
-  // ─── Accomplishments ───────────────────────────────────────────
-  // Structure: [{ title, description, date }]
-  accomplishments Json?
-
-  // ─── Reflections ───────────────────────────────────────────────
-  // Structure: [{ shortSummary, impectBullects, createdAt }]
-  refletions Json?
-
-  // ─── Mentor Profile ────────────────────────────────────────────
-  // Structure: { mentorName, role, company, experienceYears, skills, mentorshipDetails, availability }
-  mentorProfile Json?
-
-  // ─── Mentorship History ────────────────────────────────────────
-  // Structure: [{ learningGoals, matchPercentage, status, actionItems, sessions: [...] }]
-  mentorshipHistory Json?
-
-  // ─── Gig Activity ──────────────────────────────────────────────
-  // Structure: [{ gigTitle, category, gigType, location, status, appliedAt }]
-  appliedGigs Json?
-  savedGigs   Json?
-
-  // ─── AI / Generation Metadata ──────────────────────────────────
-  generatedCvJson Json? // Final assembled CV payload for AI/template rendering
-  lastGeneratedAt DateTime?
-  version         Int       @default(1) // Increment on each regeneration
+  id                          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                      String   @unique @db.ObjectId
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                         String?
+  careerStage                 String?
+  carrierGoal                 String?
+  challenges                  Json?
+  currentRole                 String?
+  educationsAndCertifications Json?
+  email                       String?
+  fullName                    String?
+  generatedCvJson             Json?
+  industry                    String?
+  linkedinUrl                 String?
+  location                    String?
+  phoneNumber                 String?
+  portfolioUrl                String?
+  refletions                  Json?
+  resumeSummary               String?
+  resumeLink                  String?
+  skills                      Json?
+  languages                   String[] @default([])
+  strength                    String[] @default([])
+  totalExperienceYear         Int?
+  version                     Int      @default(1)
+  workExperiences             Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model EnhancedMasterCv {
+  id                          String   @id @default(auto()) @map("_id") @db.ObjectId
+  aiScore                     Json?
+  bio                         String?
+  careerStage                 String?
+  carrierGoal                 String?
+  challenges                  Json?
+  currentRole                 String?
+  domain                      String?
+  educationsAndCertifications Json?
+  email                       String?
+  fullName                    String?
+  generatedCvJson             Json?
+  industry                    String?
+  linkedinUrl                 String?
+  location                    String?
+  languages                   String[] @default([])
+  hobbies                     String[]  @default([])
+  phoneNumber                 String?
+  portfolioUrl                String?
+  refletions                  Json?
+  resumeSummary               String?
+  resumeLink                  String?
+  skills                      Json?
+  skillGaps                   Json?
+  strength                    String[] @default([])
+  subDomain                   String?
+  totalExperienceYear         Int?
+  version                     Int      @default(1)
+  workExperiences             Json?
+  // relations
+  userId                      String   @unique @db.ObjectId
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("enhancedMasterCv")
 }
 
 model OTP {
@@ -330,6 +338,8 @@ model Skill {
   source           SkillSource      @default(MANUAL)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+
+  @@unique([userId, skillName])
 }
 
 model SavedGig {
@@ -390,6 +400,7 @@ model User {
   mentorShipRequests   MentorshipRequest[] @relation("MentorResuestRelation")
   resumeProfile        ResumeProfile?
   masterCv             MasterCv?
+  enhancedMasterCv     EnhancedMasterCv?
 }
 
 // Enums in alphabetical order
@@ -451,6 +462,7 @@ enum SkillSource {
   REFLEXTION
   MENTORSHIP
   RECOMMENDATION
+  MASTER_CV
 }
 
 enum SessionStatus {

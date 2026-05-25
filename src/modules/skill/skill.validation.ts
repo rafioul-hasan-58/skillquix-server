@@ -29,6 +29,11 @@ const createSkillSchema = z.object({
         .optional(),
 });
 
+const createManySkillsSchema = z.object({
+    skills: z.array(createSkillSchema).min(1, "At least one skill is required")
+});
+
 export const SkillValidations = {
-    createSkillSchema
+    createSkillSchema,
+    createManySkillsSchema
 }

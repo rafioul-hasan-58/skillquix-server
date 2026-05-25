@@ -14,6 +14,12 @@ router.post(
     validateRequest(SkillValidations.createSkillSchema),
     SkillController.create
 );
+router.post(
+    "/create-many",
+    auth(),
+    validateRequest(SkillValidations.createManySkillsSchema),
+    SkillController.createMany
+);
 router.get(
     "/get-my",
     auth(),
@@ -33,6 +39,11 @@ router.delete(
     "/delete/:id",
     auth(),
     SkillController.deleteSkill
+);
+router.get(
+    "/find-duplicates",
+    auth(),
+    SkillController.findDuplicateSkills
 );
 
 

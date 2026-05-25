@@ -3,92 +3,130 @@ import prisma from "../../lib/prisma";
 import { CreateResumeProfilePayload, ResumeSkill } from "./resumeProfile.interface";
 import ApiError from "../../app/errors/ApiError";
 import httpStatus from "http-status";
-import { generateResumeProfileEmbedding, upsertResumeEmbedding } from "./resumeProfile.halper";
+import { generateResumeProfileEmbedding } from "./resumeProfile.halper";
+import { resumeEmbeddingQueue } from "../../infrastructure/queue/queues/resume.queue";
+import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
 
 const create = async (userId: string, payload: CreateResumeProfilePayload) => {
     const embedding = await generateResumeProfileEmbedding(payload);
-    // upsert the profile
-    const result = await prisma.resumeProfile.upsert({
-        where: { userId },
-        create: {
-            name: payload.name,
-            email: payload.email,
-            phone: payload.phone,
-            domain: payload.domain,
-            subDomain: payload.subdomain,
-            userId,
-            location: payload.location,
-            summary: payload.summary,
-            totalExperienceYear: payload.totalExp,
-            embedding,
-            resumeSections: {
-                create: payload.sections.map(section => ({
-                    sectionType: section.sectionType,
-                    title: section.title,
-                    orderIndex: section.orderIndex,
-                    items: {
-                        create: section.items.map(item => ({
-                            orderIndex: item.orderIndex,
-                            data: item.data
-                        }))
-                    }
-                }))
-            }
-        },
-        update: {
-            name: payload.name,
-            email: payload.email,
-            phone: payload.phone,
-            domain: payload.domain,
-            subDomain: payload.subdomain,
-            location: payload.location,
-            summary: payload.summary,
-            totalExperienceYear: payload.totalExp,
-            embedding,
-            // delete old sections and recreate
-            resumeSections: {
-                deleteMany: {},
-                create: payload.sections.map(section => ({
-                    sectionType: section.sectionType,
-                    title: section.title,
-                    orderIndex: section.orderIndex,
-                    items: {
-                        create: section.items.map(item => ({
-                            orderIndex: item.orderIndex,
-                            data: item.data
-                        }))
-                    }
-                }))
-            }
-        },
-        include: {
-            resumeSections: {
-                include: { items: true }
-            }
-        }
-    });
+    // Run resume upsert and skill operations in parallel
+    const [result, masterCvSkills] = await Promise.all([
+        // 1. upsert the profile
+        prisma.resumeProfile.upsert({
+            where: { userId },
+            create: {
+                name: payload.name,
+                email: payload.email,
+                phone: payload.phone,
+                domain: payload.domain,
+                subDomain: payload.subdomain,
+                userId,
+                location: payload.location,
+                summary: payload.summary,
+                totalExperienceYear: payload.totalExp,
+                embedding,
+                resumeSections: {
+                    create: payload.sections.map(section => ({
+                        sectionType: section.sectionType,
+                        title: section.title,
+                        orderIndex: section.orderIndex,
+                        items: {
+                            create: section.items.map(item => ({
+                                orderIndex: item.orderIndex,
+                                data: item.data
+                            }))
+                        }
+                    }))
+                }
+            },
+            update: {
+                name: payload.name,
+                email: payload.email,
+                phone: payload.phone,
+                domain: payload.domain,
+                subDomain: payload.subdomain,
+                location: payload.location,
+                summary: payload.summary,
+                totalExperienceYear: payload.totalExp,
+                embedding,
+                // delete old sections and recreate
+                resumeSections: {
+                    deleteMany: {},
+                    create: payload.sections.map(section => ({
+                        sectionType: section.sectionType,
+                        title: section.title,
+                        orderIndex: section.orderIndex,
+                        items: {
+                            create: section.items.map(item => ({
+                                orderIndex: item.orderIndex,
+                                data: item.data
+                            }))
+                        }
+                    }))
+                },
 
-    // delete old resume-sourced skills and recreate
-    if (payload.skills && payload.skills.length > 0) {
-        await prisma.skill.deleteMany({
-            where: { userId, source: SkillSource.RESUME }
-        });
+            },
+            include: {
+                resumeSections: {
+                    include: { items: true }
+                }
+            }
+        }),
 
-        await prisma.skill.createMany({
-            data: payload.skills.flatMap((skill: ResumeSkill) =>
-                skill.Skills.map((s: string) => ({
-                    skillCategory: skill.category,
-                    skillName: s,
-                    userId,
-                    source: SkillSource.RESUME
-                }))
-            ),
-        });
-    }
-    const res = await upsertResumeEmbedding(result.id, embedding);
-    return res;
+        // 2. handle skills in parallel
+        (async () => {
+            if (!payload.skills?.length) return [];
+            await prisma.skill.deleteMany({ where: { userId, source: SkillSource.RESUME } });
+            await prisma.skill.createMany({
+                data: payload.skills.flatMap((skill: ResumeSkill) =>
+                    skill.Skills.map((s: string) => ({
+                        skillCategory: skill.category,
+                        skillName: s,
+                        userId,
+                        source: SkillSource.RESUME
+                    }))
+                ),
+            });
+            return prisma.skill.findMany({ where: { userId, source: SkillSource.RESUME } });
+        })()
+    ]);
+
+    // 3. upsert MasterCv + add to queue in parallel
+    await Promise.all([
+        prisma.masterCv.upsert({
+            where: { userId },
+            create: {
+                userId,
+                fullName: payload.name,
+                email: payload.email,
+                phoneNumber: payload.phone,
+                location: payload.location,
+                resumeSummary: payload.summary,
+                totalExperienceYear: payload.totalExp,
+                skills: masterCvSkills,
+            },
+            update: {
+                fullName: payload.name,
+                email: payload.email,
+                phoneNumber: payload.phone,
+                location: payload.location,
+                resumeSummary: payload.summary,
+                totalExperienceYear: payload.totalExp,
+                skills: masterCvSkills,
+                version: { increment: 1 }
+
+            },
+        }),
+
+        resumeEmbeddingQueue.add(
+            JOB_NAMES.RESUME.EXTRACT_AND_EMBED,
+            { resumeProfileId: result.id, embedding },
+            { attempts: 3, backoff: { type: "exponential", delay: 2000 } }
+        )
+    ]);
+
+    return { message: "Resume parsed and skills extracted successfully!" };
 };
-
 const getMyResumeProfile = async (userId: string) => {
     const user = await prisma.user.findUnique({
         where: {

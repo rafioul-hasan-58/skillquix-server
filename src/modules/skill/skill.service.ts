@@ -1,17 +1,56 @@
-import { Skill, SkillSource } from "@prisma/client";
+import { Skill } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import ApiError from "../../app/errors/ApiError";
 import httpStatus from "http-status";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
 
 const create = async (userId: string, payload: Skill) => {
-    const result = await prisma.skill.create({
-        data: {
+    const result = await prisma.skill.upsert({
+        where: {
+            userId_skillName: {
+                userId,
+                skillName: payload.skillName
+            },
+        },
+        update: {
+            ...payload,
+            userId
+        },
+        create: {
             ...payload,
             userId
         }
+
     })
     return result
+};
+
+const createMany = async (userId: string, payload: { skills: Skill[] }) => {
+    // fetch existing skills for this user
+    const existingSkills = await prisma.skill.findMany({
+        where: { userId },
+        select: { skillName: true },
+    });
+
+    const existingSkillNames = new Set(existingSkills.map((s) => s.skillName));
+
+    // filter out skills that already exist
+    const newSkills = payload.skills
+        .filter((skill) => !existingSkillNames.has(skill.skillName))
+        .map((skill) => ({
+            ...skill,
+            userId,
+        }));
+
+    if (newSkills.length === 0) {
+        return { message: "All skills already exist", count: 0 };
+    }
+
+    const result = await prisma.skill.createMany({
+        data: newSkills,
+    });
+
+    return result;
 };
 
 const getMy = async (userId: string, query: Record<string, unknown>) => {
@@ -161,12 +200,47 @@ const topSkills = async () => {
 
     return result;
 };
+const findDuplicateSkills = async (userId: string) => {
+    // fetch ALL skills from the entire collection
+    const skills = await prisma.skill.findMany();
 
+    // group by userId + skillName combination
+    const grouped = skills.reduce((acc, skill) => {
+        const key = `${skill.userId}__${skill.skillName}`;
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(skill);
+        return acc;
+    }, {} as Record<string, typeof skills>);
+
+    // collect all deleteIds — keep first, delete the rest
+    const deleteIds = Object.values(grouped)
+        .filter((group) => group.length > 1)
+        .flatMap((group) => group.slice(1).map((s) => s.id));
+
+    if (deleteIds.length === 0) {
+        return { message: "No duplicates found across all users", deleted: 0 };
+    }
+
+    const deleted = await prisma.skill.deleteMany({
+        where: {
+            id: { in: deleteIds },
+        },
+    });
+
+    return {
+        message: `Removed ${deleted.count} duplicate skills across all users`,
+        deleted: deleted.count,
+    };
+};
 export const SkillService = {
     create,
+    createMany,
     getMy,
     details,
     updateSkill,
     deleteSkill,
-    topSkills
+    topSkills,
+    findDuplicateSkills
 }

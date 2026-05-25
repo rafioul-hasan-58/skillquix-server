@@ -36,6 +36,13 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "public", "uploads
 //Routes
 app.use("/api/v1", router);
 
+// get raoclinical runnig response
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Raoclinical Server is running!",
+  });
+});
 // 404 Handler
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(httpStatus.NOT_FOUND).json({

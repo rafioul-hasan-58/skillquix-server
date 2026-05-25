@@ -1,11 +1,10 @@
+import { createMasterCvWorker } from "./masterCv.worker";
 import { createResumeWorker } from "./resume.worker";
-
 
 const WORKER_CONFIG = [
   { name: "Resume", create: createResumeWorker },
-  //   { name: "Email",     create: createEmailWorker },
-  //   { name: "Embedding", create: createEmbeddingWorker },
-]
+  { name: "MasterCv", create: createMasterCvWorker },
+];
 
 export const startWorkers = () => {
   WORKER_CONFIG.forEach(({ name, create }) => {

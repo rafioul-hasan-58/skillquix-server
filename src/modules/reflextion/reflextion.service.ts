@@ -57,6 +57,7 @@ const createReflextion = async (userId: string, payload: CreateReflextionInput) 
     if (!Array.isArray(payload.extractedSkills) || payload.extractedSkills.length === 0) {
         throw new ApiError(status.BAD_REQUEST, "At least one extracted skill is required");
     }
+
     // Create the reflextion
     const reflextion = await prisma.reflextion.create({
         data: {
@@ -65,7 +66,6 @@ const createReflextion = async (userId: string, payload: CreateReflextionInput) 
             shortSummary: payload.shortSummary.trim(),
         }
     });
-
     // Create skills with reflextionId for per-reflextion tracking
     await prisma.skill.createMany({
         data: payload.extractedSkills.map(skill => ({
@@ -83,6 +83,31 @@ const createReflextion = async (userId: string, payload: CreateReflextionInput) 
         where: { reflextionId: reflextion.id }
     });
 
+    const existMasterCv = await prisma.masterCv.findUnique({
+        where: {
+            userId
+        }
+    });
+
+    await prisma.masterCv.upsert({
+        where: { userId },
+        create: {
+            userId,
+            skills: extractedSkills,
+            refletions: [reflextion]
+        },
+        update: {
+            skills: [
+                ...(existMasterCv?.skills as any[] ?? []),
+                ...extractedSkills
+            ],
+            refletions: [
+                ...(existMasterCv?.refletions as any[] ?? []),
+                reflextion
+            ],
+            version: { increment: 1 }
+        }
+    });
     return { ...reflextion, extractedSkills };
 };
 
