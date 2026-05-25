@@ -16,7 +16,6 @@ import { generateTemp7Html } from "./templates/template7";
 import { generateTemp8Html } from "./templates/template8";
 import { enhanceChallengeQueue } from "../../infrastructure/queue/queues/masterCv.queue";
 import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
-import { IRawCvPayload, mapPayloadToTemplateData } from "./masterCv.helper";
 
 const getExecutablePath = (): string => {
   if (os.platform() === "win32") {
@@ -35,61 +34,61 @@ const getExecutablePath = (): string => {
 
 
 
-const generateCvPdf = async (
-  userId: string,
-  templateId: string,
-  payload: IRawCvPayload          // ← typed as raw frontend shape
-): Promise<Buffer> => {
-  const masterCv = await prisma.masterCv.findUnique({ where: { userId } });
-  if (!masterCv) throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
+// const generateCvPdf = async (
+//   userId: string,
+//   templateId: string,
+//   payload: IRawCvPayload          // ← typed as raw frontend shape
+// ): Promise<Buffer> => {
+//   const masterCv = await prisma.masterCv.findUnique({ where: { userId } });
+//   if (!masterCv) throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
 
-  // ── CONVERT frontend fields → template fields ──────────────
-  const data = mapPayloadToTemplateData(payload);
-  // ───────────────────────────────────────────────────────────
+//   // ── CONVERT frontend fields → template fields ──────────────
+//   const data = mapPayloadToTemplateData(payload);
+//   // ───────────────────────────────────────────────────────────
 
-  let browser = null;
-  const execPath = getExecutablePath();
+//   let browser = null;
+//   const execPath = getExecutablePath();
 
-  try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--no-zygote"],
-      executablePath: execPath,
-    });
+//   try {
+//     browser = await puppeteer.launch({
+//       headless: true,
+//       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--no-zygote"],
+//       executablePath: execPath,
+//     });
 
-    const page = await browser.newPage();
-    let html: string;
+//     const page = await browser.newPage();
+//     let html: string;
 
-    switch (templateId) {
-      case "temp-01": html = generateTemp1Html(data); break;
-      case "temp-02": html = generateTemp2Html(data); break;
-      case "temp-03": html = generateTemp3Html({ ...data, languages: data.languagesFlat }); break;
-      case "temp-04": html = generateTemp4Html(data); break;
-      case "temp-05": html = generateTemp5Html(data); break;
-      case "temp-06": html = generateTemp6Html(data); break;
-      case "temp-07": html = generateTemp7Html(data); break;
-      case "temp-08": html = generateTemp8Html(data); break;
-      default: throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
-    }
+//     switch (templateId) {
+//       case "temp-01": html = generateTemp1Html(data); break;
+//       case "temp-02": html = generateTemp2Html(data); break;
+//       case "temp-03": html = generateTemp3Html({ ...data, languages: data.languagesFlat }); break;
+//       case "temp-04": html = generateTemp4Html(data); break;
+//       case "temp-05": html = generateTemp5Html(data); break;
+//       case "temp-06": html = generateTemp6Html(data); break;
+//       case "temp-07": html = generateTemp7Html(data); break;
+//       case "temp-08": html = generateTemp8Html(data); break;
+//       default: throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
+//     }
 
-    await page.setContent(html, { waitUntil: "load" });
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await page.emulateMediaType("screen");
+//     await page.setContent(html, { waitUntil: "load" });
+//     await new Promise((resolve) => setTimeout(resolve, 500));
+//     await page.emulateMediaType("screen");
 
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "0px", right: "0px", bottom: "0px", left: "0px" },
-    });
+//     const pdfBuffer = await page.pdf({
+//       format: "A4",
+//       printBackground: true,
+//       margin: { top: "0px", right: "0px", bottom: "0px", left: "0px" },
+//     });
 
-    return Buffer.from(pdfBuffer);
-  } catch (error) {
-    console.error("Puppeteer error:", error);
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to generate PDF. Please try again.");
-  } finally {
-    if (browser) await browser.close();
-  }
-};
+//     return Buffer.from(pdfBuffer);
+//   } catch (error) {
+//     console.error("Puppeteer error:", error);
+//     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to generate PDF. Please try again.");
+//   } finally {
+//     if (browser) await browser.close();
+//   }
+// };
 const createMasterCv = async (userId: string, payload: MasterCvInput) => {
   const existing = await prisma.masterCv.findUnique({ where: { userId } });
 
@@ -206,7 +205,6 @@ export const MasterCvService = {
   getMasterCv,
   deleteMasterCv,
   createMasterCv,
-  generateCvPdf,
   addChallange,
   getChallengeStory
 };

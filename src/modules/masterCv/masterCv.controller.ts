@@ -36,23 +36,23 @@ const deleteMasterCv = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const downloadCvPdf = catchAsync(async (req: Request, res: Response) => {
-  const { id: userId } = req.user;
-  const { templateId } = req.params;
-  const name ="Your resume";
-  const payload = req.body;
-  const pdfBuffer = await MasterCvService.generateCvPdf(userId, templateId,req.body);
+// const downloadCvPdf = catchAsync(async (req: Request, res: Response) => {
+//   const { id: userId } = req.user;
+//   const { templateId } = req.params;
+//   const name ="Your resume";
+//   const payload = req.body;
+//   const pdfBuffer = await MasterCvService.generateCvPdf(userId, templateId,req.body);
 
-  const safeName = name.replace(/\s+/g, "_").toLowerCase();
+//   const safeName = name.replace(/\s+/g, "_").toLowerCase();
 
-  res.set({
-    "Content-Type": "application/pdf",
-    "Content-Disposition": `attachment; filename="${safeName}_cv.pdf"`,
-    "Content-Length": pdfBuffer.length,
-  });
+//   res.set({
+//     "Content-Type": "application/pdf",
+//     "Content-Disposition": `attachment; filename="${safeName}_cv.pdf"`,
+//     "Content-Length": pdfBuffer.length,
+//   });
 
-  res.status(httpStatus.OK).end(pdfBuffer);
-});
+//   res.status(httpStatus.OK).end(pdfBuffer);
+// });
 
 const addChallange = catchAsync(async (req: Request, res: Response) => {
   const { id: userId } = req.user;
@@ -77,7 +77,6 @@ export const MasterCvController = {
   createMasterCv,
   getMasterCv,
   deleteMasterCv,
-  downloadCvPdf,
   addChallange,
   getChallengeStory
 };
