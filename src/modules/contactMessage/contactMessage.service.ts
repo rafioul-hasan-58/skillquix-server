@@ -77,10 +77,30 @@ const deleteContactMessage = async (id: string) => {
   return null;
 };
 
+const sendFeedBack = async (userId: string, message: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId }
+  });
+  if (!user) {
+    throw new ApiError(status.NOT_FOUND, "User not found!");
+  }
+
+  const payload = {
+    name: user.fullName,
+    email: "rafioulhasan2@gmail.com",
+    message,
+    createdAt: new Date().toISOString(),
+  }
+
+  await mailService.sendFeedBack(payload);
+
+};
+
 export const ContactMessageService = {
   create,
   getAll,
   getSingle,
   update,
   delete: deleteContactMessage,
+  sendFeedBack
 };

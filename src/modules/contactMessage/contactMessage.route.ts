@@ -28,7 +28,6 @@ router.get(
 router.patch(
   "/update/:id",
   auth(),
-  validateRequest(ContactMessageValidation.updateContactMessageValidationSchema),
   ContactMessageController.update
 );
 
@@ -36,6 +35,12 @@ router.delete(
   "/delete/:id",
   auth(UserRole.ADMIN),
   ContactMessageController.remove
+);
+router.post(
+  "/send-feedback",
+  auth(),
+  validateRequest(ContactMessageValidation.sendFeedBack),
+  ContactMessageController.sendFeedBack
 );
 
 export const ContactMessageRoutes = router;
