@@ -20,7 +20,7 @@ const create = async (userId: string, payload: any) => {
 };
 
 const update = async (userId: string, payload: any) => {
-  const { skills, workExperiences, educationsAndCertifications, ...scalarFields } = payload;
+  const { skills, workExperiences, educationsAndCertifications, hobbies, ...scalarFields } = payload;
 
   const existing = await prisma.enhancedMasterCv.findUnique({ where: { userId } });
 
@@ -35,6 +35,7 @@ const update = async (userId: string, payload: any) => {
       ...(skills !== undefined && { skills }),
       ...(workExperiences !== undefined && { workExperiences }),
       ...(educationsAndCertifications !== undefined && { educationsAndCertifications }),
+      ...(hobbies !== undefined && { hobbies }),
     },
   });
 
@@ -121,7 +122,7 @@ const TEMPLATE_FIELDS: Record<string, object> = {
   'temp-03': {
     fullName: true, currentRole: true, resumeSummary: true,
     phoneNumber: true, email: true, portfolioUrl: true,
-    location: true, languages: true, skills: true,
+    location: true, languages: true, hobbies: true, skills: true,
     educationsAndCertifications: true, workExperiences: true,
     user: { select: { profileImage: true } },
   },

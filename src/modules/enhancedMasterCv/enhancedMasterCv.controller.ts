@@ -17,7 +17,7 @@ const update = catchAsync(async (req: Request, res: Response) => {
     const userId = req.user?.id; // assumes auth middleware attaches user
     const result = await EnhancedMasterCvService.update(userId, req.body);
     sendResponse(res, {
-        statusCode: status.CREATED,
+        statusCode: status.OK,
         message: "EnhancedMasterCv updated successfully!",
         data: result,
     });
