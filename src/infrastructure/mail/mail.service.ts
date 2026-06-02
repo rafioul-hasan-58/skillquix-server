@@ -77,7 +77,7 @@ const sendFeedBack = async (payload: {
 
     const res = await transporter.sendMail({
         from: `${config.smtp.name} <${config.smtp.email_from}>`,
-        to: "rafioulhasan2@gmail.com",
+        to: `${config.admin.contact_email}`,
         subject: `New Feedback Received`,
         html,
     });

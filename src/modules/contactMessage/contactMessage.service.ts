@@ -87,7 +87,7 @@ const sendFeedBack = async (userId: string, message: string) => {
 
   const payload = {
     name: user.fullName,
-    email: "rafioulhasan2@gmail.com",
+    email: user.email,
     message,
     createdAt: new Date().toISOString(),
   }
