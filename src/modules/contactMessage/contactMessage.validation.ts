@@ -9,12 +9,12 @@ const createContactMessageValidationSchema = z.object({
   messageCategory: z.string().optional(),
 });
 
-const updateContactMessageValidationSchema = z.object({
-  // TODO: add your fields here
-  // name: z.string().optional(),
+const sendFeedBack = z.object({
+  question: z.string({ required_error: "Question is required." }),
+  message: z.string({ required_error: "Message is required." }),
 });
 
 export const ContactMessageValidation = {
   createContactMessageValidationSchema,
-  updateContactMessageValidationSchema,
+  sendFeedBack,
 };

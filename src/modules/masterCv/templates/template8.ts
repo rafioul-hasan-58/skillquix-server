@@ -2,15 +2,24 @@
 
 export interface ITemp8Education {
   degree?: string;
+  certificateName?: string;
   institution?: string;
-  period?: string;
+  organizationName?: string;
+  passingYear?: string;
+  issueDate?: string;
 }
 
 export interface ITemp8Experience {
-  title?: string;
   company?: string;
-  period?: string;
-  bullets?: string[];
+  position?: string;
+  duration?: string;
+  responsibilities?: string;
+  projects?: string[];
+}
+
+export interface ITemp8Skill {
+  skillName?: string;
+  proficiencyLevel?: string;
 }
 
 export interface ITemp8Language {
@@ -18,28 +27,36 @@ export interface ITemp8Language {
   level?: string;
 }
 
+export interface ITemp8User {
+  profileImage?: string;
+}
+
 export interface ITemp8ResumeData {
-  name?: string;
-  title?: string;
-  summary?: string;
+  fullName?: string;
+  currentRole?: string;
+  resumeSummary?: string;
   email?: string;
-  phone?: string;
-  address?: string;
-  skills?: string[];
-  education?: ITemp8Education[];
-  languages?: ITemp8Language[];
-  experience?: ITemp8Experience[];
+  location?: string;
+  phoneNumber?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+  skills?: ITemp8Skill[];
+  languages?: ITemp8Language[] | string[];
+  hobbies?: string[];
+  educationsAndCertifications?: ITemp8Education[];
+  workExperiences?: ITemp8Experience[];
+  user?: ITemp8User;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const HEADER_BG = "#5c6370";
+const HEADER_BG  = "#5c6370";
 const NAMEBOX_BG = "#f0ede8";
-const DARK = "#1a1a1a";
-const BODY = "#2d2d2d";
-const MUTED = "#4a4a4a";
-const DIVIDER = "#9ca3af";
-const F = "'Courier New', Courier, 'Lucida Console', monospace";
+const DARK       = "#1a1a1a";
+const BODY       = "#2d2d2d";
+const MUTED      = "#4a4a4a";
+const DIVIDER    = "#9ca3af";
+const F          = "'Courier New', Courier, 'Lucida Console', monospace";
 
 // ─── Helper: spaced heading ───────────────────────────────────────────────────
 
@@ -56,105 +73,152 @@ function sectionHeading(title: string): string {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export const generateTemp8Html = (data: ITemp8ResumeData): string => {
-  const name        = data.name        ?? "";
-  const title       = data.title       ?? "";
-  const summary     = data.summary     ?? "";
-  const phone       = data.phone       ?? "";
-  const email       = data.email       ?? "";
-  const address     = data.address     ?? "";
-  const skills      = data.skills      ?? [];
-  const education   = data.education   ?? [];
-  const languages   = data.languages   ?? [];
-  const experience  = data.experience  ?? [];
 
-  // ── CONTACT ──────────────────────────────────────────────────────────────
-  const contactHtml = (phone || email || address) ? `
-    <div style="margin-bottom:32px;">
+  // ── Destructure ───────────────────────────────────────────────────────────
+  const {
+    fullName        = "",
+    currentRole     = "",
+    resumeSummary   = "",
+    email           = "",
+    location        = "",
+    phoneNumber     = "",
+    linkedinUrl     = "",
+    portfolioUrl    = "",
+    skills          = [],
+    languages       = [],
+    hobbies         = [],
+    educationsAndCertifications = [],
+    workExperiences = [],
+    user,
+  } = data;
+
+  const profileImage = user?.profileImage ?? "";
+
+  // ── Normalise languages — DB sends { language, level }[] but some older
+  //    payloads may send string[]. Handle both defensively.
+  const normalisedLanguages: ITemp8Language[] = (languages as Array<ITemp8Language | string>).map(
+    (l) => typeof l === "string" ? { language: l, level: "" } : l
+  );
+
+  // ── CONTACT ───────────────────────────────────────────────────────────────
+  const contactHtml = (phoneNumber || email || location || portfolioUrl || linkedinUrl) ? `
+    <div style="margin-bottom:24px;">
       ${sectionHeading("CONTACT")}
-      ${phone ? `
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <span style="font-family:${F};font-size:12px;color:${DARK};font-weight:700;min-width:52px;">Phone:</span>
-        <span style="font-family:${F};font-size:12px;color:${BODY};">${phone}</span>
+      ${phoneNumber ? `
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <span style="font-family:${F};font-size:11px;color:${DARK};font-weight:700;min-width:52px;">Phone:</span>
+        <span style="font-family:${F};font-size:11px;color:${BODY};">${phoneNumber}</span>
       </div>` : ""}
       ${email ? `
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <span style="font-family:${F};font-size:12px;color:${DARK};font-weight:700;min-width:52px;">Email:</span>
-        <span style="font-family:${F};font-size:12px;color:${BODY};">${email}</span>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <span style="font-family:${F};font-size:11px;color:${DARK};font-weight:700;min-width:52px;">Email:</span>
+        <span style="font-family:${F};font-size:11px;color:${BODY};">${email}</span>
       </div>` : ""}
-      ${address ? `
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <span style="font-family:${F};font-size:12px;color:${DARK};font-weight:700;min-width:52px;">Address:</span>
-        <span style="font-family:${F};font-size:12px;color:${BODY};">${address}</span>
+      ${location ? `
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <span style="font-family:${F};font-size:11px;color:${DARK};font-weight:700;min-width:52px;">Address:</span>
+        <span style="font-family:${F};font-size:11px;color:${BODY};">${location}</span>
+      </div>` : ""}
+      ${portfolioUrl ? `
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <span style="font-family:${F};font-size:11px;color:${DARK};font-weight:700;min-width:52px;">Web:</span>
+        <span style="font-family:${F};font-size:11px;color:${BODY};">${portfolioUrl}</span>
+      </div>` : ""}
+      ${linkedinUrl ? `
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <span style="font-family:${F};font-size:11px;color:${DARK};font-weight:700;min-width:52px;">LinkedIn:</span>
+        <span style="font-family:${F};font-size:11px;color:${BODY};">${linkedinUrl}</span>
       </div>` : ""}
     </div>
   ` : "";
 
-  // ── SKILLS ───────────────────────────────────────────────────────────────
+  // ── SKILLS ────────────────────────────────────────────────────────────────
   const skillsHtml = skills.length > 0 ? `
-    <div style="margin-bottom:32px;">
+    <div style="margin-bottom:24px;">
       ${sectionHeading("SKILLS")}
       <ul style="list-style:none;padding:0;margin:0;">
-        ${skills.map(s => `
-        <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;font-family:${F};font-size:12px;color:${BODY};">
-          <span style="margin-top:0;">•</span>
-          <span>${s}</span>
+        ${skills.map((s) => `
+        <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;font-family:${F};font-size:11px;color:${BODY};">
+          <span>•</span>
+          <span>${s.skillName ?? ""}${s.proficiencyLevel ? ` <span style="color:${MUTED};">– ${s.proficiencyLevel}</span>` : ""}</span>
         </li>`).join("")}
       </ul>
     </div>
   ` : "";
 
   // ── EDUCATION ─────────────────────────────────────────────────────────────
-  const educationHtml = education.length > 0 ? `
-    <div style="margin-bottom:32px;">
+  const educationHtml = educationsAndCertifications.length > 0 ? `
+    <div style="margin-bottom:24px;">
       ${sectionHeading("EDUCATION")}
-      ${education.map(edu => `
-      <div style="margin-bottom:18px;">
-        ${edu.degree ? `<p style="font-family:${F};font-size:12.5px;font-weight:700;color:${DARK};margin:0 0 3px 0;line-height:1.45;white-space:pre-line;">${edu.degree}</p>` : ""}
-        ${(edu.institution || edu.period) ? `
-        <p style="font-family:${F};font-size:11.5px;color:${MUTED};margin:0;">
-          ${edu.institution ?? ""}${edu.institution && edu.period ? `<span style="margin:0 5px;">•</span>` : ""}${edu.period ?? ""}
-        </p>` : ""}
+      ${educationsAndCertifications.map((edu) => `
+      <div style="margin-bottom:12px;">
+        ${edu.degree ? `<p style="font-family:${F};font-size:11px;font-weight:700;color:${DARK};margin:0 0 2px 0;line-height:1.4;">${edu.degree}</p>` : ""}
+        ${edu.institution ? `<p style="font-family:${F};font-size:10.5px;color:${MUTED};margin:0 0 1px 0;">${edu.institution}</p>` : ""}
+        ${edu.passingYear ? `<p style="font-family:${F};font-size:10px;color:${MUTED};margin:0 0 1px 0;">${edu.passingYear}</p>` : ""}
+        ${edu.certificateName ? `<p style="font-family:${F};font-size:10.5px;color:${BODY};font-style:italic;margin:0 0 1px 0;">${edu.certificateName}</p>` : ""}
+        ${edu.organizationName ? `<p style="font-family:${F};font-size:10px;color:${MUTED};margin:0 0 1px 0;">${edu.organizationName}</p>` : ""}
+        ${edu.issueDate ? `<p style="font-family:${F};font-size:10px;color:${MUTED};margin:0;">${edu.issueDate}</p>` : ""}
       </div>`).join("")}
     </div>
   ` : "";
 
   // ── LANGUAGES ─────────────────────────────────────────────────────────────
-  const languagesHtml = languages.length > 0 ? `
-    <div>
+  const languagesHtml = normalisedLanguages.length > 0 ? `
+    <div style="margin-bottom:24px;">
       ${sectionHeading("LANGUAGES")}
       <ul style="list-style:none;padding:0;margin:0;">
-        ${languages.map(l => `
-        <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;font-family:${F};font-size:12px;color:${BODY};">
+        ${normalisedLanguages.map((l) => `
+        <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;font-family:${F};font-size:11px;color:${BODY};">
           <span>•</span>
           <span>
             ${l.language ? `<span style="font-weight:600;">${l.language}</span>` : ""}
-            ${l.level ? `<span style="font-weight:400;"> - ${l.level}</span>` : ""}
+            ${l.level ? `<span style="font-weight:400;"> – ${l.level}</span>` : ""}
           </span>
         </li>`).join("")}
       </ul>
     </div>
   ` : "";
 
+  // ── HOBBIES ───────────────────────────────────────────────────────────────
+  const hobbiesHtml = hobbies.length > 0 ? `
+    <div style="margin-bottom:24px;">
+      ${sectionHeading("HOBBIES")}
+      <p style="font-family:${F};font-size:11px;color:${BODY};line-height:1.7;margin:0;">${hobbies.join(", ")}</p>
+    </div>
+  ` : "";
+
   // ── EXPERIENCE ────────────────────────────────────────────────────────────
-  const experienceHtml = experience.length > 0 ? `
+  const experienceHtml = workExperiences.length > 0 ? `
     <div>
       ${sectionHeading("EXPERIENCE")}
-      ${experience.map(exp => `
-      <div style="margin-bottom:28px;">
-        ${exp.title ? `<p style="font-family:${F};font-size:14px;font-weight:700;color:${DARK};margin:0 0 3px 0;letter-spacing:0.02em;">${exp.title}</p>` : ""}
-        ${(exp.company || exp.period) ? `
-        <p style="font-family:${F};font-size:12px;color:${MUTED};margin:0 0 10px 0;">
-          ${exp.company ?? ""}${exp.company && exp.period ? `<span style="margin:0 6px;color:${MUTED};">•</span>` : ""}${exp.period ?? ""}
+      ${workExperiences.map((exp) => {
+        const bullets = exp.responsibilities
+          ? exp.responsibilities
+              .split(/\n|(?<=[.!?])\s+/)
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+
+        const projectBullets = exp.projects ?? [];
+        const allBullets = [...bullets, ...projectBullets];
+
+        return `
+      <div style="margin-bottom:20px;">
+        ${exp.position ? `<p style="font-family:${F};font-size:13px;font-weight:700;color:${DARK};margin:0 0 2px 0;letter-spacing:0.02em;">${exp.position}</p>` : ""}
+        ${(exp.company || exp.duration) ? `
+        <p style="font-family:${F};font-size:11px;color:${MUTED};margin:0 0 8px 0;">
+          ${exp.company ?? ""}${exp.company && exp.duration ? `<span style="margin:0 6px;">•</span>` : ""}${exp.duration ?? ""}
         </p>` : ""}
-        ${(exp.bullets && exp.bullets.length > 0) ? `
+        ${allBullets.length > 0 ? `
         <ul style="list-style:none;padding:0;margin:0;">
-          ${exp.bullets.map(b => `
-          <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
-            <span style="font-family:${F};font-size:13px;color:${BODY};flex-shrink:0;line-height:1.6;">•</span>
-            <span style="font-family:${F};font-size:12px;color:${BODY};line-height:1.7;">${b}</span>
+          ${allBullets.map((b) => `
+          <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">
+            <span style="font-family:${F};font-size:12px;color:${BODY};flex-shrink:0;line-height:1.6;">•</span>
+            <span style="font-family:${F};font-size:11px;color:${BODY};line-height:1.6;">${b}</span>
           </li>`).join("")}
         </ul>` : ""}
-      </div>`).join("")}
+      </div>`;
+      }).join("")}
     </div>
   ` : "";
 
@@ -164,120 +228,85 @@ export const generateTemp8Html = (data: ITemp8ResumeData): string => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${name} — CV</title>
+  <title>${fullName || "CV"} — CV</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-    }
+    html, body { margin: 0; padding: 0; width: 100%; }
     body {
-      padding: 40px 20px;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      background: #ffffff;
       font-family: 'Courier New', Courier, 'Lucida Console', monospace;
     }
-    .card {
-      width: 860px;
-      min-width: 860px;
-      background: #ffffff;
-      border-radius: 3px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
-      overflow: visible;
-      position: relative;
-      display: inline-block;
-    }
-
-    /* ── HEADER: uses padding-bottom to make room for the overlapping name box ── */
+    .card { width: 100%; background: #ffffff; }
     .header-band {
       background: ${HEADER_BG};
-      position: relative;
-      padding-top: 18px;
-      padding-bottom: 0;
-      z-index: 1;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    /* Name box sits at bottom of band, pulled down via negative margin */
     .name-box {
-      position: relative;
-      margin: 0 auto;
       background: ${NAMEBOX_BG};
-      padding: 18px 52px 20px;
+      padding: 14px 48px 16px;
       text-align: center;
-      width: fit-content;
-      min-width: 420px;
-      border: 4px solid ${HEADER_BG};
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      top: 32px;
-      z-index: 2;
+      border: 4px solid #ffffff33;
     }
     .name-box h1 {
       font-family: ${F};
-      font-size: 30px;
+      font-size: 26px;
       font-weight: 700;
       letter-spacing: 0.14em;
       color: ${DARK};
-      margin: 0 0 6px 0;
+      margin: 0 0 4px 0;
       text-transform: uppercase;
       line-height: 1.1;
     }
     .name-box .job-title {
       font-family: ${F};
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 400;
       letter-spacing: 0.28em;
       color: ${MUTED};
       margin: 0;
       text-transform: uppercase;
     }
-
-    /* Spacer compensates for the name-box top offset */
-    .name-box-spacer {
-      height: 52px;
-    }
-
-    .body-wrap { padding: 0 40px 48px; }
-    .summary-section { margin-bottom: 36px; }
+    .body-wrap { padding: 24px 40px 40px; }
+    .summary-section { margin-bottom: 24px; }
     .summary-section p {
       font-family: ${F};
-      font-size: 12px;
+      font-size: 11px;
       color: ${BODY};
-      line-height: 1.85;
+      line-height: 1.75;
       text-align: justify;
       margin: 0;
     }
     .two-col {
       display: flex;
-      gap: 44px;
+      gap: 40px;
       align-items: flex-start;
     }
-    .left-col { flex: 0 0 36%; min-width: 0; }
+    .left-col { flex: 0 0 34%; min-width: 0; }
     .right-col { flex: 1; min-width: 0; }
   </style>
 </head>
 <body>
   <div class="card">
 
-    <!-- HEADER BAND with name box hanging below -->
+    <!-- HEADER BAND -->
     <div class="header-band">
       <div class="name-box">
-        ${name ? `<h1>${name}</h1>` : ""}
-        ${title ? `<p class="job-title">${title}</p>` : ""}
+        ${fullName ? `<h1>${fullName}</h1>` : ""}
+        ${currentRole ? `<p class="job-title">${currentRole}</p>` : ""}
       </div>
     </div>
-
-    <!-- Spacer: fills the space for the half of name-box below the band -->
-    <div class="name-box-spacer"></div>
 
     <!-- BODY -->
     <div class="body-wrap">
 
       <!-- SUMMARY -->
-      ${summary ? `
+      ${resumeSummary ? `
       <div class="summary-section">
-        ${sectionHeading("SUMARY")}
-        <p>${summary}</p>
+        ${sectionHeading("SUMMARY")}
+        <p>${resumeSummary}</p>
       </div>` : ""}
 
       <!-- TWO COLUMNS -->
@@ -289,6 +318,7 @@ export const generateTemp8Html = (data: ITemp8ResumeData): string => {
           ${skillsHtml}
           ${educationHtml}
           ${languagesHtml}
+          ${hobbiesHtml}
         </div>
 
         <!-- RIGHT -->

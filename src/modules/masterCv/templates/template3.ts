@@ -1,53 +1,63 @@
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types matching DB exactly ─────────────────────────────────
 
 type ITemp3Education = {
-  degree: string;
-  institution: string;
-  honors: string[];
+  degree?: string;
+  certificateName?: string;
+  institution?: string;
+  organizationName?: string;
+  passingYear?: string;
+  issueDate?: string;
+};
+
+type ITemp3Skill = {
+  skillName: string;
+  proficiencyLevel?: string;
 };
 
 type ITemp3Experience = {
-  title: string;
   company: string;
-  location: string;
-  period: string;
-  points: string[];
+  position: string;       // was: title
+  duration: string;       // was: period
+  responsibilities?: string;
+  projects?: string[];
 };
 
 type ITemp3ResumeData = {
-  name: string;
-  title: string;
-  profileImage: string;
-  profile: string;
-  phone: string;
+  fullName: string;                               // was: name
+  currentRole: string;                            // was: title
+  resumeSummary: string;                          // was: profile
+  phoneNumber: string;                            // was: phone
   email: string;
-  website: string;
-  address: string;
-  languages: string[];
-  skills: string[];
+  portfolioUrl?: string;                          // was: website
+  location: string;                               // was: address
+  languages: string[];                            // stays string[] — DB sends plain strings
+  skills: ITemp3Skill[];                          // was: string[]
   hobbies: string[];
-  education: ITemp3Education[];
-  experience: ITemp3Experience[];
+  educationsAndCertifications: ITemp3Education[]; // was: education
+  workExperiences: ITemp3Experience[];            // was: experience
+  user?: { profileImage?: string };
 };
 
-// ─── Generator ────────────────────────────────────────────────────────────────
+// ─── Generator ────────────────────────────────────────────────
 
 export const generateTemp3Html = (data: ITemp3ResumeData): string => {
   const {
-    name = "",
-    title = "",
-    profileImage = "",
-    profile = "",
-    phone = "",
+    fullName = "",
+    currentRole = "",
+    resumeSummary = "",
+    phoneNumber = "",
     email = "",
-    website = "",
-    address = "",
+    portfolioUrl = "",
+    location = "",
     languages = [],
     skills = [],
     hobbies = [],
-    education = [],
-    experience = [],
+    educationsAndCertifications = [],
+    workExperiences = [],
+    user,
   } = data;
+
+  const profileImage = user?.profileImage ?? "";
 
   // ── Helpers ──
   const bulletList = (items: string[]) =>
@@ -78,43 +88,55 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
   const addressIcon = `<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`;
 
   // ── Education HTML ──
-  const educationHtml = education
+  const educationHtml = educationsAndCertifications
     .map(
       (edu: ITemp3Education, i: number) => `
-    <div class="edu-item" ${i < education.length - 1 ? 'style="margin-bottom:12px"' : ""}>
+    <div class="edu-item" ${i < educationsAndCertifications.length - 1 ? 'style="margin-bottom:12px"' : ""}>
       ${edu.degree ? `<p class="edu-degree">${edu.degree}</p>` : ""}
       ${edu.institution ? `<p class="edu-institution">${edu.institution}</p>` : ""}
-      ${
-        edu.honors && edu.honors.length > 0
-          ? `<div style="padding-left:4px">${bulletList(edu.honors)}</div>`
-          : ""
-      }
+      ${edu.passingYear ? `<p class="edu-institution">${edu.passingYear}</p>` : ""}
+      ${edu.certificateName ? `<div style="padding-left:4px">${bulletList([edu.certificateName])}</div>` : ""}
+      ${edu.organizationName ? `<p class="edu-institution">${edu.organizationName}</p>` : ""}
+      ${edu.issueDate ? `<p class="edu-institution">Issued: ${edu.issueDate}</p>` : ""}
     </div>`
     )
     .join("");
 
   // ── Experience HTML ──
-  const experienceHtml = experience
-    .map(
-      (exp: ITemp3Experience, i: number) => `
-    <div class="exp-item" ${i < experience.length - 1 ? 'style="margin-bottom:16px"' : ""}>
-      ${exp.title ? `<p class="exp-title">${exp.title}</p>` : ""}
+  const experienceHtml = workExperiences
+    .map((exp: ITemp3Experience, i: number) => {
+      const responsibilityBullets = exp.responsibilities
+        ? exp.responsibilities
+            .split(/\n|(?<=[.!?])\s+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
+      const allBullets = [
+        ...responsibilityBullets,
+        ...(exp.projects ?? []),
+      ];
+
+      return `
+    <div class="exp-item" ${i < workExperiences.length - 1 ? 'style="margin-bottom:16px"' : ""}>
+      ${exp.position ? `<p class="exp-title">${exp.position}</p>` : ""}
       ${
-        exp.company || exp.location || exp.period
+        exp.company || exp.duration
           ? `<p class="exp-meta">
-              ${[exp.company, exp.location].filter(Boolean).join(", ")}
-              ${exp.period ? `<br/>${exp.period}` : ""}
+              ${exp.company ?? ""}
+              ${exp.duration ? `<br/>${exp.duration}` : ""}
              </p>`
           : ""
       }
-      ${
-        exp.points && exp.points.length > 0
-          ? `<div>${bulletList(exp.points)}</div>`
-          : ""
-      }
-    </div>`
-    )
+      ${allBullets.length > 0 ? `<div>${bulletList(allBullets)}</div>` : ""}
+    </div>`;
+    })
     .join("");
+
+  // ── Skills as flat string array for bulletList ──
+  const skillNames = skills.map((s: ITemp3Skill) =>
+    s.proficiencyLevel ? `${s.skillName} (${s.proficiencyLevel})` : s.skillName
+  );
 
   return `
 <!DOCTYPE html>
@@ -122,7 +144,7 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${name} - CV</title>
+  <title>${fullName} - CV</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -135,7 +157,6 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       padding: 0;
     }
 
-    /* ── CV Card ── */
     .cv-card {
       width: 100%;
       min-height: 100vh;
@@ -143,12 +164,7 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       overflow: hidden;
     }
 
-    /* ─────────────────────────────────────
-       HEADER
-    ───────────────────────────────────── */
-    .header {
-      padding: 32px 32px 0 32px;
-    }
+    .header { padding: 32px 32px 0 32px; }
 
     .header-inner {
       display: flex;
@@ -212,15 +228,11 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       margin-top: 20px;
     }
 
-    /* ─────────────────────────────────────
-       BODY — two columns
-    ───────────────────────────────────── */
     .body {
       display: flex;
       padding-bottom: 32px;
     }
 
-    /* ── LEFT COLUMN ── */
     .left-col {
       width: 210px;
       min-width: 210px;
@@ -242,7 +254,6 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       margin: 14px 0 12px 0;
     }
 
-    /* Contact rows */
     .contact-row {
       display: flex;
       align-items: flex-start;
@@ -264,7 +275,6 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       word-break: break-word;
     }
 
-    /* Bullet rows (languages / skills / hobbies) */
     .bullet-row {
       display: flex;
       align-items: flex-start;
@@ -286,7 +296,6 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       line-height: 1.5;
     }
 
-    /* ── Vertical divider ── */
     .col-divider {
       width: 1px;
       background: #d1d5db;
@@ -294,7 +303,6 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       flex-shrink: 0;
     }
 
-    /* ── RIGHT COLUMN ── */
     .right-col {
       flex: 1;
       padding: 20px 32px 0 24px;
@@ -316,7 +324,6 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       margin: 0 0 16px 0;
     }
 
-    /* Education */
     .edu-degree {
       font-size: 11px;
       font-weight: 700;
@@ -333,7 +340,6 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
       margin-bottom: 4px;
     }
 
-    /* Experience */
     .exp-title {
       font-size: 11px;
       font-weight: 700;
@@ -354,102 +360,73 @@ export const generateTemp3Html = (data: ITemp3ResumeData): string => {
 <body>
   <div class="cv-card">
 
-    <!-- ══ HEADER ══ -->
     <div class="header">
       <div class="header-inner">
-
-        <!-- Left: name + title + profile -->
         <div class="header-left">
-          <h1 class="header-name">${name}</h1>
-          ${title ? `<p class="header-title">${title}</p>` : ""}
-          ${profile ? `<p class="header-profile">${profile}</p>` : ""}
+          <h1 class="header-name">${fullName}</h1>
+          ${currentRole ? `<p class="header-title">${currentRole}</p>` : ""}
+          ${resumeSummary ? `<p class="header-profile">${resumeSummary}</p>` : ""}
         </div>
-
-        <!-- Photo -->
         ${
           profileImage
-            ? `<img class="header-photo" src="${profileImage}" alt="${name}" />`
+            ? `<img class="header-photo" src="${profileImage}" alt="${fullName}" />`
             : `<div class="header-photo-placeholder">
                 <svg width="56" height="56" fill="#9ca3af" viewBox="0 0 24 24">
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                 </svg>
                </div>`
         }
-
       </div>
       <div class="header-divider"></div>
     </div>
 
-    <!-- ══ BODY ══ -->
     <div class="body">
 
-      <!-- ── LEFT COLUMN ── -->
       <div class="left-col">
-
-        <!-- Contact -->
         <p class="left-section-title">Contact</p>
-        ${contactRow(phoneIcon, phone)}
+        ${contactRow(phoneIcon, phoneNumber)}
         ${contactRow(emailIcon, email)}
-        ${contactRow(websiteIcon, website)}
-        ${contactRow(addressIcon, address)}
+        ${contactRow(websiteIcon, portfolioUrl)}
+        ${contactRow(addressIcon, location)}
 
-        <!-- Languages -->
-        ${
-          languages.length > 0
-            ? `${leftSectionDivider}
-               <p class="left-section-title">Languages</p>
-               ${bulletList(languages)}`
-            : ""
-        }
+        ${languages.length > 0
+          ? `${leftSectionDivider}
+             <p class="left-section-title">Languages</p>
+             ${bulletList(languages)}`
+          : ""}
 
-        <!-- Skills -->
-        ${
-          skills.length > 0
-            ? `${leftSectionDivider}
-               <p class="left-section-title">Skills</p>
-               ${bulletList(skills)}`
-            : ""
-        }
+        ${skillNames.length > 0
+          ? `${leftSectionDivider}
+             <p class="left-section-title">Skills</p>
+             ${bulletList(skillNames)}`
+          : ""}
 
-        <!-- Hobbies -->
-        ${
-          hobbies.length > 0
-            ? `${leftSectionDivider}
-               <p class="left-section-title">Hobbies</p>
-               ${bulletList(hobbies)}`
-            : ""
-        }
-
+        ${hobbies.length > 0
+          ? `${leftSectionDivider}
+             <p class="left-section-title">Hobbies</p>
+             ${bulletList(hobbies)}`
+          : ""}
       </div>
 
-      <!-- Vertical divider -->
       <div class="col-divider"></div>
 
-      <!-- ── RIGHT COLUMN ── -->
       <div class="right-col">
+        ${educationsAndCertifications.length > 0
+          ? `<p class="right-section-title">Education</p>
+             <div style="margin-bottom:16px">${educationHtml}</div>`
+          : ""}
 
-        <!-- Education -->
-        ${
-          education.length > 0
-            ? `<p class="right-section-title">Education</p>
-               <div style="margin-bottom:16px">${educationHtml}</div>`
-            : ""
-        }
+        ${educationsAndCertifications.length > 0 && workExperiences.length > 0
+          ? `<div class="right-divider"></div>`
+          : ""}
 
-        <!-- Divider between education and experience -->
-        ${education.length > 0 && experience.length > 0 ? `<div class="right-divider"></div>` : ""}
-
-        <!-- Work Experience -->
-        ${
-          experience.length > 0
-            ? `<p class="right-section-title">Work Experience</p>
-               <div>${experienceHtml}</div>`
-            : ""
-        }
-
+        ${workExperiences.length > 0
+          ? `<p class="right-section-title">Work Experience</p>
+             <div>${experienceHtml}</div>`
+          : ""}
       </div>
-    </div>
 
+    </div>
   </div>
 </body>
 </html>

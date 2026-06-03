@@ -16,6 +16,12 @@ router.post(
   ),
   EnhancedMasterCvController.create
 );
+//  Create
+router.patch(
+  "/update",
+  auth(),
+  EnhancedMasterCvController.update
+);
 
 // Read (Admin — all records)
 router.get(

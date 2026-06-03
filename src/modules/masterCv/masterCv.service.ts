@@ -8,14 +8,12 @@ import { generateTemp1Html } from "./templates/template1";
 import { generateTemp2Html } from "./templates/template2";
 import { generateTemp3Html } from "./templates/template3";
 import { generateTemp4Html } from "./templates/template4";
-
 import os from "os";
 import fs from "fs";
 import { generateTemp5Html } from "./templates/template5";
 import { generateTemp6Html } from "./templates/template6";
 import { generateTemp7Html } from "./templates/template7";
 import { generateTemp8Html } from "./templates/template8";
-import { enhanceChallenge } from "./masterCv.helper";
 import { enhanceChallengeQueue } from "../../infrastructure/queue/queues/masterCv.queue";
 import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
 
@@ -32,181 +30,59 @@ const getExecutablePath = (): string => {
   return process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium";
 };
 
+
 const generateCvPdf = async (
   userId: string,
   templateId: string,
-  payload: any
+  payload: any          // ← typed as raw frontend shape
 ): Promise<Buffer> => {
-  const masterCv = await prisma.masterCv.findUnique({
-    where: { userId },
-  });
-
-  if (!masterCv) {
-    throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
-  }
+  const masterCv = await prisma.masterCv.findUnique({ where: { userId } });
+  if (!masterCv) throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
+  const data = payload
 
   let browser = null;
-
   const execPath = getExecutablePath();
-  console.log("Using executable:", execPath);
 
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--no-zygote",
-      ],
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--no-zygote"],
       executablePath: execPath,
     });
 
     const page = await browser.newPage();
-    let html;
+    let html: string;
 
     switch (templateId) {
-      case "temp-01":
-        html = generateTemp1Html(payload);
-        break;
-      case "temp-02":
-        html = generateTemp2Html(payload);
-        break;
-      case "temp-03":
-        html = generateTemp3Html(payload);
-        break;
-      case "temp-04":
-        html = generateTemp4Html(payload);
-        break;
-      case "temp-05":
-        html = generateTemp5Html(payload);
-        break;
-      case "temp-06":
-        html = generateTemp6Html(payload);
-        break;
-      case "temp-07":
-        html = generateTemp7Html(payload);
-        break;
-      case "temp-08":
-        html = generateTemp8Html(payload);
-        break;
-      default:
-        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
+      case "temp-01": html = generateTemp1Html(data); break;
+      case "temp-02": html = generateTemp2Html(data); break;
+      case "temp-03": html = generateTemp3Html(data); break;
+      case "temp-04": html = generateTemp4Html(data); break;
+      case "temp-05": html = generateTemp5Html(data); break;
+      case "temp-06": html = generateTemp6Html(data); break;
+      case "temp-07": html = generateTemp7Html(data); break;
+      case "temp-08": html = generateTemp8Html(data); break;
+      default: throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
     }
 
     await page.setContent(html, { waitUntil: "load" });
-
-    // Wait for fonts and images to finish rendering
     await new Promise((resolve) => setTimeout(resolve, 500));
-
     await page.emulateMediaType("screen");
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: {
-        top: "0px",
-        right: "0px",
-        bottom: "0px",
-        left: "0px",
-      },
+      margin: { top: "0px", right: "0px", bottom: "0px", left: "0px" },
     });
 
     return Buffer.from(pdfBuffer);
   } catch (error) {
     console.error("Puppeteer error:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to generate PDF. Please try again."
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to generate PDF. Please try again.");
   } finally {
-    if (browser) {
-      await browser.close();
-    }
+    if (browser) await browser.close();
   }
 };
-// const generateCvPdf = async (userId: string, templateId: string, payload: any): Promise<Buffer> => {
-
-//   const masterCv = await prisma.masterCv.findUnique(
-//     {
-//       where: { userId },
-//     }
-//   );
-
-//   if (!masterCv) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "MasterCv not found!");
-//   }
-
-//   let browser = null;
-//   console.log("Executable path:", process.env.PUPPETEER_EXECUTABLE_PATH);
-//   console.log("Skip download:", process.env.PUPPETEER_SKIP_DOWNLOAD);
-//   try {
-//     browser = await puppeteer.launch({
-//       headless: true,
-//       args: [
-//         "--no-sandbox",
-//         "--disable-setuid-sandbox",
-//         "--disable-dev-shm-usage",   // important for VPS/Docker
-//         "--disable-gpu",
-//         "--no-zygote",
-//       ],
-//       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
-//     });
-
-//     const page = await browser.newPage();
-//     let html;
-
-//     // Inject the HTML template with user data
-//     switch (templateId) {
-//       case "temp-01":
-//         html = generateTemp1Html(payload);
-//         break;
-//       case "temp-02":
-//         html = generateTemp2Html(payload);
-//         break;
-//       case "temp-03":
-//         html = generateTemp3Html(payload);
-//         break;
-//       case "temp-04":
-//         html = generateTemp4Html(payload);
-//         break;
-//       case "temp-05":
-//       default:
-//         throw new ApiError(httpStatus.BAD_REQUEST, "Invalid template ID!");
-//     }
-//     await page.setContent(html, { waitUntil: "load" });
-//     // Wait for fonts and images to finish rendering
-//     await new Promise((resolve) => setTimeout(resolve, 500));
-
-//     // Set A4 page size
-//     await page.emulateMediaType("screen");
-
-//     const pdfBuffer = await page.pdf({
-//       format: "A4",
-//       printBackground: true,
-//       margin: {
-//         top: "0px",
-//         right: "0px",
-//         bottom: "0px",
-//         left: "0px",
-//       },
-//     });
-
-//     return Buffer.from(pdfBuffer);
-//   } catch (error) {
-//     // console.log("error", error)
-//     throw new ApiError(
-//       httpStatus.INTERNAL_SERVER_ERROR,
-//       "Failed to generate PDF. Please try again."
-//     );
-//   } finally {
-//     if (browser) {
-//       await browser.close();
-//     }
-//   }
-// };
-
 const createMasterCv = async (userId: string, payload: MasterCvInput) => {
   const existing = await prisma.masterCv.findUnique({ where: { userId } });
 
@@ -219,16 +95,16 @@ const createMasterCv = async (userId: string, payload: MasterCvInput) => {
       bio: payload.bio,
       careerStage: payload.careerStage,
       carrierGoal: payload.carrierGoal,
-      challenges: [...(existing?.challenges as any[] ?? []), ...(payload.challenges ?? [])],
+      challenges: payload.challenges,
       currentRole: payload.currentRole,
-      educationsAndCertifications: [...(existing?.educationsAndCertifications as any[] ?? []), ...(payload.educationsAndCertifications ?? [])],
+      educationsAndCertifications: payload.educationsAndCertifications,
       industry: payload.industry,
       linkedinUrl: payload.linkedinUrl,
       phoneNumber: payload.phoneNumber,
       portfolioUrl: payload.portfolioUrl,
       resumeSummary: payload.resumeSummary,
       strength: payload.strength,
-      workExperiences: [...(existing?.workExperiences as any[] ?? []), ...(payload.workExperiences ?? [])],
+      workExperiences: payload.workExperiences,
     },
     create: {
       userId,
@@ -323,7 +199,7 @@ export const MasterCvService = {
   getMasterCv,
   deleteMasterCv,
   createMasterCv,
-  generateCvPdf,
   addChallange,
-  getChallengeStory
+  getChallengeStory,
+  generateCvPdf
 };

@@ -51,6 +51,14 @@ const remove = catchAsync(async (req: Request, res: Response) => {
     message: "ContactMessage deleted successfully!",
   });
 });
+const sendFeedBack = catchAsync(async (req: Request, res: Response) => {
+  const { message,question } = req.body;
+  await ContactMessageService.sendFeedBack(req.user.id, message,question);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Feedback sent successfully!",
+  });
+});
 
 export const ContactMessageController = {
   create,
@@ -58,4 +66,5 @@ export const ContactMessageController = {
   getSingle,
   update,
   remove,
+  sendFeedBack
 };

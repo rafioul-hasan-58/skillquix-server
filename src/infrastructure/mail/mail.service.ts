@@ -47,8 +47,39 @@ const sendContactMessage = async (payload: {
 
     const res = await transporter.sendMail({
         from: `${config.smtp.name} <${config.smtp.email_from}>`,
-        to: config.admin.contact_email, // sends to your own support email
+        to: config.admin.contact_email,
         subject: `New Support Message - ${payload.messageCategory.replace(/_/g, " ")}`,
+        html,
+    });
+    return res
+};
+
+const sendFeedBack = async (payload: {
+    name: string;
+    email: string;
+    message: string;
+    question: string;
+    createdAt: string;
+}) => {
+    const date = new Date(payload.createdAt);
+
+    const formattedDate = date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+
+    const formattedTime = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+    });
+    const html = ContactMessageTemplates.sendFeedBack({ ...payload, formattedDate, formattedTime });
+
+    const res = await transporter.sendMail({
+        from: `${config.smtp.name} <${config.smtp.email_from}>`,
+        to: `${config.admin.contact_email}`,
+        subject: `New Feedback Received`,
         html,
     });
     return res
@@ -58,6 +89,7 @@ export const mailService = {
     sendEmail,
     sendApplyGigConfirmation,
     sendContactMessage,
+    sendFeedBack
 }
 
 
