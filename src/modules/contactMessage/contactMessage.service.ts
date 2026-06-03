@@ -77,7 +77,7 @@ const deleteContactMessage = async (id: string) => {
   return null;
 };
 
-const sendFeedBack = async (userId: string, message: string) => {
+const sendFeedBack = async (userId: string, message: string, question: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId }
   });
@@ -89,6 +89,7 @@ const sendFeedBack = async (userId: string, message: string) => {
     name: user.fullName,
     email: user.email,
     message,
+    question,
     createdAt: new Date().toISOString(),
   }
 

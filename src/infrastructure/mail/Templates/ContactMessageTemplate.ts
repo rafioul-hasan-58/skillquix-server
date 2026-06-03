@@ -1,12 +1,12 @@
 export const ContactMessageTemplates = {
-    supportEmail: (data: {
-        name: string;
-        email: string;
-        phoneNumber?: string;
-        organization?: string;
-        message: string;
-        messageCategory: string;
-    }) => `<!DOCTYPE html>
+  supportEmail: (data: {
+    name: string;
+    email: string;
+    phoneNumber?: string;
+    organization?: string;
+    message: string;
+    messageCategory: string;
+  }) => `<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -132,13 +132,14 @@ export const ContactMessageTemplates = {
 </body>
 
 </html>`,
-    sendFeedBack: (data: {
-        name: string;
-        email: string;
-        formattedDate: string;
-        formattedTime: string;
-        message: string;
-    }) => `<!DOCTYPE html>
+  sendFeedBack: (data: {
+    name: string;
+    email: string;
+    question: string;
+    formattedDate: string;
+    formattedTime: string;
+    message: string;
+  }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -190,6 +191,12 @@ export const ContactMessageTemplates = {
 
               <!-- Divider -->
               <hr style="border:none;border-top:1px solid #f0f0f0;margin:0 0 28px;" />
+
+              <!-- Question -->
+              <p style="margin:0 0 8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#999999;font-family:Arial,sans-serif;">Question</p>
+              <div style="background-color:#f4f4f0;border-left:3px solid #cccccc;border-radius:0 8px 8px 0;padding:16px 24px;margin-bottom:28px;">
+                <p style="margin:0;font-size:15px;line-height:1.8;color:#444444;font-family:Georgia,serif;">${data.question}</p>
+              </div>
 
               <!-- Message -->
               <p style="margin:0 0 8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#999999;font-family:Arial,sans-serif;">Message</p>

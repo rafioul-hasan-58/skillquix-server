@@ -10,6 +10,7 @@ const createContactMessageValidationSchema = z.object({
 });
 
 const sendFeedBack = z.object({
+  question: z.string({ required_error: "Question is required." }),
   message: z.string({ required_error: "Message is required." }),
 });
 

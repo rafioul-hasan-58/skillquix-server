@@ -52,8 +52,8 @@ const remove = catchAsync(async (req: Request, res: Response) => {
   });
 });
 const sendFeedBack = catchAsync(async (req: Request, res: Response) => {
-  const { message } = req.body;
-  await ContactMessageService.sendFeedBack(req.user.id, message);
+  const { message,question } = req.body;
+  await ContactMessageService.sendFeedBack(req.user.id, message,question);
   sendResponse(res, {
     statusCode: status.OK,
     message: "Feedback sent successfully!",
