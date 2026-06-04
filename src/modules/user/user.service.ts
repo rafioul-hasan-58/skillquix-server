@@ -136,6 +136,8 @@ const myProfile = async (userId: string) => {
       fullName: true,
       email: true,
       profileImage: true,
+      subscriptionStatus: true,
+      subscriptionType: true,
       profession: true,
       role: true,
       bio: true,
