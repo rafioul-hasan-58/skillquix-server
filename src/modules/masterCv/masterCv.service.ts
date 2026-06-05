@@ -84,8 +84,6 @@ const generateCvPdf = async (
   }
 };
 const createMasterCv = async (userId: string, payload: MasterCvInput) => {
-  const existing = await prisma.masterCv.findUnique({ where: { userId } });
-
   return prisma.masterCv.upsert({
     where: { userId },
     update: {
@@ -100,6 +98,7 @@ const createMasterCv = async (userId: string, payload: MasterCvInput) => {
       educationsAndCertifications: payload.educationsAndCertifications,
       industry: payload.industry,
       linkedinUrl: payload.linkedinUrl,
+      totalExperienceYear: payload.totalExperienceYear,
       phoneNumber: payload.phoneNumber,
       portfolioUrl: payload.portfolioUrl,
       resumeSummary: payload.resumeSummary,
@@ -118,6 +117,7 @@ const createMasterCv = async (userId: string, payload: MasterCvInput) => {
       currentRole: payload.currentRole,
       educationsAndCertifications: payload.educationsAndCertifications ?? [],
       industry: payload.industry,
+      totalExperienceYear: payload.totalExperienceYear,
       linkedinUrl: payload.linkedinUrl,
       phoneNumber: payload.phoneNumber,
       portfolioUrl: payload.portfolioUrl,
