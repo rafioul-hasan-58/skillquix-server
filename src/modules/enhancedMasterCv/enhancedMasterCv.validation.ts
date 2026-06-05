@@ -9,12 +9,12 @@ const ScoreBreakdownSchema = z.object({
 
 const SkillSchema = z.object({
   skillName: z.string().min(1, "Skill name is required"),
-  skillCategory: z.string().min(1, "Skill category is required"),
-  proficiencyLevel: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"]),
-  yearOfExperience: z.number().int().min(0),
-  source: z.enum(["MASTER_CV", "JOB_POSTING", "ASSESSMENT", "OTHER"]),
-  score: z.number().min(0).max(100),
-  scoreBreakdown: ScoreBreakdownSchema,
+  skillCategory: z.string().min(1, "Skill category is required").optional(),
+  proficiencyLevel: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"]).optional(),
+  yearOfExperience: z.number().int().min(0).optional(),
+  source: z.enum(["MASTER_CV", "JOB_POSTING", "ASSESSMENT", "OTHER"]).optional(),
+  score: z.number().min(0).max(100).optional(),
+  scoreBreakdown: ScoreBreakdownSchema.optional(),
 });
 // ai score json validation
 const AiScoreBreakdownSchema = z.object({
@@ -48,7 +48,7 @@ const EducationAndCertificationSchema = z.object({
   passingYear: z
     .string(),
   issueDate: z
-    .string()
+    .string().optional()
 });
 // work experience json validation
 const WorkExperienceSchema = z.object({
