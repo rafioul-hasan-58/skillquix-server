@@ -48,7 +48,7 @@ const EducationAndCertificationSchema = z.object({
   passingYear: z
     .string(),
   issueDate: z
-    .string()
+    .string().optional()
 });
 // work experience json validation
 const WorkExperienceSchema = z.object({
