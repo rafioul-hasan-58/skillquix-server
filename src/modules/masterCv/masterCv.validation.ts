@@ -27,7 +27,7 @@ export const MasterCvSchema = z.object({
   email: z.string().email().optional(),
   location: z.string().optional(),
   bio: z.string().optional(),
-  experienceYear: z.string().optional(),
+  totalExperienceYear: z.number().optional(),
   careerStage: z.string().optional(),
   resumeLink: z.string().url().optional(),
   domain: z.string().optional(),
