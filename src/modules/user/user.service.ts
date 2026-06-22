@@ -2,7 +2,6 @@ import status from "http-status";
 import { getClarityPercentageChange, getClearityScore, hashPassword, parseResume } from "./user.helper";
 import { SubscriptionType, User, UserRole } from "@prisma/client";
 import prisma from "../../lib/prisma";
-import { createToken } from "../auth/auth.halper";
 import { addManagerInput } from "./user.validation";
 import { monthlyRevenue } from "../subscription/subscription.helper";
 import { SkillService } from "../skill/skill.service";
@@ -15,6 +14,7 @@ import stripe from "../../infrastructure/stripe/stripe";
 import { fetchSimilarGigs } from "../gig/gig.helper";
 import { JOB_NAMES } from "../../infrastructure/queue/queue.constant";
 import { resumeExtractionQueue } from "../../infrastructure/queue/queues/resume.queue";
+import { sendOTP } from "../../shared/utils/sendOTP";
 
 
 const register = async (payload: User) => {
@@ -66,27 +66,13 @@ const register = async (payload: User) => {
     }
   })
 
-  const jwtPayload = {
-    id: user.id,
-    fullName: user.fullName ?? undefined,
-    email: user.email,
-    profileImage: user.profileImage,
-    role: user.role,
+  // Send OTP to user's email for verification
+  const otpResult = await sendOTP(user.id);
+
+  return {
+    message: "An OTP has been sent to your email. Please verify to complete registration.",
+    expiresAt: otpResult.expiresAt,
   };
-
-  const accessToken = createToken(
-    jwtPayload,
-    config.jwt.access_token_secret as string,
-    config.jwt.access_token_expires_in as string
-  );
-
-  const refreshToken = createToken(
-    jwtPayload,
-    config.jwt.refresh_token_secret as string,
-    config.jwt.refresh_token_expires_in as string
-  );
-
-  return { accessToken, refreshToken };
 };
 
 const getAllUserFromDB = async (query: Record<string, unknown>) => {
@@ -539,6 +525,170 @@ const monthlyInsight = async (userId: string) => {
   }
 };
 
+const PROFILE_FIELDS = [
+  {
+    field: "fullName",
+    label: "Full Name",
+    weight: 15,
+    tip: "Add your full name",
+    check: (user: any) => !!user.fullName && user.fullName.trim() !== "",
+  },
+  {
+    field: "profileImage",
+    label: "Profile Photo",
+    weight: 10,
+    tip: "Upload a profile photo to increase visibility",
+    check: (user: any) => !!user.profileImage && user.profileImage.trim() !== "",
+  },
+  {
+    field: "profession",
+    label: "Profession",
+    weight: 15,
+    tip: "Add your profession or job title",
+    check: (user: any) => !!user.profession && user.profession.trim() !== "",
+  },
+  {
+    field: "location",
+    label: "Location",
+    weight: 10,
+    tip: "Add your location",
+    check: (user: any) => !!user.location && user.location.trim() !== "",
+  },
+  {
+    field: "bio",
+    label: "Bio",
+    weight: 10,
+    tip: "Write a short bio about yourself",
+    check: (user: any) => !!user.bio && user.bio.trim() !== "",
+  },
+  {
+    field: "experienceYear",
+    label: "Experience Year",
+    weight: 5,
+    tip: "Add your years of experience",
+    check: (user: any) => !!user.experienceYear && user.experienceYear.trim() !== "",
+  },
+  {
+    field: "careerStage",
+    label: "Career Stage",
+    weight: 5,
+    tip: "Select your career stage",
+    check: (user: any) => !!user.careerStage && user.careerStage.trim() !== "",
+  },
+  {
+    field: "resumeLink",
+    label: "Resume",
+    weight: 10,
+    tip: "Upload your resume",
+    check: (user: any) => !!user.resumeLink && user.resumeLink.trim() !== "",
+  },
+  {
+    field: "skills",
+    label: "Skills",
+    weight: 10,
+    tip: "Add at least one skill",
+    check: (user: any) => user._count?.skills > 0,
+  },
+  {
+    field: "resumeProfile",
+    label: "Resume Profile",
+    weight: 5,
+    tip: "Parse your resume to create a resume profile",
+    check: (user: any) => !!user.resumeProfile,
+  },
+  {
+    field: "enhancedMasterCv",
+    label: "Master CV",
+    weight: 5,
+    tip: "Complete your Master CV with work experiences",
+    check: (user: any) => !!user.enhancedMasterCv && !!user.enhancedMasterCv.workExperiences,
+  },
+];
+
+const getProfileStrength = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      resumeProfile: { select: { id: true } },
+      enhancedMasterCv: { select: { id: true, workExperiences: true, aiScore: true, skills: true } },
+      _count: { select: { skills: true, reflextions: true } },
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+
+  const completedFields: { field: string; label: string }[] = [];
+  const missingFields: { field: string; label: string; tip: string }[] = [];
+  let earnedWeight = 0;
+
+  for (const entry of PROFILE_FIELDS) {
+    if (entry.check(user)) {
+      completedFields.push({ field: entry.field, label: entry.label });
+      earnedWeight += entry.weight;
+    } else {
+      missingFields.push({ field: entry.field, label: entry.label, tip: entry.tip });
+    }
+  }
+
+  const totalWeight = PROFILE_FIELDS.reduce((sum, f) => sum + f.weight, 0);
+  const strengthPercentage = Math.round((earnedWeight / totalWeight) * 100);
+
+  // Extract humanAuthenticityScore from enhancedMasterCv.aiScore.total
+  const aiScore = user.enhancedMasterCv?.aiScore as Record<string, any> | null;
+  const humanAuthenticityScore = aiScore?.total ?? null;
+
+  // Extract top 3 skills by score from enhancedMasterCv.skills
+  const rawSkills = (user.enhancedMasterCv?.skills as Array<{ skillName: string; score: number }>) ?? [];
+  const topSkills = [...rawSkills]
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    .slice(0, 3)
+    .map(({ skillName, score }) => ({ skillName, score }));
+
+  // Badge based on reflextion count
+  const reflextionCount = user._count.reflextions;
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  const last14DaysReflextionCount = await prisma.reflextion.count({
+    where: { userId, createdAt: { gte: fourteenDaysAgo } },
+  });
+
+  const BADGE_TIERS = [
+    { min: 15, badge: "Visionary", description: "A true thought leader with deep self-awareness" },
+    { min: 10, badge: "Expert", description: "Consistently reflecting and growing" },
+    { min: 6, badge: "Senior", description: "Building strong reflective habits" },
+    { min: 3, badge: "Emerging", description: "Developing a reflective mindset" },
+    { min: 1, badge: "Starter", description: "Took the first step toward self-reflection" },
+    { min: 0, badge: "Newcomer", description: "Start adding reflections to earn badges" },
+  ];
+  const badgeTier = BADGE_TIERS.find((t) => reflextionCount >= t.min)!;
+  const currentTierIndex = BADGE_TIERS.indexOf(badgeTier);
+  const nextTier = currentTierIndex > 0 ? BADGE_TIERS[currentTierIndex - 1] : null;
+  const reflextionsToNextBadge = nextTier ? nextTier.min - reflextionCount : 0;
+
+  return {
+    strengthPercentage,
+    humanAuthenticityScore,
+    topSkills,
+    badge: {
+      name: badgeTier.badge,
+      description: badgeTier.description,
+      reflextionCount,
+      last14DaysReflextionCount,
+      nextBadge: nextTier
+        ? { name: nextTier.badge, reflextionsNeeded: reflextionsToNextBadge }
+        : null,
+    },
+    completedFields,
+    missingFields,
+    totalFields: PROFILE_FIELDS.length,
+    completedCount: completedFields.length,
+    missingCount: missingFields.length,
+  };
+};
+
 export const UserService = {
   register,
   getAllUserFromDB,
@@ -552,5 +702,6 @@ export const UserService = {
   getAllAdmins,
   adminDashboardOverview,
   userDashboardOverview,
-  monthlyInsight
+  monthlyInsight,
+  getProfileStrength
 };
