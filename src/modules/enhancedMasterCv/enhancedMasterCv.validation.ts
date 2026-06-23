@@ -67,6 +67,11 @@ const SkillGapScoreBreakdownSchema = z.object({
   roleAlignment: z.number().min(0).max(100),
   demandWeight: z.number().min(0).max(100),
 });
+// future vision json validation
+const UpdateFutureVisionSchema = z.object({
+  position: z.string().min(1, "Position is required"),
+  target: z.string().min(1, "Target is required"),
+});
 const SkillGapSchema = z.object({
   skillName: z.string().min(1, "Skill name is required"),
   skillCategory: z.string().min(1, "Skill category is required"),
@@ -117,6 +122,43 @@ const createEnhancedMasterCvValidationSchema = z.object({
   workExperiences: z.array(WorkExperienceSchema).default([]),
 });
 
+const updateEnhancedMasterCvValidationSchema = z.object({
+  bio: z.string().optional(),
+  careerStage: z.string().optional(),
+  carrierGoal: z.string().optional(),
+  currentRole: z.string().optional(),
+  domain: z.string().optional(),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .optional(),
+  fullName: z.string().optional(),
+  industry: z.string().optional(),
+  linkedinUrl: z.string().url("Invalid LinkedIn URL").optional(),
+  location: z.string().optional(),
+  languages: z.array(z.string()).optional(),
+  hobbies: z.array(z.string()).optional(),
+  phoneNumber: z.string().optional(),
+  portfolioUrl: z.string().url("Invalid portfolio URL").optional(),
+  resumeSummary: z.string().optional(),
+  resumeLink: z.string().url("Invalid resume URL").optional(),
+  subDomain: z.string().optional(),
+  totalExperienceYear: z.number().int().nonnegative().optional(),
+  strength: z.array(z.string()).optional(),
+
+  // JSON fields
+  aiScore: AiScoreSchema.optional(),
+  challenges: z.array(ChallengeSchema).optional(),
+  educationsAndCertifications: z.array(EducationAndCertificationSchema).optional(),
+  skills: z.array(SkillSchema).optional(),
+  skillGaps: z.array(SkillGapSchema).optional(),
+  workExperiences: z.array(WorkExperienceSchema).optional(),
+  futureVision: UpdateFutureVisionSchema.optional(),
+});
+
+export type TUpdateEnhancedMasterCv = z.infer<typeof updateEnhancedMasterCvValidationSchema>;
+
 export const EnhancedMasterCvValidation = {
   createEnhancedMasterCvValidationSchema,
+  updateEnhancedMasterCvValidationSchema,
 };

@@ -610,7 +610,39 @@ const getProfileStrength = async (userId: string) => {
     where: { id: userId },
     include: {
       resumeProfile: { select: { id: true } },
-      enhancedMasterCv: { select: { id: true, workExperiences: true, aiScore: true, skills: true } },
+      enhancedMasterCv: {
+        select: {
+          id: true,
+          workExperiences: true,
+          aiScore: true,
+          skills: true,
+          carrierGoal: true,
+          currentRole: true,
+          createdAt: true,
+          futureVision: true,
+        },
+      },
+      masterCv: {
+        select: {
+          currentRole: true,
+          createdAt: true,
+        },
+      },
+      reflextions: {
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: {
+          shortSummary: true,
+          createdAt: true,
+        },
+      },
+      skills: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          skillName: true,
+          createdAt: true,
+        },
+      },
       _count: { select: { skills: true, reflextions: true } },
     },
   });
@@ -667,6 +699,62 @@ const getProfileStrength = async (userId: string) => {
   const currentTierIndex = BADGE_TIERS.indexOf(badgeTier);
   const nextTier = currentTierIndex > 0 ? BADGE_TIERS[currentTierIndex - 1] : null;
   const reflextionsToNextBadge = nextTier ? nextTier.min - reflextionCount : 0;
+  const badgeProgress = nextTier
+    ? Math.round(((reflextionCount - badgeTier.min) / (nextTier.min - badgeTier.min)) * 100)
+    : 100;
+
+  // Milestone / Timeline Data Construction
+  const firstReflection = user.reflextions?.[0] || null;
+  const firstReflectionMilestone = firstReflection
+    ? {
+      year: new Date(firstReflection.createdAt).getFullYear(),
+      shortSummary: firstReflection.shortSummary,
+    }
+    : null;
+
+  const careerGoalMilestone = user.enhancedMasterCv?.carrierGoal
+    ? {
+      year: new Date(user.enhancedMasterCv.createdAt).getFullYear(),
+      carrierGoal: user.enhancedMasterCv.carrierGoal,
+    }
+    : null;
+
+  const firstSkills = user.skills || [];
+  const skillsMilestone = firstSkills.length > 0
+    ? {
+      year: new Date(firstSkills[0].createdAt).getFullYear(),
+      skills: firstSkills.slice(0, 4).map((s) => s.skillName),
+    }
+    : null;
+
+  const masterCvMilestone = user.masterCv
+    ? {
+      year: new Date(user.masterCv.createdAt).getFullYear(),
+    }
+    : null;
+
+  const currentRole = user.enhancedMasterCv?.currentRole || user.masterCv?.currentRole || null;
+  const currentPositionMilestone = {
+    year: "Today",
+    currentRole: currentRole,
+  };
+
+  const fVision = user.enhancedMasterCv?.futureVision as { position?: string; target?: string } | null;
+  const futureVisionMilestone = {
+    year: fVision?.target && fVision.target,
+    futureVision: fVision?.position && fVision?.target
+      ? `Future vision ${fVision.position} ${fVision.target}`
+      : "Future vision Target future role",
+  };
+
+  const milestonesList = [
+    ...(firstReflectionMilestone ? [{ type: "firstReflextion", ...firstReflectionMilestone }] : []),
+    ...(skillsMilestone ? [{ type: "skillsIdentified", ...skillsMilestone }] : []),
+    ...(masterCvMilestone ? [{ type: "masterCvCreated", ...masterCvMilestone }] : []),
+    ...(careerGoalMilestone ? [{ type: "careerGoal", ...careerGoalMilestone }] : []),
+    { type: "currentPosition", ...currentPositionMilestone },
+    { type: "futureVision", ...futureVisionMilestone },
+  ];
 
   return {
     strengthPercentage,
@@ -675,6 +763,7 @@ const getProfileStrength = async (userId: string) => {
     badge: {
       name: badgeTier.badge,
       description: badgeTier.description,
+      progress: badgeProgress,
       reflextionCount,
       last14DaysReflextionCount,
       nextBadge: nextTier
@@ -686,6 +775,124 @@ const getProfileStrength = async (userId: string) => {
     totalFields: PROFILE_FIELDS.length,
     completedCount: completedFields.length,
     missingCount: missingFields.length,
+    milestones: milestonesList,
+  };
+};
+
+const getStreakAndMilestones = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+  const reflections = await prisma.reflextion.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    select: { createdAt: true },
+  });
+
+  // ─── Weekly Streak Computation ────────────────────────────────────────────
+  // Group all reflection dates into ISO week buckets (YYYY-Www)
+  const getISOWeekKey = (date: Date): string => {
+    // Clone date and shift to Thursday of the same week (ISO week rule)
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = d.getUTCDay() || 7; // treat Sunday (0) as 7
+    d.setUTCDate(d.getUTCDate() + 4 - day); // shift to Thursday
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  };
+
+  const getPrevWeekKey = (weekKey: string): string => {
+    const [yr, wk] = weekKey.split("-W").map(Number);
+    const prevDate = new Date(Date.UTC(yr, 0, 1 + (wk - 2) * 7));
+    return getISOWeekKey(prevDate);
+  };
+
+  const allReflectionDates = reflections.map((r) => new Date(r.createdAt));
+  const weekSet = new Set(allReflectionDates.map(getISOWeekKey));
+  const sortedWeeks = [...weekSet].sort();
+
+  // Current consecutive streak (backwards from current week)
+  let currentStreak = 0;
+  const todayWeekKey = getISOWeekKey(new Date());
+  let startKey = todayWeekKey;
+  if (!weekSet.has(todayWeekKey)) {
+    const lastWeekKey = getPrevWeekKey(todayWeekKey);
+    if (weekSet.has(lastWeekKey)) {
+      startKey = lastWeekKey;
+    }
+  }
+
+  if (weekSet.has(startKey)) {
+    let checkKey = startKey;
+    while (weekSet.has(checkKey)) {
+      currentStreak++;
+      checkKey = getPrevWeekKey(checkKey);
+    }
+  }
+
+  // Longest streak ever
+  let longestStreak = 0;
+  let tempStreak = 0;
+  for (let i = 0; i < sortedWeeks.length; i++) {
+    if (i === 0) {
+      tempStreak = 1;
+    } else {
+      const prevWeekKey = sortedWeeks[i - 1];
+      const currentWeekKey = sortedWeeks[i];
+      const expectedPrevKey = getPrevWeekKey(currentWeekKey);
+      if (prevWeekKey === expectedPrevKey) {
+        tempStreak++;
+      } else {
+        tempStreak = 1;
+      }
+    }
+    longestStreak = Math.max(longestStreak, tempStreak);
+  }
+
+  // Total unique weeks with at least one reflection
+  const totalActiveWeeks = sortedWeeks.length;
+
+  // Streak milestones — week thresholds to celebrate
+  const STREAK_MILESTONES = [
+    { weeks: 1, label: "First Step", description: "Reflected for the first time!" },
+    { weeks: 3, label: "On a Roll", description: "3 weeks of consistent reflection" },
+    { weeks: 7, label: "One Month In", description: "7 weeks of steady growth" },
+    { weeks: 12, label: "Quarter Strong", description: "12 weeks — a full quarter of reflection" },
+    { weeks: 24, label: "Half Year", description: "24 weeks — six months of self-awareness" },
+  ];
+
+  const streakMilestones = STREAK_MILESTONES.map((m) => ({
+    weeks: m.weeks,
+    label: m.label,
+    description: m.description,
+    achieved: totalActiveWeeks >= m.weeks,
+  }));
+
+  // Weekly progress steps — how far the user is (e.g. 1st, 2nd … Nth week)
+  const weeklyProgress = sortedWeeks.map((weekKey, idx) => ({
+    week: idx + 1,
+    weekKey,
+    label: idx === 0
+      ? "1st week"
+      : idx === 1
+      ? "2nd week"
+      : idx === 2
+      ? "3rd week"
+      : `${idx + 1}th week`,
+  }));
+
+  return {
+    currentStreak,
+    longestStreak,
+    totalActiveWeeks,
+    streakMilestones,
+    weeklyProgress,
   };
 };
 
@@ -703,5 +910,6 @@ export const UserService = {
   adminDashboardOverview,
   userDashboardOverview,
   monthlyInsight,
-  getProfileStrength
+  getProfileStrength,
+  getStreakAndMilestones
 };

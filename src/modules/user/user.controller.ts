@@ -160,6 +160,17 @@ const profileStrength = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const streakAndMilestones = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  const result = await UserService.getStreakAndMilestones(id);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Streak and milestones fetched successfully!",
+    data: result,
+  });
+});
+
 export const UserController = {
   addManager,
   blockUser,
@@ -174,5 +185,6 @@ export const UserController = {
   getSingleUserById,
   userDashboardOverview,
   adminDashboardOverview,
-  profileStrength
+  profileStrength,
+  streakAndMilestones
 };

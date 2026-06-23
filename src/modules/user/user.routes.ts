@@ -1,4 +1,4 @@
-import {  Router } from "express";
+import { Router } from "express";
 import { UserValidation } from "./user.validation";
 import { UserController } from "./user.controller";
 import { UserRole } from "@prisma/client";
@@ -84,5 +84,15 @@ router.get(
   "/dashboard/monthly-insight",
   auth(UserRole.USER),
   UserController.monthlyInsight
+);
+router.get(
+  "/profile-strength",
+  auth(UserRole.USER),
+  UserController.profileStrength
+);
+router.get(
+  "/streak-milestones",
+  auth(UserRole.USER),
+  UserController.streakAndMilestones
 );
 export const UserRoutes = router;
