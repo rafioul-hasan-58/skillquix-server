@@ -402,6 +402,23 @@ model User {
   resumeProfile        ResumeProfile?
   masterCv             MasterCv?
   enhancedMasterCv     EnhancedMasterCv?
+  profileScore         ProfileScore?
+}
+
+model ProfileScore {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String   @unique @db.ObjectId
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  AIScore               Json?
+  CareerMomentum        Json?
+  ChallengesConsistency Json?
+  ConfidenceScore       Json?
+  GrowthDirection       Json?
+  JobReadiness          Json?
+  OverallAssessment     String?
+  TopTraits             String[] @default([])
+
+  @@map("ProfileScore")
 }
 
 // Enums in alphabetical order

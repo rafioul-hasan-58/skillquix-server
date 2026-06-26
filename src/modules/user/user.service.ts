@@ -644,6 +644,7 @@ const getProfileStrength = async (userId: string) => {
         },
       },
       _count: { select: { skills: true, reflextions: true } },
+      profileScore: true,
     },
   });
 
@@ -686,6 +687,31 @@ const getProfileStrength = async (userId: string) => {
   const last14DaysReflextionCount = await prisma.reflextion.count({
     where: { userId, createdAt: { gte: fourteenDaysAgo } },
   });
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const last30DaysReflextionCount = await prisma.reflextion.count({
+    where: { userId, createdAt: { gte: thirtyDaysAgo } },
+  });
+
+  let reflectionConsistencyScore = 0;
+  let reflectionConsistencyTag = "Needs Start";
+
+  if (reflextionCount > 0) {
+    if (last30DaysReflextionCount >= 8) {
+      reflectionConsistencyScore = Math.min(100, 90 + (last30DaysReflextionCount - 8));
+      reflectionConsistencyTag = "Excellent";
+    } else if (last30DaysReflextionCount >= 4) {
+      reflectionConsistencyScore = 70 + (last30DaysReflextionCount - 4) * 5;
+      reflectionConsistencyTag = "Good";
+    } else if (last30DaysReflextionCount >= 1) {
+      reflectionConsistencyScore = 30 + (last30DaysReflextionCount - 1) * 13;
+      reflectionConsistencyTag = "Progressive";
+    } else {
+      reflectionConsistencyScore = 15;
+      reflectionConsistencyTag = "Progressive";
+    }
+  }
 
   const BADGE_TIERS = [
     { min: 15, badge: "Visionary", description: "A true thought leader with deep self-awareness" },
@@ -756,6 +782,18 @@ const getProfileStrength = async (userId: string) => {
     { type: "futureVision", ...futureVisionMilestone },
   ];
 
+
+  const carrierHealthReport = {
+    careerMomentum: user.profileScore?.CareerMomentum,
+    reflectionConsistency: {
+      score: reflectionConsistencyScore,
+      tag: reflectionConsistencyTag,
+    },
+    growthDirection: user.profileScore?.GrowthDirection,
+    jobReadiness: user.profileScore?.JobReadiness,
+    overallAssessment:user.profileScore?.OverallAssessment
+  }
+
   return {
     strengthPercentage,
     humanAuthenticityScore,
@@ -776,6 +814,8 @@ const getProfileStrength = async (userId: string) => {
     completedCount: completedFields.length,
     missingCount: missingFields.length,
     milestones: milestonesList,
+    carrierHealthReport,
+
   };
 };
 
@@ -881,10 +921,10 @@ const getStreakAndMilestones = async (userId: string) => {
     label: idx === 0
       ? "1st week"
       : idx === 1
-      ? "2nd week"
-      : idx === 2
-      ? "3rd week"
-      : `${idx + 1}th week`,
+        ? "2nd week"
+        : idx === 2
+          ? "3rd week"
+          : `${idx + 1}th week`,
   }));
 
   return {
