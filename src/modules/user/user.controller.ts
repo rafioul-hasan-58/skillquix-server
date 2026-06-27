@@ -171,6 +171,16 @@ const streakAndMilestones = catchAsync(async (req, res) => {
   });
 });
 
+const carrierGrowth = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  const result = await UserService.getCarrierGrowth(id);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Carrier growth fetched successfully!",
+    data: result,
+  });
+});
+
 export const UserController = {
   addManager,
   blockUser,
@@ -186,5 +196,6 @@ export const UserController = {
   userDashboardOverview,
   adminDashboardOverview,
   profileStrength,
-  streakAndMilestones
+  streakAndMilestones,
+  carrierGrowth
 };

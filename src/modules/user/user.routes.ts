@@ -95,4 +95,11 @@ router.get(
   auth(UserRole.USER),
   UserController.streakAndMilestones
 );
+
+router.get(
+  "/carrier-growth",
+  auth(UserRole.USER),
+  UserController.carrierGrowth
+);
+
 export const UserRoutes = router;

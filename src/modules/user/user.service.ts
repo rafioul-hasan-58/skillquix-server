@@ -791,7 +791,7 @@ const getProfileStrength = async (userId: string) => {
     },
     growthDirection: user.profileScore?.GrowthDirection,
     jobReadiness: user.profileScore?.JobReadiness,
-    overallAssessment:user.profileScore?.OverallAssessment
+    overallAssessment: user.profileScore?.OverallAssessment
   }
 
   return {
@@ -936,6 +936,158 @@ const getStreakAndMilestones = async (userId: string) => {
   };
 };
 
+const getCarrierGrowth = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      profileScore: {
+        select: {
+          ConfidenceScore: true,
+        },
+      },
+      _count: {
+        select: {
+          reflextions: true,
+        },
+      },
+      reflextions: {
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: {
+          createdAt: true,
+          shortSummary: true,
+        },
+      },
+      skills: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          createdAt: true,
+          skillName: true,
+        },
+      },
+      resumeProfile: {
+        select: {
+          createdAt: true,
+          summary: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+  // Get weekly reflection streak
+  const streakInfo = await getStreakAndMilestones(userId);
+
+  // Get confidence scores from profileScore
+  const confidenceScoreRaw = user.profileScore?.ConfidenceScore;
+  let confidenceScores: { date: string; score: number }[] = [];
+  if (Array.isArray(confidenceScoreRaw)) {
+    confidenceScores = confidenceScoreRaw
+      .map((item: any) => ({
+        date: item?.date || "",
+        score: typeof item?.score === "number" ? item.score : Number(item?.score) || 0,
+      }))
+      .filter((item) => item.date);
+  }
+
+  // Sort by date ascending
+  confidenceScores.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const latestScore = confidenceScores.length > 0
+    ? confidenceScores[confidenceScores.length - 1].score
+    : 0;
+
+  // Find the score from 6 months ago
+  const now = new Date();
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(now.getMonth() - 6);
+
+  // Split scores into past (older than 6 months) and recent (last 6 months)
+  const pastScores = confidenceScores.filter((item) => new Date(item.date) < sixMonthsAgo);
+  const recentScores = confidenceScores.filter((item) => new Date(item.date) >= sixMonthsAgo);
+
+  let baselineScore = 0;
+  if (pastScores.length > 0) {
+    // The latest score before the 6 month window
+    baselineScore = pastScores[pastScores.length - 1].score;
+  } else if (recentScores.length > 0) {
+    // If no past scores, use the oldest score in the 6-month window
+    baselineScore = recentScores[0].score;
+  }
+
+  const delta = latestScore - baselineScore;
+  let percentageChange = 0;
+  if (baselineScore > 0) {
+    percentageChange = (delta / baselineScore) * 100;
+  } else if (latestScore > 0) {
+    percentageChange = 100;
+  }
+
+  // Milestone/Badge progression logic
+  const reflextionCount = user._count?.reflextions || 0;
+  const BADGE_TIERS = [
+    { min: 15, badge: "Visionary" },
+    { min: 10, badge: "Expert" },
+    { min: 6, badge: "Senior" },
+    { min: 3, badge: "Emerging" },
+    { min: 1, badge: "Starter" },
+    { min: 0, badge: "Newcomer" },
+  ];
+
+  const badgeTier = BADGE_TIERS.find((t) => reflextionCount >= t.min)!;
+  const currentTierIndex = BADGE_TIERS.indexOf(badgeTier);
+  const nextTier = currentTierIndex > 0 ? BADGE_TIERS[currentTierIndex - 1] : null;
+
+  const progressToNextMilestone = nextTier
+    ? Math.round(((reflextionCount - badgeTier.min) / (nextTier.min - badgeTier.min)) * 100)
+    : 100;
+
+  // Timeline / Milestones construction
+  const firstReflection = user.reflextions?.[0] || null;
+  const firstReflectionInfo = firstReflection
+    ? {
+        createdAt: firstReflection.createdAt,
+        shortSummary: firstReflection.shortSummary,
+      }
+    : null;
+
+  const firstSkill = user.skills?.[0] || null;
+  const firstThreeSkills = user.skills?.slice(0, 3).map((s) => s.skillName) || [];
+  const firstSkillInfo = firstSkill
+    ? {
+        date: firstSkill.createdAt,
+        skills: firstThreeSkills,
+      }
+    : null;
+
+  const resumeProfileInfo = user.resumeProfile
+    ? {
+        createdAt: user.resumeProfile.createdAt,
+        summary: user.resumeProfile.summary,
+      }
+    : null;
+
+  return {
+    confidenceScore: {
+      percentage: Number(Math.abs(percentageChange).toFixed(2)),
+      status: percentageChange > 0 ? "positive" : (percentageChange < 0 ? "negative" : "neutral"),
+    },
+    reflectionMilestoneProgress: {
+      currentStreak: streakInfo.currentStreak,
+      progressToNextMilestone,
+    },
+    carrierTimeline: {
+      firstReflection: firstReflectionInfo,
+      firstSkillDiscovered: firstSkillInfo,
+      resumeProfile: resumeProfileInfo,
+    },
+  };
+};
+
 export const UserService = {
   register,
   getAllUserFromDB,
@@ -951,5 +1103,6 @@ export const UserService = {
   userDashboardOverview,
   monthlyInsight,
   getProfileStrength,
-  getStreakAndMilestones
+  getStreakAndMilestones,
+  getCarrierGrowth
 };
