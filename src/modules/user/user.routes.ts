@@ -91,9 +91,9 @@ router.get(
   UserController.profileStrength
 );
 router.get(
-  "/streak-milestones",
+  "/consistency-report",
   auth(UserRole.USER),
-  UserController.streakAndMilestones
+  UserController.consistencyReport
 );
 
 router.get(

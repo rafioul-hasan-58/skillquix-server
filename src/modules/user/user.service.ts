@@ -819,29 +819,17 @@ const getProfileStrength = async (userId: string) => {
   };
 };
 
-const getStreakAndMilestones = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true },
-  });
-
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
-  }
-
+const computeWeeklyStreak = async (userId: string) => {
   const reflections = await prisma.reflextion.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
     select: { createdAt: true },
   });
 
-  // ─── Weekly Streak Computation ────────────────────────────────────────────
-  // Group all reflection dates into ISO week buckets (YYYY-Www)
   const getISOWeekKey = (date: Date): string => {
-    // Clone date and shift to Thursday of the same week (ISO week rule)
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const day = d.getUTCDay() || 7; // treat Sunday (0) as 7
-    d.setUTCDate(d.getUTCDate() + 4 - day); // shift to Thursday
+    const day = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - day);
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
     return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
@@ -857,7 +845,6 @@ const getStreakAndMilestones = async (userId: string) => {
   const weekSet = new Set(allReflectionDates.map(getISOWeekKey));
   const sortedWeeks = [...weekSet].sort();
 
-  // Current consecutive streak (backwards from current week)
   let currentStreak = 0;
   const todayWeekKey = getISOWeekKey(new Date());
   let startKey = todayWeekKey;
@@ -876,29 +863,46 @@ const getStreakAndMilestones = async (userId: string) => {
     }
   }
 
-  // Longest streak ever
-  let longestStreak = 0;
-  let tempStreak = 0;
-  for (let i = 0; i < sortedWeeks.length; i++) {
-    if (i === 0) {
-      tempStreak = 1;
-    } else {
-      const prevWeekKey = sortedWeeks[i - 1];
-      const currentWeekKey = sortedWeeks[i];
-      const expectedPrevKey = getPrevWeekKey(currentWeekKey);
-      if (prevWeekKey === expectedPrevKey) {
-        tempStreak++;
-      } else {
-        tempStreak = 1;
-      }
-    }
-    longestStreak = Math.max(longestStreak, tempStreak);
-  }
-
-  // Total unique weeks with at least one reflection
   const totalActiveWeeks = sortedWeeks.length;
 
-  // Streak milestones — week thresholds to celebrate
+  return {
+    currentStreak,
+    totalActiveWeeks,
+  };
+};
+
+const getConsistencyReport = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      profileScore: {
+        select: {
+          ConfidenceScore: true,
+          AIScore: true,
+          TopTraits: true,
+        },
+      },
+      _count: {
+        select: {
+          reflextions: true,
+        },
+      },
+      enhancedMasterCv: {
+        select: {
+          skills: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+  // 1. Current streak & milestones
+  const streakInfo = await computeWeeklyStreak(userId);
+
   const STREAK_MILESTONES = [
     { weeks: 1, label: "First Step", description: "Reflected for the first time!" },
     { weeks: 3, label: "On a Roll", description: "3 weeks of consistent reflection" },
@@ -907,32 +911,173 @@ const getStreakAndMilestones = async (userId: string) => {
     { weeks: 24, label: "Half Year", description: "24 weeks — six months of self-awareness" },
   ];
 
-  const streakMilestones = STREAK_MILESTONES.map((m) => ({
+  const milestones = STREAK_MILESTONES.map((m) => ({
     weeks: m.weeks,
     label: m.label,
     description: m.description,
-    achieved: totalActiveWeeks >= m.weeks,
+    achieved: streakInfo.totalActiveWeeks >= m.weeks,
   }));
 
-  // Weekly progress steps — how far the user is (e.g. 1st, 2nd … Nth week)
-  const weeklyProgress = sortedWeeks.map((weekKey, idx) => ({
-    week: idx + 1,
-    weekKey,
-    label: idx === 0
-      ? "1st week"
-      : idx === 1
-        ? "2nd week"
-        : idx === 2
-          ? "3rd week"
-          : `${idx + 1}th week`,
+  // 4. Progress to achieve next reflection milestone
+  const reflextionCount = user._count?.reflextions || 0;
+  const BADGE_TIERS = [
+    { min: 15, badge: "Visionary" },
+    { min: 10, badge: "Expert" },
+    { min: 6, badge: "Senior" },
+    { min: 3, badge: "Emerging" },
+    { min: 1, badge: "Starter" },
+    { min: 0, badge: "Newcomer" },
+  ];
+
+  const badgeTier = BADGE_TIERS.find((t) => reflextionCount >= t.min)!;
+  const currentTierIndex = BADGE_TIERS.indexOf(badgeTier);
+  const nextTier = currentTierIndex > 0 ? BADGE_TIERS[currentTierIndex - 1] : null;
+
+  const progressToNextMilestone = nextTier
+    ? Math.round(((reflextionCount - badgeTier.min) / (nextTier.min - badgeTier.min)) * 100)
+    : 100;
+
+  // 2. Confidence growth vs last month percentage and status
+  const confidenceScoreRaw = user.profileScore?.ConfidenceScore;
+  let confidenceScores: { date: string; score: number }[] = [];
+  if (Array.isArray(confidenceScoreRaw)) {
+    confidenceScores = confidenceScoreRaw
+      .map((item: any) => {
+        const rawDate = item?.date;
+        const dateStr = typeof rawDate === "string" ? rawDate : (rawDate?.$date || "");
+        return {
+          date: dateStr,
+          score: typeof item?.score === "number" ? item.score : Number(item?.score) || 0,
+        };
+      })
+      .filter((item) => item.date);
+  }
+  confidenceScores.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const calculateGrowthVsLastMonth = (scores: { date: string; score: number }[]) => {
+    if (scores.length === 0) {
+      return { percentage: 0, status: "neutral" };
+    }
+    const latest = scores[scores.length - 1].score;
+    const startOfCurrentMonth = new Date();
+    startOfCurrentMonth.setDate(1);
+    startOfCurrentMonth.setHours(0, 0, 0, 0);
+
+    const pastScores = scores.filter((item) => new Date(item.date) < startOfCurrentMonth);
+    let baseline = 0;
+    if (pastScores.length > 0) {
+      baseline = pastScores[pastScores.length - 1].score;
+    } else {
+      baseline = scores[0].score;
+    }
+
+    const change = latest - baseline;
+    let percentage = 0;
+    if (baseline > 0) {
+      percentage = (change / baseline) * 100;
+    } else if (latest > 0) {
+      percentage = 100;
+    }
+
+    return {
+      percentage: Number(Math.abs(percentage).toFixed(2)),
+      status: percentage > 0 ? "positive" : (percentage < 0 ? "negative" : "neutral"),
+    };
+  };
+
+  const confidenceGrowth = calculateGrowthVsLastMonth(confidenceScores);
+
+  // 3. Human authenticity points vs last month points and status
+  const aiScoreRaw = user.profileScore?.AIScore;
+  let aiScores: { date: string; score: number }[] = [];
+  if (Array.isArray(aiScoreRaw)) {
+    aiScores = aiScoreRaw
+      .map((item: any) => {
+        const rawDate = item?.date;
+        const dateStr = typeof rawDate === "string" ? rawDate : (rawDate?.$date || "");
+        return {
+          date: dateStr,
+          score: typeof item?.score === "number" ? item.score : (typeof item?.total === "number" ? item.total : Number(item?.total || item?.score) || 0),
+        };
+      })
+      .filter((item) => item.date);
+  }
+  aiScores.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  let authenticityGrowth = {
+    currentPoints: 0,
+    points: 0,
+    status: "neutral",
+  };
+
+  if (aiScores.length > 0) {
+    const latest = aiScores[aiScores.length - 1].score;
+    const startOfCurrentMonth = new Date();
+    startOfCurrentMonth.setDate(1);
+    startOfCurrentMonth.setHours(0, 0, 0, 0);
+
+    const pastScores = aiScores.filter((item) => new Date(item.date) < startOfCurrentMonth);
+    let baseline = 0;
+    if (pastScores.length > 0) {
+      baseline = pastScores[pastScores.length - 1].score;
+    } else {
+      baseline = aiScores[0].score;
+    }
+
+    const change = latest - baseline;
+
+    authenticityGrowth = {
+      currentPoints: latest,
+      points: Number(Math.abs(change).toFixed(2)),
+      status: change > 0 ? "positive" : (change < 0 ? "negative" : "neutral"),
+    };
+  }
+
+  // 6. Top 3 skills gained this month ranked by score
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const skillsThisMonth = await prisma.skill.findMany({
+    where: {
+      userId,
+      createdAt: {
+        gte: startOfMonth,
+        lt: endOfMonth,
+      },
+    },
+    select: {
+      skillName: true,
+    },
+  });
+
+  const skillNamesThisMonth = new Set(skillsThisMonth.map((s) => s.skillName.toLowerCase()));
+  const rawCvSkills = (user.enhancedMasterCv?.skills as Array<{ skillName: string; score: number }>) || [];
+  
+  let filteredCvSkills = rawCvSkills.filter((s) => skillNamesThisMonth.has(s.skillName.toLowerCase()));
+  if (filteredCvSkills.length === 0) {
+    filteredCvSkills = rawCvSkills;
+  }
+
+  const topSkills = [...filteredCvSkills]
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    .slice(0, 3)
+    .map(({ skillName, score }) => ({ skillName, score }));
+
+  const interviewConfidenceTrend = confidenceScores.map((item) => ({
+    date: item.date,
+    score: item.score,
   }));
 
   return {
-    currentStreak,
-    longestStreak,
-    totalActiveWeeks,
-    streakMilestones,
-    weeklyProgress,
+    currentStreak: streakInfo.currentStreak,
+    confidenceGrowth,
+    authenticityGrowth,
+    progressToNextMilestone,
+    milestones,
+    topSkills,
+    topTraits: user.profileScore?.TopTraits || [],
+    interviewConfidenceTrend,
   };
 };
 
@@ -980,17 +1125,21 @@ const getCarrierGrowth = async (userId: string) => {
   }
 
   // Get weekly reflection streak
-  const streakInfo = await getStreakAndMilestones(userId);
+  const streakInfo = await computeWeeklyStreak(userId);
 
   // Get confidence scores from profileScore
   const confidenceScoreRaw = user.profileScore?.ConfidenceScore;
   let confidenceScores: { date: string; score: number }[] = [];
   if (Array.isArray(confidenceScoreRaw)) {
     confidenceScores = confidenceScoreRaw
-      .map((item: any) => ({
-        date: item?.date || "",
-        score: typeof item?.score === "number" ? item.score : Number(item?.score) || 0,
-      }))
+      .map((item: any) => {
+        const rawDate = item?.date;
+        const dateStr = typeof rawDate === "string" ? rawDate : (rawDate?.$date || "");
+        return {
+          date: dateStr,
+          score: typeof item?.score === "number" ? item.score : Number(item?.score) || 0,
+        };
+      })
       .filter((item) => item.date);
   }
 
@@ -1103,6 +1252,6 @@ export const UserService = {
   userDashboardOverview,
   monthlyInsight,
   getProfileStrength,
-  getStreakAndMilestones,
+  getConsistencyReport,
   getCarrierGrowth
 };

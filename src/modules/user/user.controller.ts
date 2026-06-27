@@ -161,12 +161,12 @@ const profileStrength = catchAsync(async (req, res) => {
   });
 });
 
-const streakAndMilestones = catchAsync(async (req, res) => {
+const consistencyReport = catchAsync(async (req, res) => {
   const { id } = req.user;
-  const result = await UserService.getStreakAndMilestones(id);
+  const result = await UserService.getConsistencyReport(id);
   sendResponse(res, {
     statusCode: status.OK,
-    message: "Streak and milestones fetched successfully!",
+    message: "Consistency report fetched successfully!",
     data: result,
   });
 });
@@ -196,6 +196,6 @@ export const UserController = {
   userDashboardOverview,
   adminDashboardOverview,
   profileStrength,
-  streakAndMilestones,
+  consistencyReport,
   carrierGrowth
 };
