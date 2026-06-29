@@ -669,9 +669,10 @@ const getProfileStrength = async (userId: string) => {
   const totalWeight = PROFILE_FIELDS.reduce((sum, f) => sum + f.weight, 0);
   const strengthPercentage = Math.round((earnedWeight / totalWeight) * 100);
 
-  // Extract humanAuthenticityScore from enhancedMasterCv.aiScore.total
+  // Extract humanAuthenticityScore and breakdown from enhancedMasterCv.aiScore
   const aiScore = user.enhancedMasterCv?.aiScore as Record<string, any> | null;
   const humanAuthenticityScore = aiScore?.total ?? null;
+  const aiScoreBreakdown = aiScore?.breakdown ?? null;
 
   // Extract top 3 skills by score from enhancedMasterCv.skills
   const rawSkills = (user.enhancedMasterCv?.skills as Array<{ skillName: string; score: number }>) ?? [];
@@ -815,7 +816,7 @@ const getProfileStrength = async (userId: string) => {
     missingCount: missingFields.length,
     milestones: milestonesList,
     carrierHealthReport,
-
+    aiScoreBreakdown,
   };
 };
 
@@ -891,6 +892,7 @@ const getConsistencyReport = async (userId: string) => {
       enhancedMasterCv: {
         select: {
           skills: true,
+          aiScore: true,
         },
       },
     },
@@ -1069,10 +1071,14 @@ const getConsistencyReport = async (userId: string) => {
     score: item.score,
   }));
 
+  const enhancedMasterCvAiScore = user.enhancedMasterCv?.aiScore as Record<string, any> | null;
+  const aiScoreBreakdown = enhancedMasterCvAiScore?.breakdown ?? null;
+
   return {
     currentStreak: streakInfo.currentStreak,
     confidenceGrowth,
     authenticityGrowth,
+    aiScoreBreakdown,
     progressToNextMilestone,
     milestones,
     topSkills,
