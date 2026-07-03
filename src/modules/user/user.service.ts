@@ -545,42 +545,50 @@ const PROFILE_FIELDS = [
     label: "Profession",
     weight: 15,
     tip: "Add your profession or job title",
-    check: (user: any) => !!user.profession && user.profession.trim() !== "",
+    check: (user: any) =>
+      (!!user.profession && user.profession.trim() !== "") ||
+      (!!user.masterCv?.currentRole && user.masterCv.currentRole.trim() !== "") ||
+      (!!user.enhancedMasterCv?.currentRole && user.enhancedMasterCv.currentRole.trim() !== ""),
   },
   {
     field: "location",
     label: "Location",
     weight: 10,
     tip: "Add your location",
-    check: (user: any) => !!user.location && user.location.trim() !== "",
+    check: (user: any) =>
+      (!!user.location && user.location.trim() !== "") ||
+      (!!user.masterCv?.location && user.masterCv.location.trim() !== "") ||
+      (!!user.enhancedMasterCv?.location && user.enhancedMasterCv.location.trim() !== ""),
   },
   {
     field: "bio",
     label: "Bio",
     weight: 10,
     tip: "Write a short bio about yourself",
-    check: (user: any) => !!user.bio && user.bio.trim() !== "",
+    check: (user: any) =>
+      (!!user.bio && user.bio.trim() !== "") ||
+      (!!user.masterCv?.bio && user.masterCv.bio.trim() !== "") ||
+      (!!user.enhancedMasterCv?.bio && user.enhancedMasterCv.bio.trim() !== ""),
   },
   {
     field: "experienceYear",
     label: "Experience Year",
     weight: 5,
     tip: "Add your years of experience",
-    check: (user: any) => !!user.experienceYear && user.experienceYear.trim() !== "",
+    check: (user: any) =>
+      (!!user.experienceYear && user.experienceYear.trim() !== "") ||
+      (user.masterCv?.totalExperienceYear !== undefined && user.masterCv.totalExperienceYear !== null && String(user.masterCv.totalExperienceYear).trim() !== "") ||
+      (user.enhancedMasterCv?.totalExperienceYear !== undefined && user.enhancedMasterCv.totalExperienceYear !== null && String(user.enhancedMasterCv.totalExperienceYear).trim() !== ""),
   },
   {
     field: "careerStage",
     label: "Career Stage",
     weight: 5,
     tip: "Select your career stage",
-    check: (user: any) => !!user.careerStage && user.careerStage.trim() !== "",
-  },
-  {
-    field: "resumeLink",
-    label: "Resume",
-    weight: 10,
-    tip: "Upload your resume",
-    check: (user: any) => !!user.resumeLink && user.resumeLink.trim() !== "",
+    check: (user: any) =>
+      (!!user.careerStage && user.careerStage.trim() !== "") ||
+      (!!user.masterCv?.careerStage && user.masterCv.careerStage.trim() !== "") ||
+      (!!user.enhancedMasterCv?.careerStage && user.enhancedMasterCv.careerStage.trim() !== ""),
   },
   {
     field: "skills",
@@ -591,8 +599,8 @@ const PROFILE_FIELDS = [
   },
   {
     field: "resumeProfile",
-    label: "Resume Profile",
-    weight: 5,
+    label: "Resume",
+    weight: 15,
     tip: "Parse your resume to create a resume profile",
     check: (user: any) => !!user.resumeProfile,
   },
@@ -620,12 +628,21 @@ const getProfileStrength = async (userId: string) => {
           currentRole: true,
           createdAt: true,
           futureVision: true,
+          bio: true,
+          location: true,
+          careerStage: true,
+          totalExperienceYear: true,
         },
       },
       masterCv: {
         select: {
           currentRole: true,
           createdAt: true,
+          bio: true,
+          location: true,
+          careerStage: true,
+          totalExperienceYear: true,
+          resumeLink: true,
         },
       },
       reflextions: {
