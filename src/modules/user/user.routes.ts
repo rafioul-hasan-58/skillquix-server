@@ -1,4 +1,4 @@
-import {  Router } from "express";
+import { Router } from "express";
 import { UserValidation } from "./user.validation";
 import { UserController } from "./user.controller";
 import { UserRole } from "@prisma/client";
@@ -85,4 +85,21 @@ router.get(
   auth(UserRole.USER),
   UserController.monthlyInsight
 );
+router.get(
+  "/profile-strength",
+  auth(UserRole.USER),
+  UserController.profileStrength
+);
+router.get(
+  "/consistency-report",
+  auth(UserRole.USER),
+  UserController.consistencyReport
+);
+
+router.get(
+  "/carrier-growth",
+  auth(UserRole.USER),
+  UserController.carrierGrowth
+);
+
 export const UserRoutes = router;

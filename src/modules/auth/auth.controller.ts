@@ -11,12 +11,18 @@ import { verifyGoogleToken } from "./auth.halper";
 
 const verifyOTP = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
-  const result = await AuthService.verifyOTP(email, otp);
+  const { accessToken, refreshToken } = await AuthService.verifyOTP(email, otp);
+  res.cookie("refreshToken", refreshToken, {
+    secure: false,
+    httpOnly: true,
+  });
   sendResponse(res, {
     success: true,
     statusCode: status.OK,
     message: "OTP verified successfully!",
-    data: result,
+    data: {
+      accessToken,
+    },
   });
 });
 
@@ -83,7 +89,7 @@ const resendOTP = catchAsync(async (req, res) => {
 
   sendResponse(res, {
     statusCode: status.OK,
-    message: result.message,
+    message: "New otp has been sent!",
   });
 });
 

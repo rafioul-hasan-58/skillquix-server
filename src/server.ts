@@ -15,7 +15,6 @@ async function bootstrap() {
 
   // 2. Seed admin
   await seedAdmin();
-  // console.log("☑️  Admin seeded!");
   startWorkers()
   console.log("☑️  Workers started!");
 

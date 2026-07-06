@@ -48,8 +48,14 @@ const verifyOTP = async (email: string, otp: string) => {
     config.jwt.access_token_secret as string,
     config.jwt.access_token_expires_in as string
   );
+  const refreshToken = createToken(
+    jwtPayload,
+    config.jwt.refresh_token_secret as string,
+    config.jwt.refresh_token_expires_in as string
+  );
   return {
-    accessToken
+    accessToken,
+    refreshToken,
   }
 };
 

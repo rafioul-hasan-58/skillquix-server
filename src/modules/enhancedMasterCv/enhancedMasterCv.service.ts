@@ -2,6 +2,7 @@ import status from "http-status";
 import ApiError from "../../app/errors/ApiError";
 import prisma from "../../lib/prisma";
 import QueryBuilder from "../../infrastructure/builder/QueryBuilder";
+import { TUpdateEnhancedMasterCv } from "./enhancedMasterCv.validation";
 
 const create = async (userId: string, payload: any) => {
   const result = await prisma.enhancedMasterCv.upsert({
@@ -19,8 +20,8 @@ const create = async (userId: string, payload: any) => {
   return result;
 };
 
-const update = async (userId: string, payload: any) => {
-  const { skills, workExperiences, educationsAndCertifications, hobbies, ...scalarFields } = payload;
+const update = async (userId: string, payload: TUpdateEnhancedMasterCv) => {
+  const { skills, workExperiences, educationsAndCertifications, hobbies, futureVision, ...scalarFields } = payload;
 
   const existing = await prisma.enhancedMasterCv.findUnique({ where: { userId } });
 
@@ -36,6 +37,7 @@ const update = async (userId: string, payload: any) => {
       ...(workExperiences !== undefined && { workExperiences }),
       ...(educationsAndCertifications !== undefined && { educationsAndCertifications }),
       ...(hobbies !== undefined && { hobbies }),
+      ...(futureVision !== undefined && { futureVision }),
     },
   });
 

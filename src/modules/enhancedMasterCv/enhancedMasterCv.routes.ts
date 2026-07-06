@@ -16,10 +16,13 @@ router.post(
   ),
   EnhancedMasterCvController.create
 );
-//  Create
+//  Update
 router.patch(
   "/update",
   auth(),
+  validateRequest(
+    EnhancedMasterCvValidation.updateEnhancedMasterCvValidationSchema
+  ),
   EnhancedMasterCvController.update
 );
 

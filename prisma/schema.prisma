@@ -224,7 +224,7 @@ model EnhancedMasterCv {
   linkedinUrl                 String?
   location                    String?
   languages                   String[] @default([])
-  hobbies                     String[]  @default([])
+  hobbies                     String[] @default([])
   phoneNumber                 String?
   portfolioUrl                String?
   refletions                  Json?
@@ -237,6 +237,7 @@ model EnhancedMasterCv {
   totalExperienceYear         Int?
   version                     Int      @default(1)
   workExperiences             Json?
+  futureVision                Json?
   // relations
   userId                      String   @unique @db.ObjectId
   user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -401,6 +402,23 @@ model User {
   resumeProfile        ResumeProfile?
   masterCv             MasterCv?
   enhancedMasterCv     EnhancedMasterCv?
+  profileScore         ProfileScore?
+}
+
+model ProfileScore {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String   @unique @db.ObjectId
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  AIScore               Json?
+  CareerMomentum        Json?
+  ChallengesConsistency Json?
+  ConfidenceScore       Json?
+  GrowthDirection       Json?
+  JobReadiness          Json?
+  OverallAssessment     String?
+  TopTraits             String[] @default([])
+
+  @@map("ProfileScore")
 }
 
 // Enums in alphabetical order
