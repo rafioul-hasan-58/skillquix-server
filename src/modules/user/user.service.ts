@@ -278,7 +278,8 @@ const addManager = async (payload: addManagerInput) => {
     data: {
       ...payload,
       password: hashedPassword,
-      role: UserRole.MANAGER
+      role: UserRole.MANAGER,
+      isEmailVerified: true
     },
     select: {
       id: true,

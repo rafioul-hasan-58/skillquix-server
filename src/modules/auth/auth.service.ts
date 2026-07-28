@@ -31,9 +31,15 @@ const verifyOTP = async (email: string, otp: string) => {
   }
 
   // update database
-  await prisma.oTP.delete({
-    where: { id: savedOtp.id },
-  });
+  await prisma.$transaction([
+    prisma.oTP.delete({
+      where: { id: savedOtp.id },
+    }),
+    prisma.user.update({
+      where: { id: user.id },
+      data: { isEmailVerified: true },
+    }),
+  ]);
 
   const jwtPayload = {
     id: user.id,
@@ -69,6 +75,10 @@ const loginUser = async (email: string, password: string) => {
 
   if (!user) {
     throw new ApiError(status.NOT_FOUND, "User not found!");
+  }
+
+  if (!user.isEmailVerified) {
+    throw new ApiError(status.FORBIDDEN, "Email is not verified!");
   }
 
   const isPasswordMatched = await comparePassword(password, user.password ?? "");
@@ -210,7 +220,7 @@ const resendOtp = async (email: string) => {
 
   await sendOTP(user.id)
   return {
-    message: "New OTP has been sent to your email for reset password.",
+    message: "New OTP has been sent to your email.",
   };
 };
 
@@ -266,6 +276,7 @@ const linkedInCallback = async (code: string) => {
           fullName: linkedInUser.name || `${linkedInUser.given_name} ${linkedInUser.family_name}`,
           profileImage: linkedInUser.picture || null,
           role: 'USER',
+          isEmailVerified: true,
         },
       });
     } else {
@@ -354,6 +365,7 @@ const googleLogin = async (payload: Partial<User>) => {
         email,
         password: crypto.randomBytes(6).toString('hex'),
         lastLogin: new Date(),
+        isEmailVerified: true,
       }
     });
 

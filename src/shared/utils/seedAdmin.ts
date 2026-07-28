@@ -22,7 +22,8 @@ export const seedAdmin = async () => {
                 role: UserRole.ADMIN,
                 email: config.admin.email!,
                 password: hashedPassword,
-                profileImage: "https://i.ibb.co.com/vC0htHb9/emma-Watson.jpg"
+                profileImage: "https://i.ibb.co.com/vC0htHb9/emma-Watson.jpg",
+                isEmailVerified: true
             }
         })
         console.log("🧙‍♂️ Admin seeded successfully!")

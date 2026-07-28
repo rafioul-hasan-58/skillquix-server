@@ -368,6 +368,7 @@ model User {
   role                 UserRole            @default(USER)
   isDeleted            Boolean             @default(false)
   isBlocked            Boolean             @default(false)
+  isEmailVerified      Boolean             @default(false)
   lastLogin            DateTime?
   subscriptionType     SubscriptionType    @default(FREE)
   emailNotification    Toggle              @default(ON)
