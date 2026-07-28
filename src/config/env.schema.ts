@@ -4,7 +4,7 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.string().default("5000"),
   AI_BASE_URL: z.string().url(),
-  BACKEND_BASE_URL: z.string().url(),
+  BACKEND_BASE_URL: z.string().url().optional(),
   FRONTEND_URL: z.string(),
   IMAGE_URL: z.string().url().optional(),
 
@@ -21,7 +21,7 @@ export const envSchema = z.object({
   CONTACT_EMAIL: z.string().email(),
 
   GOOGLE_SERVICE_ACCOUNT_PATH: z.string().optional(),
-  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
   OAUTH_CLIENT_ID: z.string(),
   OAUTH_CLIENT_SECRET: z.string(),
   OAUTH_REDIRECT_URL: z.string().url(),

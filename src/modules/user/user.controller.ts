@@ -19,18 +19,14 @@ const register = catchAsync(async (req: Request, res: Response) => {
   const resumeLink = files.resume
     ? await getImageUrl(files.resume[0])
     : undefined;
-  const { accessToken, refreshToken } = await UserService.register({ ...req.body, profileImage, resumeLink });
-  res.cookie("refreshToken", refreshToken, {
-    secure: false,
-    httpOnly: true,
-  });
+  const result = await UserService.register({ ...req.body, profileImage, resumeLink });
 
   sendResponse(res, {
     success: true,
     statusCode: status.OK,
-    message: "User registered successfully!",
+    message: result.message,
     data: {
-      accessToken
+      expiresAt: result.expiresAt,
     },
   });
 });
@@ -155,6 +151,36 @@ const monthlyInsight = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const profileStrength = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  const result = await UserService.getProfileStrength(id);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Profile strength fetched successfully!",
+    data: result,
+  });
+});
+
+const consistencyReport = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  const result = await UserService.getConsistencyReport(id);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Consistency report fetched successfully!",
+    data: result,
+  });
+});
+
+const carrierGrowth = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  const result = await UserService.getCarrierGrowth(id);
+  sendResponse(res, {
+    statusCode: status.OK,
+    message: "Carrier growth fetched successfully!",
+    data: result,
+  });
+});
+
 export const UserController = {
   addManager,
   blockUser,
@@ -168,5 +194,8 @@ export const UserController = {
   myProfile,
   getSingleUserById,
   userDashboardOverview,
-  adminDashboardOverview
+  adminDashboardOverview,
+  profileStrength,
+  consistencyReport,
+  carrierGrowth
 };
