@@ -66,18 +66,40 @@ const createReflextion = async (userId: string, payload: CreateReflextionInput) 
             shortSummary: payload.shortSummary.trim(),
         }
     });
-    // Create skills with reflextionId for per-reflextion tracking
-    await prisma.skill.createMany({
-        data: payload.extractedSkills.map(skill => ({
-            skillName: skill.skillName,
-            skillCategory: skill.skillCategory,
-            proficiencyLevel: skill.proficiencyLevel,
-            yearOfExperience: skill.yearOfExperience,
-            userId,
-            reflextionId: reflextion.id,
-            source: SkillSource.REFLEXTION
-        }))
-    });
+    // Deduplicate extracted skills by skillName to prevent duplicate inputs
+    const uniqueSkillsMap = new Map<string, typeof payload.extractedSkills[number]>();
+    for (const skill of payload.extractedSkills) {
+        uniqueSkillsMap.set(skill.skillName, skill);
+    }
+    const uniqueExtractedSkills = Array.from(uniqueSkillsMap.values());
+
+    // Create/update skills with reflextionId for per-reflextion tracking
+    for (const skill of uniqueExtractedSkills) {
+        await prisma.skill.upsert({
+            where: {
+                userId_skillName: {
+                    userId,
+                    skillName: skill.skillName,
+                },
+            },
+            update: {
+                skillCategory: skill.skillCategory,
+                proficiencyLevel: skill.proficiencyLevel,
+                yearOfExperience: skill.yearOfExperience,
+                reflextionId: reflextion.id,
+                source: SkillSource.REFLEXTION,
+            },
+            create: {
+                skillName: skill.skillName,
+                skillCategory: skill.skillCategory,
+                proficiencyLevel: skill.proficiencyLevel,
+                yearOfExperience: skill.yearOfExperience,
+                userId,
+                reflextionId: reflextion.id,
+                source: SkillSource.REFLEXTION,
+            },
+        });
+    }
 
     const extractedSkills = await prisma.skill.findMany({
         where: { reflextionId: reflextion.id }
@@ -89,6 +111,18 @@ const createReflextion = async (userId: string, payload: CreateReflextionInput) 
         }
     });
 
+    // Merge skills in MasterCv to prevent duplicates
+    const existingSkillsList = existMasterCv?.skills as any[] ?? [];
+    const mergedSkills = [...existingSkillsList];
+    for (const newSkill of extractedSkills) {
+        const index = mergedSkills.findIndex(s => s.skillName === newSkill.skillName);
+        if (index > -1) {
+            mergedSkills[index] = newSkill;
+        } else {
+            mergedSkills.push(newSkill);
+        }
+    }
+
     await prisma.masterCv.upsert({
         where: { userId },
         create: {
@@ -97,10 +131,7 @@ const createReflextion = async (userId: string, payload: CreateReflextionInput) 
             refletions: [reflextion]
         },
         update: {
-            skills: [
-                ...(existMasterCv?.skills as any[] ?? []),
-                ...extractedSkills
-            ],
+            skills: mergedSkills,
             refletions: [
                 ...(existMasterCv?.refletions as any[] ?? []),
                 reflextion
@@ -217,17 +248,39 @@ const updateReflextion = async (
             where: { reflextionId: id }
         });
 
-        await prisma.skill.createMany({
-            data: payload.extractedSkills.map(skill => ({
-                skillName: skill.skillName,
-                skillCategory: skill.skillCategory,
-                proficiencyLevel: skill.proficiencyLevel,
-                yearOfExperience: skill.yearOfExperience,
-                userId: existing.userId,
-                reflextionId: id,
-                source: SkillSource.REFLEXTION
-            }))
-        });
+        // Deduplicate extracted skills by skillName to prevent duplicate inputs
+        const uniqueSkillsMap = new Map<string, typeof payload.extractedSkills[number]>();
+        for (const skill of payload.extractedSkills) {
+            uniqueSkillsMap.set(skill.skillName, skill);
+        }
+        const uniqueExtractedSkills = Array.from(uniqueSkillsMap.values());
+
+        for (const skill of uniqueExtractedSkills) {
+            await prisma.skill.upsert({
+                where: {
+                    userId_skillName: {
+                        userId: existing.userId,
+                        skillName: skill.skillName,
+                    },
+                },
+                update: {
+                    skillCategory: skill.skillCategory,
+                    proficiencyLevel: skill.proficiencyLevel,
+                    yearOfExperience: skill.yearOfExperience,
+                    reflextionId: id,
+                    source: SkillSource.REFLEXTION,
+                },
+                create: {
+                    skillName: skill.skillName,
+                    skillCategory: skill.skillCategory,
+                    proficiencyLevel: skill.proficiencyLevel,
+                    yearOfExperience: skill.yearOfExperience,
+                    userId: existing.userId,
+                    reflextionId: id,
+                    source: SkillSource.REFLEXTION,
+                },
+            });
+        }
     }
 
     const extractedSkills = await prisma.skill.findMany({
