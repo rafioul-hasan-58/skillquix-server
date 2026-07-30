@@ -77,16 +77,42 @@ const create = async (userId: string, payload: CreateResumeProfilePayload) => {
         (async () => {
             if (!payload.skills?.length) return [];
             await prisma.skill.deleteMany({ where: { userId, source: SkillSource.RESUME } });
-            await prisma.skill.createMany({
-                data: payload.skills.flatMap((skill: ResumeSkill) =>
-                    skill.Skills.map((s: string) => ({
-                        skillCategory: skill.category,
-                        skillName: s,
+
+            // Flatten and deduplicate skills
+            const flatSkills = payload.skills.flatMap((skill: ResumeSkill) =>
+                skill.Skills.map((s: string) => ({
+                    skillCategory: skill.category,
+                    skillName: s,
+                }))
+            );
+
+            const uniqueSkillsMap = new Map<string, typeof flatSkills[number]>();
+            for (const skill of flatSkills) {
+                uniqueSkillsMap.set(skill.skillName, skill);
+            }
+            const uniqueSkills = Array.from(uniqueSkillsMap.values());
+
+            for (const skill of uniqueSkills) {
+                await prisma.skill.upsert({
+                    where: {
+                        userId_skillName: {
+                            userId,
+                            skillName: skill.skillName,
+                        },
+                    },
+                    update: {
+                        skillCategory: skill.skillCategory,
+                        source: SkillSource.RESUME,
+                    },
+                    create: {
+                        skillName: skill.skillName,
+                        skillCategory: skill.skillCategory,
                         userId,
-                        source: SkillSource.RESUME
-                    }))
-                ),
-            });
+                        source: SkillSource.RESUME,
+                    },
+                });
+            }
+
             return prisma.skill.findMany({ where: { userId, source: SkillSource.RESUME } });
         })()
     ]);
