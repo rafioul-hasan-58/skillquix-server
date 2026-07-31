@@ -147,6 +147,7 @@ const getAllReflextions = async (query: Record<string, unknown>) => {
     const reflextionQuery = new QueryBuilder(prisma.reflextion, query)
         .search(["shortSummary"])
         .filter()
+        .sort()
         .paginate();
 
     const [rawData, meta] = await Promise.all([
@@ -176,6 +177,7 @@ const getMyReflextions = async (userId: string, query: Record<string, unknown>) 
         .search(["shortSummary"])
         .filter()
         .rawFilter({ userId })
+        .sort()
         .paginate();
 
     const [rawData, meta] = await Promise.all([
